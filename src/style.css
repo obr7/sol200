@@ -36,8 +36,8 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes shake { 25% { transform: translateX(-52%); } 75% { transform: translateX(-48%); } }
 #prompt { position: absolute; transform: translate(-50%, -100%); background: var(--cream); color: var(--brown); border: .15em solid var(--brown); border-radius: .4em; padding: .2em .5em; font-size: .7em; font-weight: 700; white-space: nowrap; pointer-events: none; box-shadow: 0 .2em 0 rgba(0,0,0,.4); }
 #prompt kbd { background: var(--brown); color: var(--cream); border-radius: .25em; padding: 0 .3em; font-family: inherit; margin-right: .3em; }
-#toast { position: absolute; left: 50%; bottom: 26%; transform: translateX(-50%); background: rgba(14,16,30,.92); border: .15em solid var(--gold); padding: .4em .9em; border-radius: .5em; font-size: .8em; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; text-align: center; max-width: 70%; }
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(-.4em); }
+#toast { position: absolute; left: 1.2em; bottom: 9em; transform: none; background: rgba(14,16,30,.92); border: .15em solid var(--gold); padding: .4em .9em; border-radius: .5em; font-size: .8em; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; text-align: left; max-width: 40%; z-index: 5; }
+#toast.show { opacity: 1; transform: translateY(-.4em); }
 
 /* ---------- dialogue (Stardew-like) ---------- */
 #dialog { position: absolute; left: 3%; right: 3%; bottom: 3%; height: 30%; display: flex; gap: .6em; pointer-events: auto; animation: popIn .25s; }
@@ -140,7 +140,7 @@ button { font-family: inherit; cursor: pointer; }
 #title h1 { font-size: 4em; margin: 0; color: #ffd8a8; letter-spacing: .08em; text-shadow: 0 .08em 0 #8a3a1a, 0 .16em 0 #3a1a0a, 0 0 .6em rgba(255,120,60,.6); animation: titleFloat 4s ease-in-out infinite; }
 @keyframes titleFloat { 50% { transform: translateY(-.15em); } }
 #title h2 { margin: .2em 0 1.2em; font-size: 1em; letter-spacing: .3em; color: #cfd8ff; }
-#title .btn { font-size: 1.2em; margin: .3em; min-width: 9em; align-self: flex-start; height: auto; }
+#title .btn { font-size: 1.2em; margin: .3em; min-width: 9em; }
 #title small { position: absolute; bottom: .8em; font-size: .6em; opacity: .7; max-width: 90%; }
 #subs { position: absolute; left: 10%; right: 10%; bottom: 7%; text-align: center; font-size: 1.15em; text-shadow: 0 .1em 0 #000, 0 0 .4em #000; line-height: 1.35; pointer-events: none; }
 #subs .nm { color: var(--gold); font-size: .7em; letter-spacing: .2em; display: block; }

@@ -187,11 +187,16 @@ function drawTool(g, k, x, y, t, active) {
 // =====================================================================
 //  SOLAR PANELS — 3 kinds of job
 // =====================================================================
-const PANEL_JOBS = ["brush", "pebbles", "tilt", "brush", "tilt", "pebbles"];
-Minigames.panelJob = function (n, getTime) {
-  const kind = PANEL_JOBS[n % PANEL_JOBS.length];
-  return Minigames["panel_" + kind](n, getTime);
-};
+const PANEL_JOBS = ["brush", "pebbles", "tilt"]; // one job per pair of panels
+Minigames.panelJob = function (k, getTime) { return Minigames["panel_" + PANEL_JOBS[k % 3]](k, getTime); };
+const pairName = (k) => `Panels ${k * 2 + 1} + ${k * 2 + 2}`;
+// two panels joined by a cable (gap in the middle)
+const PGAP = [144, 156];
+function drawPanelPair(g, x, y, w, h) {
+  const half = (w - (PGAP[1] - PGAP[0])) / 2;
+  drawPanelFace(g, x, y, half, h); drawPanelFace(g, x + w - half, y, half, h);
+  PX(g, x + half + 2, y + h / 2 - 2, PGAP[1] - PGAP[0] - 4, 4, "#15161f"); PX(g, x + half + 3, y + h / 2 - 5, 6, 10, "#5a6070");
+}
 function panelBackdrop(g, t, storm) {
   const sky = g.createLinearGradient(0, 0, 0, MH2); sky.addColorStop(0, "#7a3a20"); sky.addColorStop(1, "#c86a3a"); g.fillStyle = sky; g.fillRect(0, 0, MW2, MH2);
   g.fillStyle = `rgba(230,150,90,${0.25 + storm * 0.3})`; for (let k = 0; k < 40; k++) { const x = ((k * 97 + t * (90 + k * 4)) % (MW2 + 40)) - 20, y = (k * 53) % MH2; g.fillRect(Math.round(x), y, 6 + (k % 4) * 3, 1); }
@@ -203,14 +208,15 @@ function drawPanelFace(g, x, y, w, h) {
 }
 // ---------------------------------------------------------- 1) brush the dust
 Minigames.panel_brush = function (n, getTime) {
-  return canvasGame({ title: `Panel ${n + 1}: Brush the dust`, tag: "SOLAR PANEL", speaker: "diego", sub: "Hold and <b>move the brush</b> over the panel to sweep the dust away. Dust blocks sunlight, so a dusty panel makes less power.", hint: "Sweep, sweep, sweep! Dust is soft like flour." }, (api) => {
+  return canvasGame({ title: `${pairName(n)}: Brush the dust`, tag: "SOLAR PANEL", speaker: "diego", sub: "Hold and <b>move the brush</b> over the panel to sweep the dust away. Dust blocks sunlight, so a dusty panel makes less power.", hint: "Sweep, sweep, sweep! Dust is soft like flour." }, (api) => {
     const { g } = api; const PXW = 300, PXH = 150, ox = 90, oy = 52;
     const dust = mkCanvas(PXW, PXH), dg = dust.getContext("2d");
     for (let i = 0; i < 3500; i++) { dg.fillStyle = ["#b8743e", "#c8854a", "#a8642e", "#d89a5e"][i % 4]; dg.fillRect((Math.random() * PXW) | 0, (Math.random() * PXH) | 0, 3 + ((Math.random() * 4) | 0), 2 + ((Math.random() * 3) | 0)); }
     dg.fillStyle = "rgba(184,116,62,0.9)"; dg.fillRect(0, 0, PXW, PXH);
     for (let i = 0; i < 900; i++) { dg.fillStyle = Math.random() < 0.5 ? "#d89a5e" : "#9a5a2e"; dg.fillRect((Math.random() * PXW) | 0, (Math.random() * PXH) | 0, 2, 1); }
+    dg.clearRect(PGAP[0] - 3, 0, PGAP[1] - PGAP[0] + 6, PXH); // no dust over the cable gap
     const parts = new Pool(160); let lastP = null, pct = 0, checkT = 0, done = false;
-    const measure = () => { const d = dg.getImageData(0, 0, PXW, PXH).data; let clear = 0, tot = 0; for (let y = 2; y < PXH; y += 6) for (let x = 2; x < PXW; x += 6) { tot++; if (d[(y * PXW + x) * 4 + 3] < 60) clear++; } return clear / tot; };
+    const measure = () => { const d = dg.getImageData(0, 0, PXW, PXH).data; let clear = 0, tot = 0; for (let y = 2; y < PXH; y += 6) for (let x = 2; x < PXW; x += 6) { if (x >= PGAP[0] - 3 && x < PGAP[1] + 3) continue; tot++; if (d[(y * PXW + x) * 4 + 3] < 60) clear++; } return clear / tot; };
     api.frame = (dt, t) => {
       const pt = api.ptr;
       if (pt.down && pt.inside && !done) {
@@ -221,10 +227,10 @@ Minigames.panel_brush = function (n, getTime) {
         lastP = p;
       } else lastP = null;
       checkT -= dt; if (checkT <= 0) { checkT = 0.15; pct = measure(); }
-      if (!done && pct >= 0.9) { done = true; dg.clearRect(0, 0, PXW, PXH); Sound.play("success"); api.say("diego", "Shiny! The Sun can reach the cells again."); api.finish({ ok: true, delay: 900 }); }
+      if (!done && pct >= 0.9) { done = true; dg.clearRect(0, 0, PXW, PXH); Sound.play("success"); api.say("diego", "Shiny! Both panels can catch sunlight again."); api.finish({ ok: true, delay: 900 }); }
       parts.update(dt);
       panelBackdrop(g, t, G.storm || 0);
-      drawPanelFace(g, ox, oy, PXW, PXH); g.drawImage(dust, ox, oy);
+      drawPanelPair(g, ox, oy, PXW, PXH); g.drawImage(dust, ox, oy);
       if (done) { g.save(); g.globalCompositeOperation = "lighter"; g.fillStyle = `rgba(160,200,255,${0.3 + Math.sin(t * 10) * 0.1})`; g.fillRect(ox, oy, PXW, PXH); g.restore(); }
       parts.draw(g, t);
       // progress
@@ -238,10 +244,10 @@ Minigames.panel_brush = function (n, getTime) {
 };
 // ---------------------------------------------------------- 2) flick off the pebbles
 Minigames.panel_pebbles = function (n, getTime) {
-  return canvasGame({ title: `Panel ${n + 1}: Flick off the pebbles`, tag: "SOLAR PANEL", speaker: "diego", sub: "The wind blew sand and small rocks onto this panel. <b>Tap each pebble</b> to flick it off — watch out, the wind brings more!", hint: "Quick fingers, Commander!" }, (api) => {
+  return canvasGame({ title: `${pairName(n)}: Flick off the pebbles`, tag: "SOLAR PANEL", speaker: "diego", sub: "The wind blew sand and small rocks onto this panel. <b>Tap each pebble</b> to flick it off — watch out, the wind brings more!", hint: "Quick fingers, Commander!" }, (api) => {
     const { g } = api; const ox = 90, oy = 52, W = 300, H = 150;
-    const mk = () => ({ x: ox + 15 + Math.random() * (W - 30), y: oy + 15 + Math.random() * (H - 30), r: 5 + Math.random() * 4, fly: 0, vx: 0, vy: 0, rot: 0, ph: Math.random() * 7, c: ["#7a3a20", "#9a4c2a", "#6a3018"][(Math.random() * 3) | 0] });
-    const pebbles = Array.from({ length: 7 }, mk); let extra = 2, gust = 1.6, done = false;
+    const mk = () => ({ x: (() => { let x = 15 + Math.random() * (W - 30); if (x > PGAP[0] - 8 && x < PGAP[1] + 8) x += 24; return ox + x; })(), y: oy + 15 + Math.random() * (H - 30), r: 5 + Math.random() * 4, fly: 0, vx: 0, vy: 0, rot: 0, ph: Math.random() * 7, c: ["#7a3a20", "#9a4c2a", "#6a3018"][(Math.random() * 3) | 0] });
+    const pebbles = Array.from({ length: 8 }, mk); let extra = 2, gust = 1.6, done = false;
     api.onDown = (pt) => {
       if (done) return;
       const p = pebbles.find((p) => !p.fly && Math.hypot(pt.x - p.x, pt.y - p.y) < p.r + 9);
@@ -258,8 +264,8 @@ Minigames.panel_pebbles = function (n, getTime) {
       const left = pebbles.filter((p) => !p.fly).length;
       if (!done && left === 0 && extra === 0) { done = true; Sound.play("success"); api.say("diego", "All clear! Even small rocks cast shadows on the cells."); api.finish({ ok: true, delay: 900 }); }
       panelBackdrop(g, t, G.storm || 0);
-      drawPanelFace(g, ox, oy, W, H);
-      g.fillStyle = "rgba(184,116,62,0.25)"; g.fillRect(ox, oy, W, H);
+      drawPanelPair(g, ox, oy, W, H);
+      g.fillStyle = "rgba(184,116,62,0.25)"; g.fillRect(ox, oy, PGAP[0], H); g.fillRect(ox + PGAP[1], oy, W - PGAP[1], H);
       for (const p of pebbles) {
         if (p.fly > 1.2) continue;
         g.save(); g.translate(p.x, p.y + (p.fly ? 0 : Math.sin(t * 6 + p.ph) * 0.6)); g.rotate(p.rot);
@@ -276,8 +282,8 @@ Minigames.panel_pebbles = function (n, getTime) {
 };
 // ---------------------------------------------------------- 3) tilt toward the Sun
 Minigames.panel_tilt = function (n, getTime) {
-  return canvasGame({ title: `Panel ${n + 1}: Point it at the Sun`, tag: "SOLAR PANEL", speaker: "diego", sub: "The storm wind knocked this panel crooked. <b>Drag left/right</b> (or use the arrow keys) to tilt it so it faces the Sun. Hold it in the green zone!", hint: "Panels make the most power when they face the Sun straight on." }, (api) => {
-    const { g } = api; let ang = Math.random() < 0.5 ? -0.9 : 0.85, vel = 0, hold = 0, done = false, gustT = 1.2, gustF = 0, drag = null;
+  return canvasGame({ title: `${pairName(n)}: Point them at the Sun`, tag: "SOLAR PANEL", speaker: "diego", sub: "The storm wind knocked these two panels crooked. They share one frame. <b>Drag left/right</b> (or use the arrow keys) to tilt them so they face the Sun. Hold it in the green zone!", hint: "Panels make the most power when they face the Sun straight on." }, (api) => {
+    const { g } = api; let ang = Math.random() < 0.5 ? -0.85 : 0.8, vel = 0, hold = 0, done = false, gustT = 1.2, gustF = 0, drag = null;
     const sunA = -0.35; // the Sun's direction (radians from straight up)
     api.onDown = (pt) => { drag = { x: pt.x, a: ang }; };
     api.onUp = () => { drag = null; };
@@ -288,7 +294,7 @@ Minigames.panel_tilt = function (n, getTime) {
       if (drag && api.ptr.down) ang = drag.a + (api.ptr.x - drag.x) / 160;
       else { const k = (api.keys.ArrowLeft || api.keys.a ? -1 : 0) + (api.keys.ArrowRight || api.keys.d ? 1 : 0); vel += k * 3.2 * dt; }
       vel += gustF * dt * 1.2; vel *= Math.pow(0.08, dt); ang += vel * dt * 2; if (drag) { drag.a += gustF * dt * 0.5; }
-      ang = Math.max(-1.3, Math.min(1.3, ang));
+      ang = Math.max(-1.0, Math.min(1.0, ang));
       const diff = Math.abs(ang - sunA), power = Math.max(0, Math.cos(Math.min(Math.PI / 2, diff)));
       const inZone = diff < 0.17;
       if (!done) { hold = inZone ? hold + dt : Math.max(0, hold - dt * 0.8); if (hold >= 1.2) { done = true; Sound.play("success"); Sound.play("power"); api.say("diego", "Locked! Facing the Sun means the most power."); api.finish({ ok: true, delay: 900 }); } }
@@ -304,8 +310,9 @@ Minigames.panel_tilt = function (n, getTime) {
       PX(g, 0, 236, MW2, 34, "#9a4c2a"); PX(g, 0, 236, MW2, 2, "#b56236");
       PX(g, 236, 214, 8, 24, "#5a6070");
       g.save(); g.translate(240, 214); g.rotate(ang);
-      g.fillStyle = "#1b1d2b"; g.fillRect(-72, -10, 144, 12); g.fillStyle = "#2a4aa0"; g.fillRect(-70, -9, 140, 9); g.fillStyle = "#4a7ad0"; for (let k = -70; k < 70; k += 14) g.fillRect(k, -9, 1, 9);
-      g.fillStyle = `rgba(255,255,220,${power * 0.6})`; g.fillRect(-70, -9, 140, 2);
+      g.fillStyle = "#1b1d2b"; g.fillRect(-120, -10, 240, 12);
+      for (const sx of [-118, 6]) { g.fillStyle = "#2a4aa0"; g.fillRect(sx, -9, 112, 9); g.fillStyle = "#4a7ad0"; for (let k = sx; k < sx + 112; k += 14) g.fillRect(k, -9, 1, 9); g.fillStyle = `rgba(255,255,220,${power * 0.6})`; g.fillRect(sx, -9, 112, 2); }
+      g.fillStyle = "#5a6070"; g.fillRect(-4, -11, 8, 12);
       g.fillStyle = "#ffd34a"; g.fillRect(-2, -16, 4, 6); // normal pointer
       g.restore();
       // power meter
@@ -483,3 +490,103 @@ function drawSuitPart(g, k, t) {
   }
   g.fillStyle = "#cfd8ff"; g.font = "7px monospace"; g.textAlign = "center"; g.fillText(SUIT_PARTS.find((p) => p.k === k).name, 0, 21); g.textAlign = "left";
 }
+
+// =====================================================================
+//  RESTART ROSIE — reconnect the 4 cut wires (any order, match colours).
+//  Each wire brings one part of the oxygen machine back to life, and the
+//  machine view above shows what that part does (based on NASA's MOXIE).
+// =====================================================================
+const ROSIE_PARTS = [
+  { k: "power", name: "Power", c: "#ff4a4a", line: "Power on! Rosie gets her energy from our solar panels." },
+  { k: "fan", name: "Air pump", c: "#4a8aff", line: "The pump pulls Mars air inside. It is mostly carbon dioxide — CO₂." },
+  { k: "filter", name: "Dust filter", c: "#ffd040", line: "The filter catches the dust, so it can't break Rosie again." },
+  { k: "heat", name: "Heater", c: "#5dd06a", line: "The heater makes the air super hot — about 800 °C — so CO₂ can split apart." },
+];
+Minigames.wires = function ({ time, hints }) {
+  Sound.setMood("task");
+  const who = hints ? "marcus" : "diego";
+  return canvasGame({ title: "Restart Rosie", sub: "Dust cut Rosie's wires! <b>Drag each wire to the plug with the same colour</b> — any order. Watch what each part does.", hint: hints ? "Match the colours. I'll tell you what each part does." : "Match each wire to its colour. Quick, Commander!", speaker: who }, (api) => {
+    const { g } = api; api.cv.style.cursor = "grab";
+    const L = ROSIE_PARTS.map((p) => p).sort(() => Math.random() - 0.5), R = ROSIE_PARTS.map((p) => p).sort(() => Math.random() - 0.5);
+    const rowY = (i) => 140 + i * 32;
+    const ends = L.map((p, i) => ({ p, x: 40, y: rowY(i), done: false, tx: 40, ty: rowY(i) }));
+    const plugs = R.map((p, i) => ({ p, x: 398, y: rowY(i), on: 0 }));
+    const parts = new Pool(200), on = {};
+    let drag = null, tLeft = time || 0, ended = false, flowT = 0, wrong = 0, sparkT = 0;
+    api.state = { ends, plugs };
+    api.onDown = (pt) => { if (ended) return; const e = ends.find((e) => !e.done && Math.hypot(pt.x - e.tx, pt.y - e.ty) < 18); if (e) { drag = e; api.cv.style.cursor = "grabbing"; Sound.play("click"); } };
+    api.onUp = (pt) => {
+      api.cv.style.cursor = "grab"; if (!drag) return; const e = drag; drag = null;
+      const pl = plugs.find((q) => Math.hypot(pt.x - q.x, pt.y - q.y) < 26);
+      if (pl && pl.p === e.p) { e.done = true; e.tx = pl.x - 10; e.ty = pl.y; on[e.p.k] = 1; pl.on = 1; Sound.play("wire"); Sound.play("good"); for (let k = 0; k < 14; k++) parts.spawn({ x: pl.x - 10, y: pl.y, vx: (Math.random() - 0.5) * 120, vy: -40 - Math.random() * 80, life: 0.5, s: 2, c: "#fff6b0", g: 200 }); api.say(who, e.p.line); }
+      else if (pl) { Sound.play("zap"); sparkT = 0.3; wrong++; for (let k = 0; k < 10; k++) parts.spawn({ x: pl.x - 10, y: pl.y, vx: (Math.random() - 0.5) * 160, vy: (Math.random() - 0.5) * 160, life: 0.3, s: 2, c: "#7fd0ff", g: 0 }); if (time) { tLeft -= BALANCE.rosie.wrongPenalty; api.say(who, `Zap! Wrong colour. (−${BALANCE.rosie.wrongPenalty} seconds)`); } else api.say(who, "Zap! Match the same colour."); }
+    };
+    api.frame = (dt, t) => {
+      const pt = api.ptr;
+      if (drag) { drag.tx += (pt.x - drag.tx) * Math.min(1, dt * 25); drag.ty += (pt.y - drag.ty) * Math.min(1, dt * 25); }
+      for (const e of ends) if (!e.done && e !== drag) { e.tx += (e.x - e.tx) * Math.min(1, dt * 12); e.ty += (e.y - e.ty) * Math.min(1, dt * 12); }
+      const all = ends.every((e) => e.done);
+      if (time && !ended && !all) { tLeft -= dt; if (tLeft < 10 && ((tLeft * 10) | 0) % 10 === 0) Sound.play("heart"); if (tLeft <= 0) { ended = true; api.say(who, "Oxygen is too low!"); api.finish({ ok: false, delay: 400 }); } }
+      api.timer(time ? `⏱ ${Math.max(0, Math.ceil(tLeft))}` : "No timer");
+      if (all && !ended) { ended = true; flowT = 0.001; Sound.play("power"); Sound.play("success"); api.say(who, "CO₂ splits into oxygen (O₂) for us — the rest goes back outside. Just like NASA's MOXIE on Mars!"); api.finish({ ok: true, delay: 3200 }); }
+      if (flowT) flowT += dt;
+      parts.update(dt); sparkT = Math.max(0, sparkT - dt);
+      // ---------------- machine view
+      PX(g, 0, 0, MW2, MH2, "#161a2a");
+      PX(g, 0, 0, MW2, 112, "#1e2336"); PX(g, 0, 111, MW2, 2, "#3a4170");
+      // pipe
+      PX(g, 20, 52, 400, 14, "#3a4052"); PX(g, 20, 54, 400, 10, "#262b3c");
+      // inlet
+      PX(g, 6, 38, 22, 40, "#5a6070"); for (let y = 42; y < 76; y += 4) PX(g, 8, y, 18, 2, "#2a2e3c");
+      g.fillStyle = "#e8e0d0"; g.font = "7px monospace"; g.fillText("MARS AIR", 4, 34);
+      const box = (x, k, label) => {
+        const lit = on[k], col = ROSIE_PARTS.find((p) => p.k === k).c;
+        PX(g, x - 30, 30, 60, 58, lit ? "#3a4566" : "#262b3c"); PX(g, x - 30, 30, 60, 2, lit ? col : "#3a4052");
+        g.fillStyle = lit ? "#fff" : "#7a8098"; g.font = "8px monospace"; g.textAlign = "center"; g.fillText(label, x, 100); g.textAlign = "left";
+        return lit;
+      };
+      // fan
+      if (box(95, "fan", "AIR PUMP")) { g.save(); g.translate(95, 59); g.rotate(t * 14); for (let i = 0; i < 4; i++) { g.rotate(Math.PI / 2); g.fillStyle = "#9ad0ff"; g.fillRect(0, -3, 16, 6); } g.restore(); } else { g.save(); g.translate(95, 59); for (let i = 0; i < 4; i++) { g.rotate(Math.PI / 2); g.fillStyle = "#4a5068"; g.fillRect(0, -3, 16, 6); } g.restore(); }
+      // filter
+      const fl = box(185, "filter", "DUST FILTER"); for (let x = 165; x < 205; x += 4) PX(g, x, 38, 2, 42, fl ? "#ffd040" : "#4a5068");
+      // heater
+      const hl = box(275, "heat", "HEATER 800°C"); for (let i = 0; i < 4; i++) PX(g, 255 + i * 11, 40, 6, 38, hl ? `rgb(255,${110 + Math.sin(t * 6 + i) * 40},40)` : "#4a5068");
+      // tank
+      PX(g, 350, 24, 70, 70, "#2a3048"); PX(g, 352, 26, 66, 66, "#141826");
+      const lvl = Math.min(1, flowT / 2.6); PX(g, 352, 26 + 66 * (1 - lvl), 66, 66 * lvl, "rgba(120,200,255,0.55)");
+      g.fillStyle = "#cfe8ff"; g.font = "10px monospace"; g.textAlign = "center"; g.fillText("O₂", 385, 64); g.font = "8px monospace"; g.fillText("OXYGEN", 385, 104); g.textAlign = "left";
+      // power box
+      const pl = on.power; PX(g, 130, 4, 110, 16, pl ? "#4a2a2a" : "#2a2230"); g.fillStyle = pl ? "#ffb0a0" : "#7a6878"; g.font = "8px monospace"; g.fillText(pl ? "⚡ POWER ON" : "⚡ NO POWER", 142, 15);
+      if (pl) for (const x of [95, 185, 275]) PX(g, x - 1, 20, 2, 10, ((t * 8 + x) | 0) % 3 ? "#ff6a4a" : "#ffd040");
+      // molecules flowing once everything works
+      if (flowT) {
+        for (let i = 0; i < 9; i++) {
+          const u = ((flowT * 0.5 + i / 9) % 1), x = 20 + u * 330, y = 59 + Math.sin(u * 20 + i) * 2;
+          if (x < 275) { PX(g, x - 1, y - 1, 3, 3, "#1b1b1b"); PX(g, x - 5, y - 1, 3, 3, "#ff5a5a"); PX(g, x + 3, y - 1, 3, 3, "#ff5a5a"); } // CO₂
+          else { PX(g, x - 3, y - 1, 3, 3, "#ff5a5a"); PX(g, x + 1, y - 1, 3, 3, "#ff5a5a"); } // O₂
+        }
+        g.fillStyle = "#ffd34a"; g.font = "8px monospace"; g.fillText("CO₂ → O₂", 296, 22);
+      }
+      // ---------------- oxygen bar
+      if (time) { const k = Math.max(0, tLeft / time); PX(g, 60, 118, 360, 6, "#0b0d18"); PX(g, 61, 119, Math.round(358 * k), 4, k > 0.5 ? "#5fb7ff" : k > 0.25 ? "#ffd040" : ((t * 6) | 0) % 2 ? "#ff4a4a" : "#a02020"); g.fillStyle = "#cfd8ff"; g.font = "8px monospace"; g.fillText("O₂", 44, 125); }
+      // ---------------- wiring panel
+      PX(g, 14, 128, 452, 136, "#20263a"); PX(g, 14, 128, 452, 2, "#3a4170");
+      for (const q of plugs) {
+        PX(g, q.x - 6, q.y - 11, 26, 22, "#11141f"); PX(g, q.x - 4, q.y - 9, 22, 18, q.p.c); PX(g, q.x - 1, q.y - 4, 8, 8, q.on ? "#ffffff" : "#1b1d2b");
+        g.fillStyle = "#e8eeff"; g.font = "8px monospace"; g.fillText(q.p.name, q.x + 24, q.y + 3);
+        if (hints && drag && drag.p === q.p) { g.strokeStyle = `rgba(255,255,255,${0.5 + Math.sin(t * 10) * 0.4})`; g.lineWidth = 2; g.strokeRect(q.x - 8, q.y - 13, 30, 26); }
+      }
+      for (const e of ends) {
+        // wire: thick sagging curve from the stub to its end
+        const sx = 26, sy = e.y, ex = e.tx, ey = e.ty, sag = e.done ? 6 : 14 + Math.abs(ex - sx) * 0.05;
+        g.strokeStyle = "#0b0d18"; g.lineWidth = 9; g.lineCap = "round"; g.beginPath(); g.moveTo(sx, sy); g.bezierCurveTo(sx + (ex - sx) * 0.35, sy + sag, sx + (ex - sx) * 0.65, ey + sag, ex, ey); g.stroke();
+        g.strokeStyle = e.p.c; g.lineWidth = 6; g.stroke();
+        g.strokeStyle = "rgba(255,255,255,0.35)"; g.lineWidth = 1; g.beginPath(); g.moveTo(sx, sy - 2); g.bezierCurveTo(sx + (ex - sx) * 0.35, sy + sag - 2, sx + (ex - sx) * 0.65, ey + sag - 2, ex, ey - 2); g.stroke();
+        PX(g, 14, e.y - 8, 14, 16, "#3a4052");
+        if (!e.done) { PX(g, ex - 5, ey - 5, 10, 10, "#c8ccd8"); PX(g, ex + 4, ey - 2, 4, 1, "#ffd34a"); PX(g, ex + 4, ey + 1, 4, 1, "#ffd34a"); if (!drag && ((t * 2) | 0) % 2) { g.strokeStyle = "rgba(255,255,255,0.5)"; g.lineWidth = 1; g.strokeRect(ex - 7, ey - 7, 14, 14); } }
+      }
+      if (sparkT) { g.fillStyle = `rgba(120,200,255,${sparkT})`; g.fillRect(0, 128, MW2, 136); }
+      parts.draw(g, t); g.globalAlpha = 1;
+    };
+  }).then((r) => !!(r && r.ok));
+};

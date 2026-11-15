@@ -154,6 +154,10 @@ function drawProp1(g, p, t) {
       for (let i = 4; i < W; i += 8) R(i, 1, 1, H - 8, "#4a7ad0"); R(1, (H - 6) / 2, W - 2, 1, "#4a7ad0");
       if (d > 0) { g.fillStyle = `rgba(190,100,50,${0.25 + d * 0.7})`; g.fillRect(p.x + 1, p.y + 1, W - 2, H - 8); for (let i = 0; i < 10 * d; i++) R(2 + hash(n, i) * (W - 5), 2 + hash(i, n) * (H - 10), 2, 1, "#d98a55"); }
       else { R(3, 2, 6, 1, "rgba(255,255,255,0.7)"); glow(p.x + W / 2, p.y + 8, 20, "#80b0ff", 0.25); }
+      if (n % 2 === 0) { // cable to its partner panel (they are cleaned together)
+        const partner = G.panels ? G.panels[n + 1] : 1, both = d <= 0 && partner <= 0;
+        R(W, H - 5, 16, 2, "#15161f"); R(W + 4, H - 9, 8, 6, "#5a6070"); R(W + 6, H - 8, 4, 2, both ? "#5dff8a" : ((Date.now() / 400) | 0) % 2 ? "#ff5a40" : "#5a2020");
+      }
       if (p.state.progress) { R(0, -6, W, 3, "#222"); R(0, -6, W * p.state.progress, 3, "#5dff8a"); }
       break;
     }

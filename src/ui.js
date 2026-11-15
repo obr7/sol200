@@ -46,7 +46,8 @@ const UI = {
         if (i >= plain.length) finish(); else setTimeout(step, /[.,!?]/.test(plain[i - 1]) ? 90 : 24);
       };
       step();
-      const anim = () => { if (!wrap.isConnected) return; if (port) { const g = port.getContext("2d"); g.clearRect(0, 0, 42, 42); const tt = performance.now() / 1000; const talking = !done && (tt * 8 | 0) % 2 === 0; g.drawImage(portraitFor(who, tt % 3.5 < 0.13, talking, opts.mood || (opts.think ? 1 : 0)), 0, CHAR_STYLE === "team" && talking ? -1 : 0); } requestAnimationFrame(anim); };
+      const mood = inferMood(who, plain, opts);
+      const anim = () => { if (!wrap.isConnected) return; if (port) { const g = port.getContext("2d"); g.clearRect(0, 0, 42, 42); const tt = performance.now() / 1000; const talking = !done && (tt * 8 | 0) % 2 === 0; g.drawImage(moodPortrait(who, tt % 3.5 < 0.13, talking, mood), 0, CHAR_STYLE === "team" && talking ? -1 : 0); drawEmote(g, mood, tt); } requestAnimationFrame(anim); };
       anim();
       const advance = () => { if (!done) { finish(); return; } Sound.play("click"); wrap.remove(); this.active = null; resolve(); };
       wrap.onclick = (e) => { e.stopPropagation(); advance(); };

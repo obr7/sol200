@@ -44,8 +44,8 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes shake { 25% { transform: translateX(-52%); } 75% { transform: translateX(-48%); } }
 #prompt { position: absolute; transform: translate(-50%, -100%); background: var(--cream); color: var(--brown); border: .15em solid var(--brown); border-radius: .4em; padding: .2em .5em; font-size: .7em; font-weight: 700; white-space: nowrap; pointer-events: none; box-shadow: 0 .2em 0 rgba(0,0,0,.4); }
 #prompt kbd { background: var(--brown); color: var(--cream); border-radius: .25em; padding: 0 .3em; font-family: inherit; margin-right: .3em; }
-#toast { position: absolute; left: 50%; bottom: 26%; transform: translateX(-50%); background: rgba(14,16,30,.92); border: .15em solid var(--gold); padding: .4em .9em; border-radius: .5em; font-size: .8em; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; text-align: center; max-width: 70%; }
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(-.4em); }
+#toast { position: absolute; left: 1.2em; bottom: 9em; transform: none; background: rgba(14,16,30,.92); border: .15em solid var(--gold); padding: .4em .9em; border-radius: .5em; font-size: .8em; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; text-align: left; max-width: 40%; z-index: 5; }
+#toast.show { opacity: 1; transform: translateY(-.4em); }
 
 /* ---------- dialogue (Stardew-like) ---------- */
 #dialog { position: absolute; left: 3%; right: 3%; bottom: 3%; height: 30%; display: flex; gap: .6em; pointer-events: auto; animation: popIn .25s; }
@@ -148,7 +148,7 @@ button { font-family: inherit; cursor: pointer; }
 #title h1 { font-size: 4em; margin: 0; color: #ffd8a8; letter-spacing: .08em; text-shadow: 0 .08em 0 #8a3a1a, 0 .16em 0 #3a1a0a, 0 0 .6em rgba(255,120,60,.6); animation: titleFloat 4s ease-in-out infinite; }
 @keyframes titleFloat { 50% { transform: translateY(-.15em); } }
 #title h2 { margin: .2em 0 1.2em; font-size: 1em; letter-spacing: .3em; color: #cfd8ff; }
-#title .btn { font-size: 1.2em; margin: .3em; min-width: 9em; align-self: flex-start; height: auto; }
+#title .btn { font-size: 1.2em; margin: .3em; min-width: 9em; }
 #title small { position: absolute; bottom: .8em; font-size: .6em; opacity: .7; max-width: 90%; }
 #subs { position: absolute; left: 10%; right: 10%; bottom: 7%; text-align: center; font-size: 1.15em; text-shadow: 0 .1em 0 #000, 0 0 .4em #000; line-height: 1.35; pointer-events: none; }
 #subs .nm { color: var(--gold); font-size: .7em; letter-spacing: .2em; display: block; }
@@ -355,7 +355,7 @@ const BALANCE = {
   gardenCheck: { mission: +10 },
   d1A: { safety: -15, team: -10 },            // go outside
   d1B: { safety: +10, mission: -10 },         // stay inside
-  panels: { time: 70, tripAt: 10, good: 5, goodMission: +15, poorMission: +5 },
+  panels: { time: 65, tripAt: 10, good: 4, goodMission: +15, poorMission: +5 },
   // Extra outdoor radiation cost from REAL space weather (DONKI): quiet / M-class / X-class
   radiation: { quiet: 0, M: -3, X: -6 },
   power: { time: 30, units: 6 },
@@ -1296,6 +1296,112 @@ function portraitFor(id, blink, talk, mood) {
 }
 function charHeadOffset() { return CHAR_STYLE === "team" ? 46 : CHAR_STYLE === "v2" ? 43 : 34; }
 
+// ---- emotions.js ----
+// =====================================================================
+//  EMOTIONS — portraits show how the speaker feels.
+//  Moods: calm, happy, worried, scared, sad, angry, hurt.
+//  • Team portraits get their mouth + eyebrows redrawn per mood.
+//  • Every style gets a small animated emote (sweat drop, anger mark…).
+//  • The mood is picked from the line (or set explicitly with {mood}).
+// =====================================================================
+const MOODS = ["calm", "happy", "worried", "scared", "sad", "angry", "hurt"];
+// face landmarks in the 40x40 team portrait (drawn at +1,+1 in a 42 canvas)
+const TEAM_FACE = {
+  lead:   { skin: [20, 28], mouth: [18, 21, 31, 32], brow: [[12, 17], [23, 28]], by: 21, browC: "#7a5420", smile: false },
+  layla:  { skin: [20, 27], mouth: [16, 21, 29, 30], brow: [[13, 17], [23, 27]], by: 18, browC: "#4a2e22", smile: true },
+  marcus: { skin: [20, 27], mouth: [17, 24, 33, 33], brow: [[12, 17], [24, 29]], by: 18, browC: "#1e1612", smile: false },
+  diego:  { skin: [20, 29], mouth: null, under: [18, 25, 33], brow: [[12, 17], [23, 28]], by: 22, browC: "#1e1612", smile: false },
+};
+const _moodCache = {};
+function moodPortrait(id, blink, talk, mood) {
+  mood = MOODS.includes(mood) ? mood : mood === 1 ? "angry" : "calm";
+  if (!(CHAR_STYLE === "team" && TeamSheets[id] && TeamSheets[id].porCanvas && TEAM_FACE[id])) {
+    // code-drawn portraits: mood 1 = serious face (no smile); smile only when happy
+    return getPortrait(id, blink, talk, mood === "happy" ? 0 : 1);
+  }
+  const key = id + mood;
+  if (_moodCache[key]) return _moodCache[key];
+  const base = TeamSheets[id].porCanvas, F = TEAM_FACE[id];
+  const c = mkCanvas(42, 42), g = c.getContext("2d"); g.drawImage(base, 0, 0);
+  const px = g.getImageData(F.skin[0] + 1, F.skin[1] + 1, 1, 1).data, skin = `rgb(${px[0]},${px[1]},${px[2]})`;
+  const dark = "#2a1410", P = (x, y, w = 1, h = 1, col = dark) => { g.fillStyle = col; g.fillRect(x + 1, y + 1, w, h); };
+  // ---- mouth
+  const shape = { calm: "flat", happy: "smile", worried: "wavy", scared: "open", sad: "frown", angry: "frown", hurt: "teeth" }[mood];
+  if (F.mouth && !(shape === "smile" && F.smile)) {
+    const [x0, x1, y0, y1] = F.mouth, cx = Math.round((x0 + x1) / 2), y = y0;
+    P(x0 - 1, y0 - 1, x1 - x0 + 3, y1 - y0 + 3, skin);
+    const w = Math.max(3, x1 - x0 - 1), L = cx - (w >> 1);
+    if (shape === "flat") P(L, y, w, 1);
+    else if (shape === "smile") { P(L + 1, y + 1, w - 2, 1); P(L, y, 1, 1); P(L + w - 1, y, 1, 1); }
+    else if (shape === "frown") { P(L + 1, y, w - 2, 1); P(L, y + 1, 1, 1); P(L + w - 1, y + 1, 1, 1); }
+    else if (shape === "wavy") { for (let i = 0; i < w; i++) P(L + i, y + (i % 2), 1, 1); }
+    else if (shape === "open") { P(cx - 1, y - 1, 3, 1); P(cx - 2, y, 1, 2); P(cx + 2, y, 1, 2); P(cx - 1, y + 2, 3, 1); P(cx - 1, y, 3, 2, "#5a1a1a"); }
+    else if (shape === "teeth") { P(L, y - 1, w, 3); P(L + 1, y, w - 2, 1, "#f0ece4"); }
+  } else if (F.under && (shape === "open" || shape === "teeth" || shape === "frown")) {
+    const [x0, x1, y] = F.under, cx = Math.round((x0 + x1) / 2);
+    if (shape === "open") { P(cx - 1, y, 3, 2, "#5a1a1a"); }
+    else if (shape === "teeth") { P(cx - 2, y, 5, 1, "#f0ece4"); }
+  }
+  // ---- eyebrows: angry = inner ends down, worried/sad/scared/hurt = inner ends up
+  const tilt = mood === "angry" ? 1 : ["worried", "sad", "scared", "hurt"].includes(mood) ? -1 : 0;
+  if (tilt) {
+    F.brow.forEach(([a, b], side) => {
+      const n = b - a;
+      for (let i = 0; i <= n; i++) {
+        const k = side === 0 ? i / n : 1 - i / n; // 0 = outer, 1 = inner
+        const yy = Math.round(F.by - 1 + tilt * (k * 2 - 1));
+        P(a + i, yy, 1, 1, F.browC); P(a + i, yy - 1, 1, 1, F.browC);
+      }
+    });
+  }
+  return (_moodCache[key] = c);
+}
+// small animated emote drawn over a 42x42 portrait
+function drawEmote(g, mood, t) {
+  const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); };
+  if (mood === "worried" || mood === "scared" || mood === "hurt") {
+    const y = 6 + ((t * 9) % 8);
+    P(34, y, 2, 1, "#bfe8ff"); P(33, y + 1, 4, 3, "#6fc4ff"); P(34, y + 4, 2, 1, "#6fc4ff"); P(34, y + 1, 1, 1, "#ffffff");
+  }
+  if (mood === "scared" || mood === "sad") {
+    g.fillStyle = `rgba(80,110,200,${mood === "sad" ? 0.35 : 0.45})`;
+    for (let i = 0; i < 4; i++) g.fillRect(13 + i * 4, 7, 1, 5 + (i % 2) * 2);
+  }
+  if (mood === "angry") {
+    const c = ((t * 4) | 0) % 2 ? "#ff3a3a" : "#ff7a5a";
+    for (const [x, y, dx, dy] of [[31, 6, 1, -1], [36, 6, -1, -1], [31, 9, 1, 1], [36, 9, -1, 1]]) { P(x, y, 2, 1, c); P(x + (dx > 0 ? 1 : 0), y + dy, 1, 1, c); }
+  }
+  if (mood === "hurt") { const on = ((t * 5) | 0) % 2; P(6, 8, 1, 1, on ? "#ffd34a" : "#fff"); P(5, 9, 3, 1, "#ffd34a"); P(6, 10, 1, 1, "#ffd34a"); }
+  if (mood === "happy") { const on = ((t * 3) | 0) % 2; if (on) { P(34, 6, 1, 3, "#fff6b0"); P(33, 7, 3, 1, "#fff6b0"); } }
+}
+// hand-picked moods for story lines (matched by a piece of the text)
+const MOOD_LINES = [
+  ["Earth is waiting for good news", "calm"], ["Everything okay?", "calm"], ["But look at this screen", "worried"], ["It's just dust. Relax", "happy"],
+  ["Meet Rosie, our oxygen machine", "happy"], ["soft like flour", "calm"], ["You two, again?", "happy"], ["The first leaves are here", "happy"],
+  ["some plants look sick", "worried"], ["I named this one Hope", "happy"], ["Control room, now!", "scared"], ["The storm changed direction", "scared"],
+  ["Dust is covering the solar panels", "worried"], ["time is running out", "worried"], ["the garden heaters stop", "worried"], ["Are you okay?", "scared"],
+  ["Good call. Come to the power panel", "calm"], ["why do I feel like I lost", "sad"], ["Enough, if we start now", "worried"], ["Listen carefully", "calm"],
+  ["I'll be in my room if you need me", "sad"], ["waiting for you to ask", "sad"], ["You never asked me for anything", "calm"], ["I should have. In training too", "sad"],
+  ["The danger is over", "calm"], ["we worked as one team", "happy"], ["It shouldn't be the last", "happy"], ["Wake me up when everyone makes peace", "sad"],
+  ["A message from Earth", "worried"], ["Hope has a new leaf. Bravest", "happy"], ["No time! I'll do it myself", "angry"], ["We only have 6 units", "worried"],
+  ["Pressure holds at", "happy"], ["Last step: the leak check", "calm"], ["We passed by luck", "angry"], ["Training is over", "calm"],
+];
+// pick a mood from the words in the line
+function inferMood(who, text, opts = {}) {
+  if (typeof opts.mood === "string") return opts.mood;
+  { const s0 = String(text || ""); if (s0.trim() === "..." || s0.trim() === "I...") return "worried"; for (const [k, m] of MOOD_LINES) if (s0.includes(k)) return m; }
+  if (opts.mood === 1) return "angry";
+  const s = String(text || "");
+  if (opts.think) return /did it|right choice|shouldn't be the last/i.test(s) ? "calm" : "worried";
+  if (/\bow\b|hurts|my hand|glove is torn|can't work fast/i.test(s)) return "hurt";
+  if (/alarm|oxygen (is )?(dropping|running)|emergency|back inside|storm is on top|stopped!|ran low|stopped\b/i.test(s)) return "scared";
+  if (/we lost|months of work|nobody is talking|paid for it|sorry|i feel like i lost/i.test(s)) return "sad";
+  if (/on you|luck won't|got lucky|like he's the commander|fine\. but/i.test(s)) return "angry";
+  if (/careful|too much|too close|hurry|faster|barely|not yet|oh no|danger|storm|how much time|don't know|i can't|try again|watch out|wrong|too hot|easy,/i.test(s)) return "worried";
+  if (/great|yes!|we did it|working|new leaf|bravest|shiny|perfect|all clear|well done|nice|healthy|welcome|that's the team|i can hear rosie|locked|sealed|done!|good job|hooray|wow|beautiful|amazing|happy/i.test(s)) return "happy";
+  return G.alarm || (G.storm || 0) > 0.5 ? "worried" : "calm";
+}
+
 // ---- world.js ----
 // =====================================================================
 //  WORLD — the Mars base map (Among-Us style rooms + corridors),
@@ -1376,11 +1482,11 @@ const PROPS = [
   { id: "hatch", type: "hatch", tx: 53, ty: 8, w: 1, h: 2, solid: false, label: "Outer Hatch" },
   // outside panels
   { id: "panel0", type: "panel", tx: 59, ty: 4, w: 3, h: 2, n: 0 },
-  { id: "panel1", type: "panel", tx: 65, ty: 4, w: 3, h: 2, n: 1 },
-  { id: "panel2", type: "panel", tx: 71, ty: 4, w: 3, h: 2, n: 2 },
-  { id: "panel3", type: "panel", tx: 59, ty: 13, w: 3, h: 2, n: 3 },
-  { id: "panel4", type: "panel", tx: 65, ty: 13, w: 3, h: 2, n: 4 },
-  { id: "panel5", type: "panel", tx: 71, ty: 13, w: 3, h: 2, n: 5 },
+  { id: "panel1", type: "panel", tx: 63, ty: 4, w: 3, h: 2, n: 1 },
+  { id: "panel2", type: "panel", tx: 69, ty: 4, w: 3, h: 2, n: 2 },
+  { id: "panel3", type: "panel", tx: 73, ty: 4, w: 3, h: 2, n: 3 },
+  { id: "panel4", type: "panel", tx: 61, ty: 13, w: 3, h: 2, n: 4 },
+  { id: "panel5", type: "panel", tx: 65, ty: 13, w: 3, h: 2, n: 5 },
   { id: "rock1", type: "rock", tx: 63, ty: 9, w: 1, h: 1 }, { id: "rock2", type: "rock", tx: 76, ty: 10, w: 1, h: 1 }, { id: "rock3", type: "rock", tx: 57, ty: 18, w: 2, h: 1 },
   { id: "rock4", type: "rock", tx: 69, ty: 19, w: 1, h: 1 }, { id: "rock5", type: "rock", tx: 75, ty: 2, w: 1, h: 1 },
 ];
@@ -1671,6 +1777,10 @@ function drawProp1(g, p, t) {
       for (let i = 4; i < W; i += 8) R(i, 1, 1, H - 8, "#4a7ad0"); R(1, (H - 6) / 2, W - 2, 1, "#4a7ad0");
       if (d > 0) { g.fillStyle = `rgba(190,100,50,${0.25 + d * 0.7})`; g.fillRect(p.x + 1, p.y + 1, W - 2, H - 8); for (let i = 0; i < 10 * d; i++) R(2 + hash(n, i) * (W - 5), 2 + hash(i, n) * (H - 10), 2, 1, "#d98a55"); }
       else { R(3, 2, 6, 1, "rgba(255,255,255,0.7)"); glow(p.x + W / 2, p.y + 8, 20, "#80b0ff", 0.25); }
+      if (n % 2 === 0) { // cable to its partner panel (they are cleaned together)
+        const partner = G.panels ? G.panels[n + 1] : 1, both = d <= 0 && partner <= 0;
+        R(W, H - 5, 16, 2, "#15161f"); R(W + 4, H - 9, 8, 6, "#5a6070"); R(W + 6, H - 8, 4, 2, both ? "#5dff8a" : ((Date.now() / 400) | 0) % 2 ? "#ff5a40" : "#5a2020");
+      }
       if (p.state.progress) { R(0, -6, W, 3, "#222"); R(0, -6, W * p.state.progress, 3, "#5dff8a"); }
       break;
     }
@@ -2039,7 +2149,8 @@ const UI = {
         if (i >= plain.length) finish(); else setTimeout(step, /[.,!?]/.test(plain[i - 1]) ? 90 : 24);
       };
       step();
-      const anim = () => { if (!wrap.isConnected) return; if (port) { const g = port.getContext("2d"); g.clearRect(0, 0, 42, 42); const tt = performance.now() / 1000; const talking = !done && (tt * 8 | 0) % 2 === 0; g.drawImage(portraitFor(who, tt % 3.5 < 0.13, talking, opts.mood || (opts.think ? 1 : 0)), 0, CHAR_STYLE === "team" && talking ? -1 : 0); } requestAnimationFrame(anim); };
+      const mood = inferMood(who, plain, opts);
+      const anim = () => { if (!wrap.isConnected) return; if (port) { const g = port.getContext("2d"); g.clearRect(0, 0, 42, 42); const tt = performance.now() / 1000; const talking = !done && (tt * 8 | 0) % 2 === 0; g.drawImage(moodPortrait(who, tt % 3.5 < 0.13, talking, mood), 0, CHAR_STYLE === "team" && talking ? -1 : 0); drawEmote(g, mood, tt); } requestAnimationFrame(anim); };
       anim();
       const advance = () => { if (!done) { finish(); return; } Sound.play("click"); wrap.remove(); this.active = null; resolve(); };
       wrap.onclick = (e) => { e.stopPropagation(); advance(); };
@@ -2556,7 +2667,7 @@ function meter(changes, reason) {
 // =====================================================================
 const STORY = {
   chapterTitle: "Chapter One: The Commander",
-  nextChapter: "Chapter Two: Marcus — Coming Soon",
+  nextChapter: "Chapter Two: Damon — Coming Soon",
   meters: {
     safety: { label: "SAFETY", icon: "🛡️", color: "#4fa8ff", help: "Is the crew okay?" },
     mission: { label: "MISSION", icon: "🌱", color: "#5dd06a", help: "Are we growing the first food on Mars?" },
@@ -2905,8 +3016,8 @@ const Story = {
 //  MINI-GAMES — Garden Check, Clean the Panels, Share the Power,
 //  Restart Rosie, and the flip cards.
 // =====================================================================
-function miniPortrait(id) { const c = mkCanvas(42, 42); c.getContext("2d").drawImage(portraitFor(id, false, false), 0, 0); c.style.background = shade(CHAR_SPECS[id].stripe, 0.4); c.style.borderRadius = ".3em"; return c; }
-function mgSay(box, id, text) { box.innerHTML = ""; box.appendChild(miniPortrait(id)); box.appendChild(el("span", "", fill(text))); box.animate([{ transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 250 }); }
+function miniPortrait(id, mood = "calm") { const c = mkCanvas(42, 42); const g = c.getContext("2d"); g.drawImage(moodPortrait(id, false, false, mood), 0, 0); drawEmote(g, mood, 0.1); c.style.background = shade(CHAR_SPECS[id].stripe, 0.4); c.style.borderRadius = ".3em"; return c; }
+function mgSay(box, id, text) { box.innerHTML = ""; box.appendChild(miniPortrait(id, inferMood(id, text))); box.appendChild(el("span", "", fill(text))); box.animate([{ transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 250 }); }
 
 const Minigames = {
   // ------------------------------------------------------------ flip cards
@@ -2968,17 +3079,17 @@ const Minigames = {
       let time = B.time, cleaned = 0, tripped = false;
       G.panels = [0.9, 0.9, 0.9, 0.9, 0.9, 0.9];
       UI.objective(`Clean the solar panels! Walk to a panel and press ${document.body.classList.contains("touch") ? "A" : "Space"}`);
-      UI.toast(`☀️ Clean as many panels as you can — <b>${B.time - B.tripAt} seconds!</b> Each panel has a different job.`, 3500);
+      UI.toast(`☀️ Clean as many panels as you can — <b>${B.time - B.tripAt} seconds!</b> Panels are joined in pairs — one job cleans two!`, 3500);
       const ids = [];
-      for (let n = 0; n < 6; n++) {
-        const p = propById["panel" + n]; const id = "scrub" + n; ids.push(id);
-        const job = PANEL_JOBS[n % PANEL_JOBS.length];
-        Game.addInteract({ id, x: p.x + p.pw / 2, y: p.y + p.ph + 8, r: 30, label: job === "brush" ? "Brush" : job === "pebbles" ? "Clear rocks" : "Tilt", name: `Panel ${n + 1}`, marker: () => "!", use: async () => {
-          if (tripped || G.panels[n] === 0) return;
-          const res = await Minigames.panelJob(n, () => Math.max(0, time - B.tripAt));
+      for (let k = 0; k < 3; k++) {
+        const a = propById["panel" + k * 2], b = propById["panel" + (k * 2 + 1)]; const id = "scrub" + k; ids.push(id);
+        const job = PANEL_JOBS[k];
+        Game.addInteract({ id, x: (a.x + b.x + b.pw) / 2, y: a.y + a.ph + 8, r: 34, label: job === "brush" ? "Brush" : job === "pebbles" ? "Clear rocks" : "Tilt", name: `Panels ${k * 2 + 1} + ${k * 2 + 2}`, marker: () => "!", use: async () => {
+          if (tripped || G.panels[k * 2] === 0) return;
+          const res = await Minigames.panelJob(k, () => Math.max(0, time - B.tripAt));
           if (res && res.ok && !tripped) {
-            G.panels[n] = 0; cleaned++; Sound.play("good"); Particles.sparkle(p.x + 24, p.y + 8); Game.removeInteract(id);
-            UI.toast(`✨ Panel ${n + 1} done! ${cleaned}/6`);
+            G.panels[k * 2] = 0; G.panels[k * 2 + 1] = 0; cleaned += 2; Sound.play("good"); Particles.sparkle(a.x + 24, a.y + 8); Particles.sparkle(b.x + 24, b.y + 8); Game.removeInteract(id);
+            UI.toast(`✨ Panels ${k * 2 + 1} + ${k * 2 + 2} clean! ${cleaned}/6`);
             if (cleaned === 6) time = Math.min(time, B.tripAt + 0.01);
           }
         } });
@@ -3063,63 +3174,7 @@ const Minigames = {
   },
 
   // ------------------------------------------------------------ restart rosie (wires)
-  wires({ time, hints }) {
-    Sound.setMood("task");
-    const W = [
-      { c: "#ff4a4a", n: "Power", i: "⚡", hint: "Red first: power. Without it, nothing works." },
-      { c: "#4a8aff", n: "Fan", i: "🌀", hint: "Blue second: the fan pulls Mars air inside." },
-      { c: "#ffd040", n: "Filter", i: "🧹", hint: "Yellow third: the filter keeps the dust out." },
-      { c: "#5dd06a", n: "Start", i: "▶️", hint: "And green last: start!" },
-    ];
-    return new Promise((resolve) => {
-      const leftOrder = [0, 1, 2, 3].sort(() => Math.random() - 0.5), rightOrder = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
-      let next = 0, tLeft = time, ended = false, iv;
-      const html = `<div class="head"><div><h3>MINI-TASK</h3><h1>Restart Rosie</h1></div><div class="tmr">${time ? `⏱ <span class="t">${time}</span>` : "No timer — take your time"}</div></div>
-        <div style="font-size:.75em">🫧 Oxygen</div><div class="o2bar"><div style="width:100%"></div></div>
-        <p style="font-size:.8em;margin:.3em 0">Drag each wire to the plug with the same color. The ORDER matters!</p>
-        <div class="wires"><svg></svg></div><div class="say"></div>`;
-      UI.card(html, [], {
-        cls: "mg", onMount: (c, done) => {
-          const box = c.querySelector(".wires"), svg = c.querySelector("svg"), say = c.querySelector(".say"), o2 = c.querySelector(".o2bar div"), tEl = c.querySelector(".t");
-          const showHint = () => { if (hints && next < 4) mgSay(say, "marcus", W[next].hint); else if (!hints) mgSay(say, "diego", next === 0 ? "I don't know the right order... think about it, Commander!" : "Keep going!"); };
-          showHint();
-          const L = [], Rr = [];
-          leftOrder.forEach((wi, row) => { const e = el("div", "wend", "●"); e.style.left = "4%"; e.style.top = (14 + row * 24) + "%"; e.style.background = W[wi].c; box.appendChild(e); L[wi] = e; e.dataset.w = wi; });
-          rightOrder.forEach((wi, row) => { const e = el("div", "wend right", W[wi].i); e.style.right = "4%"; e.style.top = (14 + row * 24) + "%"; e.style.background = W[wi].c; e.title = W[wi].n; box.appendChild(e); Rr[wi] = e; e.insertAdjacentHTML("beforeend", `<span style="position:absolute;right:110%;font-size:.65em;color:#fff;white-space:nowrap">${W[wi].n}</span>`); });
-          const center = (e) => { const b = box.getBoundingClientRect(), r = e.getBoundingClientRect(); return { x: r.left - b.left + r.width / 2, y: r.top - b.top + r.height / 2 }; };
-          const line = (a, b, col, id) => { let p = svg.querySelector("#" + id); if (!p) { p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.id = id; svg.appendChild(p); } const mx = (a.x + b.x) / 2; p.setAttribute("d", `M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x},${b.y}`); p.setAttribute("stroke", col); p.setAttribute("stroke-width", 10); p.setAttribute("fill", "none"); p.setAttribute("stroke-linecap", "round"); return p; };
-          let drag = null;
-          box.addEventListener("pointerdown", (e) => {
-            const t = e.target.closest(".wend:not(.right)"); if (!t || ended) return;
-            const wi = +t.dataset.w; if (t.dataset.done) return;
-            drag = { wi, start: center(t) }; try { box.setPointerCapture(e.pointerId); } catch (er) {} Sound.play("click");
-          });
-          box.addEventListener("pointermove", (e) => { if (!drag) return; const b = box.getBoundingClientRect(); line(drag.start, { x: e.clientX - b.left, y: e.clientY - b.top }, W[drag.wi].c, "drag"); });
-          const up = (e) => {
-            if (!drag) return; const d = drag; drag = null; const dl = svg.querySelector("#drag"); if (dl) dl.remove();
-            const b = box.getBoundingClientRect(); const pt = { x: e.clientX - b.left, y: e.clientY - b.top };
-            let hit = null; for (let i = 0; i < 4; i++) { const cc = center(Rr[i]); if (Math.hypot(cc.x - pt.x, cc.y - pt.y) < 40) hit = i; }
-            if (hit === null) return;
-            if (hit === d.wi && d.wi === next) {
-              line(d.start, center(Rr[hit]), W[d.wi].c, "w" + d.wi); L[d.wi].dataset.done = 1; L[d.wi].style.opacity = 0.6; Sound.play("wire"); next++;
-              if (next >= 4) { ended = true; clearInterval(iv); Sound.play("success"); mgSay(say, "diego", "I can hear Rosie! She's working!"); setTimeout(() => { done("ok"); Sound.setMood("tension"); resolve(true); }, 1600); return; }
-              showHint();
-            } else {
-              Sound.play("zap"); box.animate([{ transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "none" }], { duration: 200 });
-              if (time) { tLeft -= BALANCE.rosie.wrongPenalty; mgSay(say, hints ? "marcus" : "diego", hit !== d.wi ? "Wrong plug! Match the colors. (−5 seconds)" : "Wrong order! The wire jumped back. (−5 seconds)"); }
-              else mgSay(say, "marcus", hit !== d.wi ? "Match the colors." : "Not yet — " + W[next].hint);
-            }
-          };
-          box.addEventListener("pointerup", up); box.addEventListener("pointercancel", () => { drag = null; const dl = svg.querySelector("#drag"); if (dl) dl.remove(); });
-          if (time) iv = setInterval(() => {
-            tLeft -= 0.1; if (tEl) tEl.textContent = Math.max(0, Math.ceil(tLeft)); o2.style.width = Math.max(0, tLeft / time * 100) + "%";
-            if (tLeft < 10 && ((tLeft * 10) | 0) % 10 === 0) Sound.play("heart");
-            if (tLeft <= 0 && !ended) { ended = true; clearInterval(iv); done("x"); resolve(false); }
-          }, 100);
-        },
-      });
-    });
-  },
+
 };
 
 // ---- minigames2.js ----
@@ -3312,11 +3367,16 @@ function drawTool(g, k, x, y, t, active) {
 // =====================================================================
 //  SOLAR PANELS — 3 kinds of job
 // =====================================================================
-const PANEL_JOBS = ["brush", "pebbles", "tilt", "brush", "tilt", "pebbles"];
-Minigames.panelJob = function (n, getTime) {
-  const kind = PANEL_JOBS[n % PANEL_JOBS.length];
-  return Minigames["panel_" + kind](n, getTime);
-};
+const PANEL_JOBS = ["brush", "pebbles", "tilt"]; // one job per pair of panels
+Minigames.panelJob = function (k, getTime) { return Minigames["panel_" + PANEL_JOBS[k % 3]](k, getTime); };
+const pairName = (k) => `Panels ${k * 2 + 1} + ${k * 2 + 2}`;
+// two panels joined by a cable (gap in the middle)
+const PGAP = [144, 156];
+function drawPanelPair(g, x, y, w, h) {
+  const half = (w - (PGAP[1] - PGAP[0])) / 2;
+  drawPanelFace(g, x, y, half, h); drawPanelFace(g, x + w - half, y, half, h);
+  PX(g, x + half + 2, y + h / 2 - 2, PGAP[1] - PGAP[0] - 4, 4, "#15161f"); PX(g, x + half + 3, y + h / 2 - 5, 6, 10, "#5a6070");
+}
 function panelBackdrop(g, t, storm) {
   const sky = g.createLinearGradient(0, 0, 0, MH2); sky.addColorStop(0, "#7a3a20"); sky.addColorStop(1, "#c86a3a"); g.fillStyle = sky; g.fillRect(0, 0, MW2, MH2);
   g.fillStyle = `rgba(230,150,90,${0.25 + storm * 0.3})`; for (let k = 0; k < 40; k++) { const x = ((k * 97 + t * (90 + k * 4)) % (MW2 + 40)) - 20, y = (k * 53) % MH2; g.fillRect(Math.round(x), y, 6 + (k % 4) * 3, 1); }
@@ -3328,14 +3388,15 @@ function drawPanelFace(g, x, y, w, h) {
 }
 // ---------------------------------------------------------- 1) brush the dust
 Minigames.panel_brush = function (n, getTime) {
-  return canvasGame({ title: `Panel ${n + 1}: Brush the dust`, tag: "SOLAR PANEL", speaker: "diego", sub: "Hold and <b>move the brush</b> over the panel to sweep the dust away. Dust blocks sunlight, so a dusty panel makes less power.", hint: "Sweep, sweep, sweep! Dust is soft like flour." }, (api) => {
+  return canvasGame({ title: `${pairName(n)}: Brush the dust`, tag: "SOLAR PANEL", speaker: "diego", sub: "Hold and <b>move the brush</b> over the panel to sweep the dust away. Dust blocks sunlight, so a dusty panel makes less power.", hint: "Sweep, sweep, sweep! Dust is soft like flour." }, (api) => {
     const { g } = api; const PXW = 300, PXH = 150, ox = 90, oy = 52;
     const dust = mkCanvas(PXW, PXH), dg = dust.getContext("2d");
     for (let i = 0; i < 3500; i++) { dg.fillStyle = ["#b8743e", "#c8854a", "#a8642e", "#d89a5e"][i % 4]; dg.fillRect((Math.random() * PXW) | 0, (Math.random() * PXH) | 0, 3 + ((Math.random() * 4) | 0), 2 + ((Math.random() * 3) | 0)); }
     dg.fillStyle = "rgba(184,116,62,0.9)"; dg.fillRect(0, 0, PXW, PXH);
     for (let i = 0; i < 900; i++) { dg.fillStyle = Math.random() < 0.5 ? "#d89a5e" : "#9a5a2e"; dg.fillRect((Math.random() * PXW) | 0, (Math.random() * PXH) | 0, 2, 1); }
+    dg.clearRect(PGAP[0] - 3, 0, PGAP[1] - PGAP[0] + 6, PXH); // no dust over the cable gap
     const parts = new Pool(160); let lastP = null, pct = 0, checkT = 0, done = false;
-    const measure = () => { const d = dg.getImageData(0, 0, PXW, PXH).data; let clear = 0, tot = 0; for (let y = 2; y < PXH; y += 6) for (let x = 2; x < PXW; x += 6) { tot++; if (d[(y * PXW + x) * 4 + 3] < 60) clear++; } return clear / tot; };
+    const measure = () => { const d = dg.getImageData(0, 0, PXW, PXH).data; let clear = 0, tot = 0; for (let y = 2; y < PXH; y += 6) for (let x = 2; x < PXW; x += 6) { if (x >= PGAP[0] - 3 && x < PGAP[1] + 3) continue; tot++; if (d[(y * PXW + x) * 4 + 3] < 60) clear++; } return clear / tot; };
     api.frame = (dt, t) => {
       const pt = api.ptr;
       if (pt.down && pt.inside && !done) {
@@ -3346,10 +3407,10 @@ Minigames.panel_brush = function (n, getTime) {
         lastP = p;
       } else lastP = null;
       checkT -= dt; if (checkT <= 0) { checkT = 0.15; pct = measure(); }
-      if (!done && pct >= 0.9) { done = true; dg.clearRect(0, 0, PXW, PXH); Sound.play("success"); api.say("diego", "Shiny! The Sun can reach the cells again."); api.finish({ ok: true, delay: 900 }); }
+      if (!done && pct >= 0.9) { done = true; dg.clearRect(0, 0, PXW, PXH); Sound.play("success"); api.say("diego", "Shiny! Both panels can catch sunlight again."); api.finish({ ok: true, delay: 900 }); }
       parts.update(dt);
       panelBackdrop(g, t, G.storm || 0);
-      drawPanelFace(g, ox, oy, PXW, PXH); g.drawImage(dust, ox, oy);
+      drawPanelPair(g, ox, oy, PXW, PXH); g.drawImage(dust, ox, oy);
       if (done) { g.save(); g.globalCompositeOperation = "lighter"; g.fillStyle = `rgba(160,200,255,${0.3 + Math.sin(t * 10) * 0.1})`; g.fillRect(ox, oy, PXW, PXH); g.restore(); }
       parts.draw(g, t);
       // progress
@@ -3363,10 +3424,10 @@ Minigames.panel_brush = function (n, getTime) {
 };
 // ---------------------------------------------------------- 2) flick off the pebbles
 Minigames.panel_pebbles = function (n, getTime) {
-  return canvasGame({ title: `Panel ${n + 1}: Flick off the pebbles`, tag: "SOLAR PANEL", speaker: "diego", sub: "The wind blew sand and small rocks onto this panel. <b>Tap each pebble</b> to flick it off — watch out, the wind brings more!", hint: "Quick fingers, Commander!" }, (api) => {
+  return canvasGame({ title: `${pairName(n)}: Flick off the pebbles`, tag: "SOLAR PANEL", speaker: "diego", sub: "The wind blew sand and small rocks onto this panel. <b>Tap each pebble</b> to flick it off — watch out, the wind brings more!", hint: "Quick fingers, Commander!" }, (api) => {
     const { g } = api; const ox = 90, oy = 52, W = 300, H = 150;
-    const mk = () => ({ x: ox + 15 + Math.random() * (W - 30), y: oy + 15 + Math.random() * (H - 30), r: 5 + Math.random() * 4, fly: 0, vx: 0, vy: 0, rot: 0, ph: Math.random() * 7, c: ["#7a3a20", "#9a4c2a", "#6a3018"][(Math.random() * 3) | 0] });
-    const pebbles = Array.from({ length: 7 }, mk); let extra = 2, gust = 1.6, done = false;
+    const mk = () => ({ x: (() => { let x = 15 + Math.random() * (W - 30); if (x > PGAP[0] - 8 && x < PGAP[1] + 8) x += 24; return ox + x; })(), y: oy + 15 + Math.random() * (H - 30), r: 5 + Math.random() * 4, fly: 0, vx: 0, vy: 0, rot: 0, ph: Math.random() * 7, c: ["#7a3a20", "#9a4c2a", "#6a3018"][(Math.random() * 3) | 0] });
+    const pebbles = Array.from({ length: 8 }, mk); let extra = 2, gust = 1.6, done = false;
     api.onDown = (pt) => {
       if (done) return;
       const p = pebbles.find((p) => !p.fly && Math.hypot(pt.x - p.x, pt.y - p.y) < p.r + 9);
@@ -3383,8 +3444,8 @@ Minigames.panel_pebbles = function (n, getTime) {
       const left = pebbles.filter((p) => !p.fly).length;
       if (!done && left === 0 && extra === 0) { done = true; Sound.play("success"); api.say("diego", "All clear! Even small rocks cast shadows on the cells."); api.finish({ ok: true, delay: 900 }); }
       panelBackdrop(g, t, G.storm || 0);
-      drawPanelFace(g, ox, oy, W, H);
-      g.fillStyle = "rgba(184,116,62,0.25)"; g.fillRect(ox, oy, W, H);
+      drawPanelPair(g, ox, oy, W, H);
+      g.fillStyle = "rgba(184,116,62,0.25)"; g.fillRect(ox, oy, PGAP[0], H); g.fillRect(ox + PGAP[1], oy, W - PGAP[1], H);
       for (const p of pebbles) {
         if (p.fly > 1.2) continue;
         g.save(); g.translate(p.x, p.y + (p.fly ? 0 : Math.sin(t * 6 + p.ph) * 0.6)); g.rotate(p.rot);
@@ -3401,8 +3462,8 @@ Minigames.panel_pebbles = function (n, getTime) {
 };
 // ---------------------------------------------------------- 3) tilt toward the Sun
 Minigames.panel_tilt = function (n, getTime) {
-  return canvasGame({ title: `Panel ${n + 1}: Point it at the Sun`, tag: "SOLAR PANEL", speaker: "diego", sub: "The storm wind knocked this panel crooked. <b>Drag left/right</b> (or use the arrow keys) to tilt it so it faces the Sun. Hold it in the green zone!", hint: "Panels make the most power when they face the Sun straight on." }, (api) => {
-    const { g } = api; let ang = Math.random() < 0.5 ? -0.9 : 0.85, vel = 0, hold = 0, done = false, gustT = 1.2, gustF = 0, drag = null;
+  return canvasGame({ title: `${pairName(n)}: Point them at the Sun`, tag: "SOLAR PANEL", speaker: "diego", sub: "The storm wind knocked these two panels crooked. They share one frame. <b>Drag left/right</b> (or use the arrow keys) to tilt them so they face the Sun. Hold it in the green zone!", hint: "Panels make the most power when they face the Sun straight on." }, (api) => {
+    const { g } = api; let ang = Math.random() < 0.5 ? -0.85 : 0.8, vel = 0, hold = 0, done = false, gustT = 1.2, gustF = 0, drag = null;
     const sunA = -0.35; // the Sun's direction (radians from straight up)
     api.onDown = (pt) => { drag = { x: pt.x, a: ang }; };
     api.onUp = () => { drag = null; };
@@ -3413,7 +3474,7 @@ Minigames.panel_tilt = function (n, getTime) {
       if (drag && api.ptr.down) ang = drag.a + (api.ptr.x - drag.x) / 160;
       else { const k = (api.keys.ArrowLeft || api.keys.a ? -1 : 0) + (api.keys.ArrowRight || api.keys.d ? 1 : 0); vel += k * 3.2 * dt; }
       vel += gustF * dt * 1.2; vel *= Math.pow(0.08, dt); ang += vel * dt * 2; if (drag) { drag.a += gustF * dt * 0.5; }
-      ang = Math.max(-1.3, Math.min(1.3, ang));
+      ang = Math.max(-1.0, Math.min(1.0, ang));
       const diff = Math.abs(ang - sunA), power = Math.max(0, Math.cos(Math.min(Math.PI / 2, diff)));
       const inZone = diff < 0.17;
       if (!done) { hold = inZone ? hold + dt : Math.max(0, hold - dt * 0.8); if (hold >= 1.2) { done = true; Sound.play("success"); Sound.play("power"); api.say("diego", "Locked! Facing the Sun means the most power."); api.finish({ ok: true, delay: 900 }); } }
@@ -3429,8 +3490,9 @@ Minigames.panel_tilt = function (n, getTime) {
       PX(g, 0, 236, MW2, 34, "#9a4c2a"); PX(g, 0, 236, MW2, 2, "#b56236");
       PX(g, 236, 214, 8, 24, "#5a6070");
       g.save(); g.translate(240, 214); g.rotate(ang);
-      g.fillStyle = "#1b1d2b"; g.fillRect(-72, -10, 144, 12); g.fillStyle = "#2a4aa0"; g.fillRect(-70, -9, 140, 9); g.fillStyle = "#4a7ad0"; for (let k = -70; k < 70; k += 14) g.fillRect(k, -9, 1, 9);
-      g.fillStyle = `rgba(255,255,220,${power * 0.6})`; g.fillRect(-70, -9, 140, 2);
+      g.fillStyle = "#1b1d2b"; g.fillRect(-120, -10, 240, 12);
+      for (const sx of [-118, 6]) { g.fillStyle = "#2a4aa0"; g.fillRect(sx, -9, 112, 9); g.fillStyle = "#4a7ad0"; for (let k = sx; k < sx + 112; k += 14) g.fillRect(k, -9, 1, 9); g.fillStyle = `rgba(255,255,220,${power * 0.6})`; g.fillRect(sx, -9, 112, 2); }
+      g.fillStyle = "#5a6070"; g.fillRect(-4, -11, 8, 12);
       g.fillStyle = "#ffd34a"; g.fillRect(-2, -16, 4, 6); // normal pointer
       g.restore();
       // power meter
@@ -3608,6 +3670,106 @@ function drawSuitPart(g, k, t) {
   }
   g.fillStyle = "#cfd8ff"; g.font = "7px monospace"; g.textAlign = "center"; g.fillText(SUIT_PARTS.find((p) => p.k === k).name, 0, 21); g.textAlign = "left";
 }
+
+// =====================================================================
+//  RESTART ROSIE — reconnect the 4 cut wires (any order, match colours).
+//  Each wire brings one part of the oxygen machine back to life, and the
+//  machine view above shows what that part does (based on NASA's MOXIE).
+// =====================================================================
+const ROSIE_PARTS = [
+  { k: "power", name: "Power", c: "#ff4a4a", line: "Power on! Rosie gets her energy from our solar panels." },
+  { k: "fan", name: "Air pump", c: "#4a8aff", line: "The pump pulls Mars air inside. It is mostly carbon dioxide — CO₂." },
+  { k: "filter", name: "Dust filter", c: "#ffd040", line: "The filter catches the dust, so it can't break Rosie again." },
+  { k: "heat", name: "Heater", c: "#5dd06a", line: "The heater makes the air super hot — about 800 °C — so CO₂ can split apart." },
+];
+Minigames.wires = function ({ time, hints }) {
+  Sound.setMood("task");
+  const who = hints ? "marcus" : "diego";
+  return canvasGame({ title: "Restart Rosie", sub: "Dust cut Rosie's wires! <b>Drag each wire to the plug with the same colour</b> — any order. Watch what each part does.", hint: hints ? "Match the colours. I'll tell you what each part does." : "Match each wire to its colour. Quick, Commander!", speaker: who }, (api) => {
+    const { g } = api; api.cv.style.cursor = "grab";
+    const L = ROSIE_PARTS.map((p) => p).sort(() => Math.random() - 0.5), R = ROSIE_PARTS.map((p) => p).sort(() => Math.random() - 0.5);
+    const rowY = (i) => 140 + i * 32;
+    const ends = L.map((p, i) => ({ p, x: 40, y: rowY(i), done: false, tx: 40, ty: rowY(i) }));
+    const plugs = R.map((p, i) => ({ p, x: 398, y: rowY(i), on: 0 }));
+    const parts = new Pool(200), on = {};
+    let drag = null, tLeft = time || 0, ended = false, flowT = 0, wrong = 0, sparkT = 0;
+    api.state = { ends, plugs };
+    api.onDown = (pt) => { if (ended) return; const e = ends.find((e) => !e.done && Math.hypot(pt.x - e.tx, pt.y - e.ty) < 18); if (e) { drag = e; api.cv.style.cursor = "grabbing"; Sound.play("click"); } };
+    api.onUp = (pt) => {
+      api.cv.style.cursor = "grab"; if (!drag) return; const e = drag; drag = null;
+      const pl = plugs.find((q) => Math.hypot(pt.x - q.x, pt.y - q.y) < 26);
+      if (pl && pl.p === e.p) { e.done = true; e.tx = pl.x - 10; e.ty = pl.y; on[e.p.k] = 1; pl.on = 1; Sound.play("wire"); Sound.play("good"); for (let k = 0; k < 14; k++) parts.spawn({ x: pl.x - 10, y: pl.y, vx: (Math.random() - 0.5) * 120, vy: -40 - Math.random() * 80, life: 0.5, s: 2, c: "#fff6b0", g: 200 }); api.say(who, e.p.line); }
+      else if (pl) { Sound.play("zap"); sparkT = 0.3; wrong++; for (let k = 0; k < 10; k++) parts.spawn({ x: pl.x - 10, y: pl.y, vx: (Math.random() - 0.5) * 160, vy: (Math.random() - 0.5) * 160, life: 0.3, s: 2, c: "#7fd0ff", g: 0 }); if (time) { tLeft -= BALANCE.rosie.wrongPenalty; api.say(who, `Zap! Wrong colour. (−${BALANCE.rosie.wrongPenalty} seconds)`); } else api.say(who, "Zap! Match the same colour."); }
+    };
+    api.frame = (dt, t) => {
+      const pt = api.ptr;
+      if (drag) { drag.tx += (pt.x - drag.tx) * Math.min(1, dt * 25); drag.ty += (pt.y - drag.ty) * Math.min(1, dt * 25); }
+      for (const e of ends) if (!e.done && e !== drag) { e.tx += (e.x - e.tx) * Math.min(1, dt * 12); e.ty += (e.y - e.ty) * Math.min(1, dt * 12); }
+      const all = ends.every((e) => e.done);
+      if (time && !ended && !all) { tLeft -= dt; if (tLeft < 10 && ((tLeft * 10) | 0) % 10 === 0) Sound.play("heart"); if (tLeft <= 0) { ended = true; api.say(who, "Oxygen is too low!"); api.finish({ ok: false, delay: 400 }); } }
+      api.timer(time ? `⏱ ${Math.max(0, Math.ceil(tLeft))}` : "No timer");
+      if (all && !ended) { ended = true; flowT = 0.001; Sound.play("power"); Sound.play("success"); api.say(who, "CO₂ splits into oxygen (O₂) for us — the rest goes back outside. Just like NASA's MOXIE on Mars!"); api.finish({ ok: true, delay: 3200 }); }
+      if (flowT) flowT += dt;
+      parts.update(dt); sparkT = Math.max(0, sparkT - dt);
+      // ---------------- machine view
+      PX(g, 0, 0, MW2, MH2, "#161a2a");
+      PX(g, 0, 0, MW2, 112, "#1e2336"); PX(g, 0, 111, MW2, 2, "#3a4170");
+      // pipe
+      PX(g, 20, 52, 400, 14, "#3a4052"); PX(g, 20, 54, 400, 10, "#262b3c");
+      // inlet
+      PX(g, 6, 38, 22, 40, "#5a6070"); for (let y = 42; y < 76; y += 4) PX(g, 8, y, 18, 2, "#2a2e3c");
+      g.fillStyle = "#e8e0d0"; g.font = "7px monospace"; g.fillText("MARS AIR", 4, 34);
+      const box = (x, k, label) => {
+        const lit = on[k], col = ROSIE_PARTS.find((p) => p.k === k).c;
+        PX(g, x - 30, 30, 60, 58, lit ? "#3a4566" : "#262b3c"); PX(g, x - 30, 30, 60, 2, lit ? col : "#3a4052");
+        g.fillStyle = lit ? "#fff" : "#7a8098"; g.font = "8px monospace"; g.textAlign = "center"; g.fillText(label, x, 100); g.textAlign = "left";
+        return lit;
+      };
+      // fan
+      if (box(95, "fan", "AIR PUMP")) { g.save(); g.translate(95, 59); g.rotate(t * 14); for (let i = 0; i < 4; i++) { g.rotate(Math.PI / 2); g.fillStyle = "#9ad0ff"; g.fillRect(0, -3, 16, 6); } g.restore(); } else { g.save(); g.translate(95, 59); for (let i = 0; i < 4; i++) { g.rotate(Math.PI / 2); g.fillStyle = "#4a5068"; g.fillRect(0, -3, 16, 6); } g.restore(); }
+      // filter
+      const fl = box(185, "filter", "DUST FILTER"); for (let x = 165; x < 205; x += 4) PX(g, x, 38, 2, 42, fl ? "#ffd040" : "#4a5068");
+      // heater
+      const hl = box(275, "heat", "HEATER 800°C"); for (let i = 0; i < 4; i++) PX(g, 255 + i * 11, 40, 6, 38, hl ? `rgb(255,${110 + Math.sin(t * 6 + i) * 40},40)` : "#4a5068");
+      // tank
+      PX(g, 350, 24, 70, 70, "#2a3048"); PX(g, 352, 26, 66, 66, "#141826");
+      const lvl = Math.min(1, flowT / 2.6); PX(g, 352, 26 + 66 * (1 - lvl), 66, 66 * lvl, "rgba(120,200,255,0.55)");
+      g.fillStyle = "#cfe8ff"; g.font = "10px monospace"; g.textAlign = "center"; g.fillText("O₂", 385, 64); g.font = "8px monospace"; g.fillText("OXYGEN", 385, 104); g.textAlign = "left";
+      // power box
+      const pl = on.power; PX(g, 130, 4, 110, 16, pl ? "#4a2a2a" : "#2a2230"); g.fillStyle = pl ? "#ffb0a0" : "#7a6878"; g.font = "8px monospace"; g.fillText(pl ? "⚡ POWER ON" : "⚡ NO POWER", 142, 15);
+      if (pl) for (const x of [95, 185, 275]) PX(g, x - 1, 20, 2, 10, ((t * 8 + x) | 0) % 3 ? "#ff6a4a" : "#ffd040");
+      // molecules flowing once everything works
+      if (flowT) {
+        for (let i = 0; i < 9; i++) {
+          const u = ((flowT * 0.5 + i / 9) % 1), x = 20 + u * 330, y = 59 + Math.sin(u * 20 + i) * 2;
+          if (x < 275) { PX(g, x - 1, y - 1, 3, 3, "#1b1b1b"); PX(g, x - 5, y - 1, 3, 3, "#ff5a5a"); PX(g, x + 3, y - 1, 3, 3, "#ff5a5a"); } // CO₂
+          else { PX(g, x - 3, y - 1, 3, 3, "#ff5a5a"); PX(g, x + 1, y - 1, 3, 3, "#ff5a5a"); } // O₂
+        }
+        g.fillStyle = "#ffd34a"; g.font = "8px monospace"; g.fillText("CO₂ → O₂", 296, 22);
+      }
+      // ---------------- oxygen bar
+      if (time) { const k = Math.max(0, tLeft / time); PX(g, 60, 118, 360, 6, "#0b0d18"); PX(g, 61, 119, Math.round(358 * k), 4, k > 0.5 ? "#5fb7ff" : k > 0.25 ? "#ffd040" : ((t * 6) | 0) % 2 ? "#ff4a4a" : "#a02020"); g.fillStyle = "#cfd8ff"; g.font = "8px monospace"; g.fillText("O₂", 44, 125); }
+      // ---------------- wiring panel
+      PX(g, 14, 128, 452, 136, "#20263a"); PX(g, 14, 128, 452, 2, "#3a4170");
+      for (const q of plugs) {
+        PX(g, q.x - 6, q.y - 11, 26, 22, "#11141f"); PX(g, q.x - 4, q.y - 9, 22, 18, q.p.c); PX(g, q.x - 1, q.y - 4, 8, 8, q.on ? "#ffffff" : "#1b1d2b");
+        g.fillStyle = "#e8eeff"; g.font = "8px monospace"; g.fillText(q.p.name, q.x + 24, q.y + 3);
+        if (hints && drag && drag.p === q.p) { g.strokeStyle = `rgba(255,255,255,${0.5 + Math.sin(t * 10) * 0.4})`; g.lineWidth = 2; g.strokeRect(q.x - 8, q.y - 13, 30, 26); }
+      }
+      for (const e of ends) {
+        // wire: thick sagging curve from the stub to its end
+        const sx = 26, sy = e.y, ex = e.tx, ey = e.ty, sag = e.done ? 6 : 14 + Math.abs(ex - sx) * 0.05;
+        g.strokeStyle = "#0b0d18"; g.lineWidth = 9; g.lineCap = "round"; g.beginPath(); g.moveTo(sx, sy); g.bezierCurveTo(sx + (ex - sx) * 0.35, sy + sag, sx + (ex - sx) * 0.65, ey + sag, ex, ey); g.stroke();
+        g.strokeStyle = e.p.c; g.lineWidth = 6; g.stroke();
+        g.strokeStyle = "rgba(255,255,255,0.35)"; g.lineWidth = 1; g.beginPath(); g.moveTo(sx, sy - 2); g.bezierCurveTo(sx + (ex - sx) * 0.35, sy + sag - 2, sx + (ex - sx) * 0.65, ey + sag - 2, ex, ey - 2); g.stroke();
+        PX(g, 14, e.y - 8, 14, 16, "#3a4052");
+        if (!e.done) { PX(g, ex - 5, ey - 5, 10, 10, "#c8ccd8"); PX(g, ex + 4, ey - 2, 4, 1, "#ffd34a"); PX(g, ex + 4, ey + 1, 4, 1, "#ffd34a"); if (!drag && ((t * 2) | 0) % 2) { g.strokeStyle = "rgba(255,255,255,0.5)"; g.lineWidth = 1; g.strokeRect(ex - 7, ey - 7, 14, 14); } }
+      }
+      if (sparkT) { g.fillStyle = `rgba(120,200,255,${sparkT})`; g.fillRect(0, 128, MW2, 136); }
+      parts.draw(g, t); g.globalAlpha = 1;
+    };
+  }).then((r) => !!(r && r.ok));
+};
 
 // ---- mars3d.js ----
 // =====================================================================

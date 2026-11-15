@@ -77,11 +77,11 @@ const PROPS = [
   { id: "hatch", type: "hatch", tx: 53, ty: 8, w: 1, h: 2, solid: false, label: "Outer Hatch" },
   // outside panels
   { id: "panel0", type: "panel", tx: 59, ty: 4, w: 3, h: 2, n: 0 },
-  { id: "panel1", type: "panel", tx: 65, ty: 4, w: 3, h: 2, n: 1 },
-  { id: "panel2", type: "panel", tx: 71, ty: 4, w: 3, h: 2, n: 2 },
-  { id: "panel3", type: "panel", tx: 59, ty: 13, w: 3, h: 2, n: 3 },
-  { id: "panel4", type: "panel", tx: 65, ty: 13, w: 3, h: 2, n: 4 },
-  { id: "panel5", type: "panel", tx: 71, ty: 13, w: 3, h: 2, n: 5 },
+  { id: "panel1", type: "panel", tx: 63, ty: 4, w: 3, h: 2, n: 1 },
+  { id: "panel2", type: "panel", tx: 69, ty: 4, w: 3, h: 2, n: 2 },
+  { id: "panel3", type: "panel", tx: 73, ty: 4, w: 3, h: 2, n: 3 },
+  { id: "panel4", type: "panel", tx: 61, ty: 13, w: 3, h: 2, n: 4 },
+  { id: "panel5", type: "panel", tx: 65, ty: 13, w: 3, h: 2, n: 5 },
   { id: "rock1", type: "rock", tx: 63, ty: 9, w: 1, h: 1 }, { id: "rock2", type: "rock", tx: 76, ty: 10, w: 1, h: 1 }, { id: "rock3", type: "rock", tx: 57, ty: 18, w: 2, h: 1 },
   { id: "rock4", type: "rock", tx: 69, ty: 19, w: 1, h: 1 }, { id: "rock5", type: "rock", tx: 75, ty: 2, w: 1, h: 1 },
 ];

@@ -2,8 +2,8 @@
 //  MINI-GAMES — Garden Check, Clean the Panels, Share the Power,
 //  Restart Rosie, and the flip cards.
 // =====================================================================
-function miniPortrait(id) { const c = mkCanvas(42, 42); c.getContext("2d").drawImage(portraitFor(id, false, false), 0, 0); c.style.background = shade(CHAR_SPECS[id].stripe, 0.4); c.style.borderRadius = ".3em"; return c; }
-function mgSay(box, id, text) { box.innerHTML = ""; box.appendChild(miniPortrait(id)); box.appendChild(el("span", "", fill(text))); box.animate([{ transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 250 }); }
+function miniPortrait(id, mood = "calm") { const c = mkCanvas(42, 42); const g = c.getContext("2d"); g.drawImage(moodPortrait(id, false, false, mood), 0, 0); drawEmote(g, mood, 0.1); c.style.background = shade(CHAR_SPECS[id].stripe, 0.4); c.style.borderRadius = ".3em"; return c; }
+function mgSay(box, id, text) { box.innerHTML = ""; box.appendChild(miniPortrait(id, inferMood(id, text))); box.appendChild(el("span", "", fill(text))); box.animate([{ transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 250 }); }
 
 const Minigames = {
   // ------------------------------------------------------------ flip cards
@@ -65,17 +65,17 @@ const Minigames = {
       let time = B.time, cleaned = 0, tripped = false;
       G.panels = [0.9, 0.9, 0.9, 0.9, 0.9, 0.9];
       UI.objective(`Clean the solar panels! Walk to a panel and press ${document.body.classList.contains("touch") ? "A" : "Space"}`);
-      UI.toast(`☀️ Clean as many panels as you can — <b>${B.time - B.tripAt} seconds!</b> Each panel has a different job.`, 3500);
+      UI.toast(`☀️ Clean as many panels as you can — <b>${B.time - B.tripAt} seconds!</b> Panels are joined in pairs — one job cleans two!`, 3500);
       const ids = [];
-      for (let n = 0; n < 6; n++) {
-        const p = propById["panel" + n]; const id = "scrub" + n; ids.push(id);
-        const job = PANEL_JOBS[n % PANEL_JOBS.length];
-        Game.addInteract({ id, x: p.x + p.pw / 2, y: p.y + p.ph + 8, r: 30, label: job === "brush" ? "Brush" : job === "pebbles" ? "Clear rocks" : "Tilt", name: `Panel ${n + 1}`, marker: () => "!", use: async () => {
-          if (tripped || G.panels[n] === 0) return;
-          const res = await Minigames.panelJob(n, () => Math.max(0, time - B.tripAt));
+      for (let k = 0; k < 3; k++) {
+        const a = propById["panel" + k * 2], b = propById["panel" + (k * 2 + 1)]; const id = "scrub" + k; ids.push(id);
+        const job = PANEL_JOBS[k];
+        Game.addInteract({ id, x: (a.x + b.x + b.pw) / 2, y: a.y + a.ph + 8, r: 34, label: job === "brush" ? "Brush" : job === "pebbles" ? "Clear rocks" : "Tilt", name: `Panels ${k * 2 + 1} + ${k * 2 + 2}`, marker: () => "!", use: async () => {
+          if (tripped || G.panels[k * 2] === 0) return;
+          const res = await Minigames.panelJob(k, () => Math.max(0, time - B.tripAt));
           if (res && res.ok && !tripped) {
-            G.panels[n] = 0; cleaned++; Sound.play("good"); Particles.sparkle(p.x + 24, p.y + 8); Game.removeInteract(id);
-            UI.toast(`✨ Panel ${n + 1} done! ${cleaned}/6`);
+            G.panels[k * 2] = 0; G.panels[k * 2 + 1] = 0; cleaned += 2; Sound.play("good"); Particles.sparkle(a.x + 24, a.y + 8); Particles.sparkle(b.x + 24, b.y + 8); Game.removeInteract(id);
+            UI.toast(`✨ Panels ${k * 2 + 1} + ${k * 2 + 2} clean! ${cleaned}/6`);
             if (cleaned === 6) time = Math.min(time, B.tripAt + 0.01);
           }
         } });
@@ -160,61 +160,5 @@ const Minigames = {
   },
 
   // ------------------------------------------------------------ restart rosie (wires)
-  wires({ time, hints }) {
-    Sound.setMood("task");
-    const W = [
-      { c: "#ff4a4a", n: "Power", i: "⚡", hint: "Red first: power. Without it, nothing works." },
-      { c: "#4a8aff", n: "Fan", i: "🌀", hint: "Blue second: the fan pulls Mars air inside." },
-      { c: "#ffd040", n: "Filter", i: "🧹", hint: "Yellow third: the filter keeps the dust out." },
-      { c: "#5dd06a", n: "Start", i: "▶️", hint: "And green last: start!" },
-    ];
-    return new Promise((resolve) => {
-      const leftOrder = [0, 1, 2, 3].sort(() => Math.random() - 0.5), rightOrder = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
-      let next = 0, tLeft = time, ended = false, iv;
-      const html = `<div class="head"><div><h3>MINI-TASK</h3><h1>Restart Rosie</h1></div><div class="tmr">${time ? `⏱ <span class="t">${time}</span>` : "No timer — take your time"}</div></div>
-        <div style="font-size:.75em">🫧 Oxygen</div><div class="o2bar"><div style="width:100%"></div></div>
-        <p style="font-size:.8em;margin:.3em 0">Drag each wire to the plug with the same color. The ORDER matters!</p>
-        <div class="wires"><svg></svg></div><div class="say"></div>`;
-      UI.card(html, [], {
-        cls: "mg", onMount: (c, done) => {
-          const box = c.querySelector(".wires"), svg = c.querySelector("svg"), say = c.querySelector(".say"), o2 = c.querySelector(".o2bar div"), tEl = c.querySelector(".t");
-          const showHint = () => { if (hints && next < 4) mgSay(say, "marcus", W[next].hint); else if (!hints) mgSay(say, "diego", next === 0 ? "I don't know the right order... think about it, Commander!" : "Keep going!"); };
-          showHint();
-          const L = [], Rr = [];
-          leftOrder.forEach((wi, row) => { const e = el("div", "wend", "●"); e.style.left = "4%"; e.style.top = (14 + row * 24) + "%"; e.style.background = W[wi].c; box.appendChild(e); L[wi] = e; e.dataset.w = wi; });
-          rightOrder.forEach((wi, row) => { const e = el("div", "wend right", W[wi].i); e.style.right = "4%"; e.style.top = (14 + row * 24) + "%"; e.style.background = W[wi].c; e.title = W[wi].n; box.appendChild(e); Rr[wi] = e; e.insertAdjacentHTML("beforeend", `<span style="position:absolute;right:110%;font-size:.65em;color:#fff;white-space:nowrap">${W[wi].n}</span>`); });
-          const center = (e) => { const b = box.getBoundingClientRect(), r = e.getBoundingClientRect(); return { x: r.left - b.left + r.width / 2, y: r.top - b.top + r.height / 2 }; };
-          const line = (a, b, col, id) => { let p = svg.querySelector("#" + id); if (!p) { p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.id = id; svg.appendChild(p); } const mx = (a.x + b.x) / 2; p.setAttribute("d", `M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x},${b.y}`); p.setAttribute("stroke", col); p.setAttribute("stroke-width", 10); p.setAttribute("fill", "none"); p.setAttribute("stroke-linecap", "round"); return p; };
-          let drag = null;
-          box.addEventListener("pointerdown", (e) => {
-            const t = e.target.closest(".wend:not(.right)"); if (!t || ended) return;
-            const wi = +t.dataset.w; if (t.dataset.done) return;
-            drag = { wi, start: center(t) }; try { box.setPointerCapture(e.pointerId); } catch (er) {} Sound.play("click");
-          });
-          box.addEventListener("pointermove", (e) => { if (!drag) return; const b = box.getBoundingClientRect(); line(drag.start, { x: e.clientX - b.left, y: e.clientY - b.top }, W[drag.wi].c, "drag"); });
-          const up = (e) => {
-            if (!drag) return; const d = drag; drag = null; const dl = svg.querySelector("#drag"); if (dl) dl.remove();
-            const b = box.getBoundingClientRect(); const pt = { x: e.clientX - b.left, y: e.clientY - b.top };
-            let hit = null; for (let i = 0; i < 4; i++) { const cc = center(Rr[i]); if (Math.hypot(cc.x - pt.x, cc.y - pt.y) < 40) hit = i; }
-            if (hit === null) return;
-            if (hit === d.wi && d.wi === next) {
-              line(d.start, center(Rr[hit]), W[d.wi].c, "w" + d.wi); L[d.wi].dataset.done = 1; L[d.wi].style.opacity = 0.6; Sound.play("wire"); next++;
-              if (next >= 4) { ended = true; clearInterval(iv); Sound.play("success"); mgSay(say, "diego", "I can hear Rosie! She's working!"); setTimeout(() => { done("ok"); Sound.setMood("tension"); resolve(true); }, 1600); return; }
-              showHint();
-            } else {
-              Sound.play("zap"); box.animate([{ transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "none" }], { duration: 200 });
-              if (time) { tLeft -= BALANCE.rosie.wrongPenalty; mgSay(say, hints ? "marcus" : "diego", hit !== d.wi ? "Wrong plug! Match the colors. (−5 seconds)" : "Wrong order! The wire jumped back. (−5 seconds)"); }
-              else mgSay(say, "marcus", hit !== d.wi ? "Match the colors." : "Not yet — " + W[next].hint);
-            }
-          };
-          box.addEventListener("pointerup", up); box.addEventListener("pointercancel", () => { drag = null; const dl = svg.querySelector("#drag"); if (dl) dl.remove(); });
-          if (time) iv = setInterval(() => {
-            tLeft -= 0.1; if (tEl) tEl.textContent = Math.max(0, Math.ceil(tLeft)); o2.style.width = Math.max(0, tLeft / time * 100) + "%";
-            if (tLeft < 10 && ((tLeft * 10) | 0) % 10 === 0) Sound.play("heart");
-            if (tLeft <= 0 && !ended) { ended = true; clearInterval(iv); done("x"); resolve(false); }
-          }, 100);
-        },
-      });
-    });
-  },
+
 };

@@ -5,7 +5,7 @@
 // =====================================================================
 const STORY = {
   chapterTitle: "Chapter One: The Commander",
-  nextChapter: "Chapter Two: Marcus — Coming Soon",
+  nextChapter: "Chapter Two: Damon — Coming Soon",
   meters: {
     safety: { label: "SAFETY", icon: "🛡️", color: "#4fa8ff", help: "Is the crew okay?" },
     mission: { label: "MISSION", icon: "🌱", color: "#5dd06a", help: "Are we growing the first food on Mars?" },
