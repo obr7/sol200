@@ -345,11 +345,15 @@ body.touch.playing #touch { display: block; }
 @keyframes lgSpin { to { transform: rotate(360deg); } }
 
 /* kid-friendly Sun meter: three suns, today's one big and glowing */
-.sunPick { display: flex; justify-content: center; gap: 2.4em; margin: 1.1em 0 .5em; }
-.sp { text-align: center; opacity: .35; filter: grayscale(.7); transform: scale(.85); transition: .3s; }
-.sp.on { opacity: 1; filter: none; transform: scale(1.05); }
-.spSun { position: relative; width: 3.2em; height: 3.2em; margin: 0 auto .35em; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1em; }
-.spSun span { position: relative; z-index: 2; font-size: 1.7em; line-height: 1; width: 1.5em; height: 1.5em; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.sunPick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5em; margin: .8em 0 .7em; }
+.sp { text-align: center; opacity: .38; filter: saturate(.55); transition: .3s; border-radius: .7em; padding: .9em .3em .45em; overflow: hidden; border: .15em solid transparent; }
+.sp.calm { background: linear-gradient(#c9f5d2, #9be3ad); border-color: #5cc477; }
+.sp.busy { background: linear-gradient(#ffe2b0, #ffc56e); border-color: #f0a03a; }
+.sp.angry { background: linear-gradient(#ffc6bc, #ff9585); border-color: #ff5a40; }
+.sp.on { opacity: 1; filter: none; box-shadow: 0 0 0 .15em #fff8, 0 0 1em .2em color-mix(in srgb, currentColor 0%, rgba(0,0,0,0)); transform: translateY(-.15em); }
+.sp.calm.on { box-shadow: 0 0 1em .25em rgba(92,196,119,.55); } .sp.busy.on { box-shadow: 0 0 1em .25em rgba(240,160,58,.6); } .sp.angry.on { box-shadow: 0 0 1.1em .3em rgba(255,90,64,.6); }
+.spSun { position: relative; width: 2.5em; height: 2.5em; margin: .15em auto .75em; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1em; }
+.spSun span { position: relative; z-index: 2; font-size: 1.4em; line-height: 1; width: 1.5em; height: 1.5em; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
 .sp.calm .spSun span { background: radial-gradient(#fff3a0, #ffd34a); box-shadow: 0 0 .6em #ffe680; }
 .sp.busy .spSun span { background: radial-gradient(#ffd27a, #ff9a2a); box-shadow: 0 0 .8em #ffb040; }
 .sp.angry .spSun span { background: radial-gradient(#ff9a6a, #ff3a2a); box-shadow: 0 0 1.2em #ff4a2a; }
@@ -363,7 +367,7 @@ body.touch.playing #touch { display: block; }
 .sp.on .zap { animation: spZap 1.4s ease-out infinite; animation-delay: var(--d); }
 .sp.busy .zap { background: #ffb040; } .sp.angry .zap { background: #ff5a3a; width: .4em; height: .4em; }
 @keyframes spZap { 0% { opacity: 0; transform: rotate(var(--a)) translateX(.8em); } 20% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateX(2.4em); } }
-.spName { font-weight: 800; font-size: .8em; margin-top: 1.1em; }
+.spName { font-weight: 800; font-size: .78em; margin-top: .7em; }
 .sp.calm.on .spName { color: #1f8a3a; } .sp.busy.on .spName { color: #c06a00; } .sp.angry.on .spName { color: #d0261a; }
 .spSub { font-size: .65em; opacity: .8; }
 
