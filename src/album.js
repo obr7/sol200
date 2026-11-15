@@ -95,7 +95,7 @@ const MarsWindow = {
         // fallback: painted pixel Mars until the photo arrives (or if offline)
         const paint = () => { const gr = sg.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, "#c8743c"); gr.addColorStop(0.55, "#e09a60"); gr.addColorStop(0.56, "#b86a3a"); gr.addColorStop(1, "#8a4426"); sg.fillStyle = gr; sg.fillRect(0, 0, W, H); sg.fillStyle = "#7a3a20"; for (let i = 0; i < 12; i++) sg.fillRect((i * 37) % W, 70 + (i * 13) % 25, 6 + (i % 3) * 4, 3 + (i % 2) * 2); };
         paint();
-        const im = new Image(); im.crossOrigin = "anonymous";
+        const im = new Image(); // no CORS needed: we only draw the photo, never read its pixels
         im.onload = () => { const r = W / H, ir = im.width / im.height; let sw = im.width, sh = im.height, sx = 0, sy = 0; if (ir > r) { sw = im.height * r; sx = (im.width - sw) / 2; } else { sh = im.width / r; sy = (im.height - sh) / 2; } sg.imageSmoothingEnabled = true; sg.drawImage(im, sx, sy, sw, sh, 0, 0, W, H); ready = true; };
         im.onerror = () => { card.querySelector(".mwCap").insertAdjacentHTML("afterbegin", "<i>Can't reach NASA right now — showing a painted view.</i><br>"); };
         im.src = url;
