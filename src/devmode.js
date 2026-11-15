@@ -60,8 +60,7 @@ const Dev = {
     const m = $("#modal");
     if (m) {
       m.querySelectorAll(".flip:not(.on)").forEach((f) => f.click());
-      const lg = m.querySelector(".lgCard"); if (lg && !lg.classList.contains("flipped")) { lg.click(); setTimeout(() => m.querySelector(".lgGo")?.click(), 400); return; }
-      const go = m.querySelector(".lgGo"); if (go) { go.click(); return; }
+      const lgb = m.querySelector(".lgFlipBtn"); if (lgb) { m.querySelectorAll(".lgFront .mini").forEach((x) => x.click()); setTimeout(() => lgb.click(), 600); return; }
       setTimeout(() => { const btns = [...m.querySelectorAll(".btn")].filter((x) => !x.disabled); if (btns.length) btns[btns.length - 1].click(); else if (a && a.onAction) a.onAction(); }, 50);
       return;
     }
