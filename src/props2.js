@@ -150,6 +150,31 @@ function drawPropV2(g, p, t) {
       drawProp1(g, p, t);
       break;
     }
+    // ---------------------------------------------------------- BIG WINDOW looking out on Mars
+    case "bigwindow": {
+      const st = G.storm || 0, top = -30, h = 40;
+      R(-3, top - 3, W + 6, h + 6, "#2a2e3c"); R(-2, top - 2, W + 4, h + 4, "#8b93a6"); R(0, top, W, h, "#1b1d2b");
+      // sky, sun, hills, ground (inside the glass)
+      const gx = p.x + 2, gy = p.y + top + 2, gw = W - 4, gh = h - 4;
+      g.save(); g.beginPath(); g.rect(gx, gy, gw, gh); g.clip();
+      const sky = g.createLinearGradient(0, gy, 0, gy + gh); sky.addColorStop(0, "#e8a878"); sky.addColorStop(1, "#c87850"); g.fillStyle = sky; g.fillRect(gx, gy, gw, gh);
+      R(W - 16, top + 6, 5, 5, "#fff2d0"); R(W - 17, top + 7, 7, 3, "rgba(255,240,200,0.6)");
+      g.fillStyle = "#a85a34"; g.beginPath(); g.moveTo(gx, gy + gh - 12); for (let x = 0; x <= gw; x += 6) g.lineTo(gx + x, gy + gh - 14 + Math.sin(x * 0.3 + 1) * 3 + (x > 30 ? -4 * Math.sin((x - 30) * 0.1) : 0)); g.lineTo(gx + gw, gy + gh); g.lineTo(gx, gy + gh); g.fill();
+      R(2, top + h - 10, W - 4, 8, "#8a4426"); R(10, top + h - 7, 4, 2, "#6a3018"); R(40, top + h - 6, 6, 2, "#6a3018");
+      g.fillStyle = "rgba(240,170,110,0.55)"; for (let k = 0; k < 6; k++) g.fillRect(gx + ((k * 17 + t * (12 + k * 3)) % gw), gy + 6 + k * 4, 4, 1);
+      if (st > 0) { g.fillStyle = `rgba(150,75,35,${0.2 + st * 0.6})`; g.fillRect(gx, gy, gw, gh); }
+      R(W / 2 - 1, top, 2, h, "#8b93a6"); // window frame bar
+      g.fillStyle = "rgba(255,255,255,0.18)"; g.fillRect(gx + 3, gy + 2, 3, gh - 6); g.fillRect(gx + 8, gy + 2, 1, gh - 10);
+      g.restore();
+      R(-4, top + h + 1, W + 8, 3, "#6a7090"); // sill
+      glow(p.x + W / 2, p.y + top + h / 2, 34, "#ffb070", 0.25);
+      break;
+    }
+    case "airvent": {
+      R(1, -14, 14, 16, "#3a4052"); R(2, -13, 12, 9, "#0d1a2a"); R(3, -11, 4, 1, "#5dff8a"); R(3, -9, 8, 1, "#5dff8a"); R(3, -7, 6, 1, "#7fd0ff");
+      for (let i = 0; i < 3; i++) R(3, -3 + i * 2, 10, 1, "#262b3c");
+      break;
+    }
     // ---------------------------------------------------------- LOW SPACE TABLE + PHOTO ALBUM
     case "phototable": {
       // short legs + rounded metal top with a soft light strip

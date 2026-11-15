@@ -3,13 +3,10 @@
 //  the arrows) to send the front photo to the back and bring up the next.
 // =====================================================================
 const ALBUM = [
-  { id: "training", title: "Training Base, Earth", date: "3 years ago", faces: [["marcus", "angry"], ["lead", "happy"], ["diego", "worried"], ["layla", "worried"]],
-    note: () => `Everyone is smiling for the camera... except ${CONFIG.NAMES.marcus}. And ${CONFIG.NAMES.diego} and ${CONFIG.NAMES.layla} won't look at ${CONFIG.NAMES.lead}.<br><i>Written on the back: <b>"Commander ${CONFIG.NAMES.lead} — he saved the training!"</b></i>` },
-  { id: "launch", title: "Launch Day", date: "Earth", faces: [["layla", "happy"], ["lead", "happy"], ["diego", "happy"], ["marcus", "calm"]], note: () => "The rocket that carried the crew to Mars. Seven months in space!" },
-  { id: "sol1", title: "Sol 1 — We made it!", date: "Mars", faces: [["diego", "happy"], ["lead", "happy"], ["layla", "happy"], ["marcus", "happy"]], note: () => "The first photo on Mars, in front of the new base. Even Marcus is smiling." },
-  { id: "rosie", title: "Rosie's first breath", date: "Sol 12", faces: [["diego", "happy"]], note: () => `${CONFIG.NAMES.diego} and Rosie, the day she made her first oxygen. He gave her a party hat.` },
-  { id: "dinner", title: "Team dinner", date: "Sol 100", faces: [["layla", "happy"], ["diego", "happy"], ["marcus", "calm"], ["lead", "happy"]], note: () => "Space food for 100 sols! Diego told jokes all night." },
-  { id: "hope", title: "Hope sprouts", date: "Sol 190", faces: [["layla", "happy"]], note: () => `${CONFIG.NAMES.layla} with Hope, the first sprout. "If it grows, it will be the first food grown on Mars."` },
+  { img: "img/crew/1.jpg", title: "Training Base, Earth", date: "3 years ago", note: () => `A selfie in the training hangar. Everyone is laughing... except ${CONFIG.NAMES.marcus}, with his arms crossed.<br><i>Written on the back: <b>"Commander ${CONFIG.NAMES.lead} — he saved the training!"</b></i>` },
+  { img: "img/crew/2.jpg", title: "Desert field training", date: "Earth", note: () => `Learning to read rocks and maps in a Mars-like desert. ${CONFIG.NAMES.marcus} checks the compass while everyone else jokes around.` },
+  { img: "img/crew/3.jpg", title: "Flight simulator", date: "Earth", note: () => `${CONFIG.NAMES.marcus} reads the checklist step by step. ${CONFIG.NAMES.lead} just grabs the controls.` },
+  { img: "img/crew/4.jpg", title: "Greenhouse training", date: "Earth", note: () => `Learning to grow lettuce for space. This is where ${CONFIG.NAMES.layla} first said: "One day, the first food on Mars."` },
 ];
 function drawAlbumPhoto(ph) {
   const W = 160, H = 112, c = mkCanvas(W, H), g = c.getContext("2d"); g.imageSmoothingEnabled = false;
@@ -44,9 +41,9 @@ const PhotoAlbum = {
       cls: "dark wide albumCard", closable: true, onMount: (card) => {
         const album = card.querySelector(".album"), cap = card.querySelector(".albCap"), dots = card.querySelector(".albDots");
         const cards = ALBUM.map((ph, i) => {
-          const d = el("div", "photo"); const cv = drawAlbumPhoto(ph); cv.className = "pimg";
-          d.appendChild(cv); d.appendChild(el("div", "pcap", `${ph.title}<span>${ph.date}</span>`)); album.appendChild(d);
-          return { d, ph, tilt: [-3, 2.5, -1.5, 3, -2.5, 1.5][i % 6] };
+          const d = el("div", "photo real"); const im = new Image(); im.src = ph.img; im.className = "pimg"; im.draggable = false; im.alt = ph.title;
+          d.appendChild(im); d.appendChild(el("div", "pcap", `${ph.title}<span>${ph.date}</span>`)); album.appendChild(d);
+          return { d, ph, tilt: [-3, 2.5, -1.5, 3][i % 4] };
         });
         let order = cards.map((_, i) => i); // order[0] = front
         const place = (anim = true) => {
@@ -72,6 +69,43 @@ const PhotoAlbum = {
         album.addEventListener("pointerup", up); album.addEventListener("pointercancel", up);
         const kd = (e) => { if (!document.body.contains(album)) { window.removeEventListener("keydown", kd); return; } if (e.key === "ArrowLeft") next(); if (e.key === "ArrowRight") prev(); };
         window.addEventListener("keydown", kd);
+      },
+    });
+  },
+};
+
+// =====================================================================
+//  MARS WINDOW — real photos of Mars' surface from NASA rovers.
+// =====================================================================
+const MARS_VIEWS = [
+  { id: "PIA16077", title: "The heights of Mount Sharp", rover: "Curiosity", date: "Aug 2012", credit: "NASA/JPL-Caltech", text: "Curiosity's view from its landing spot in Gale Crater. The mountain in the distance, Mount Sharp, is about 5 km tall." },
+  { id: "PIA21268", title: "A field of sand dunes", rover: "Curiosity", date: "Feb 2017", credit: "NASA/JPL-Caltech", text: "Ripples on a long sand dune in the Bagnold Dune Field. Mars wind slowly moves this sand." },
+  { id: "PIA19400", title: "Sunset in Gale Crater", rover: "Curiosity", date: "Apr 2015", credit: "NASA/JPL-Caltech/MSSS/Texas A&M Univ.", size: "small", text: "On Mars, sunsets glow blue! Fine dust in the air lets blue light pass near the Sun." },
+  { id: "PIA24921", title: "An ancient river delta", rover: "Perseverance", date: "2022", credit: "NASA/JPL-Caltech/ASU/MSSS", text: "Billions of years ago, a river flowed into a lake in Jezero Crater and left these layers of rock." },
+  { id: "PIA26373", title: "Looking up at the crater rim", rover: "Perseverance", date: "Aug 2024", credit: "NASA/JPL-Caltech/ASU/MSSS", text: "Perseverance looks south toward the rim of Jezero Crater, the next place it will climb." },
+];
+const MarsWindow = {
+  open() {
+    G.flags.window = true; let i = 0;
+    const html = `<div class="head"><div><h3>CREW QUARTERS · WINDOW</h3><h1>🪟 The view from Mars</h1></div></div>
+      <p style="font-size:.8em;margin:.2em 0 .5em">Our window shows the real Mars! These are <b>real photos</b> taken by NASA rovers.</p>
+      <div class="mwFrame"><img class="mwImg" alt=""><button class="albNav prev">◀</button><button class="albNav next">▶</button></div>
+      <div class="mwCap"></div>`;
+    return UI.card(html, [{ id: "ok", label: "Close", cls: "go" }], {
+      cls: "dark wide mwCard", closable: true, onMount: (card) => {
+        const img = card.querySelector(".mwImg"), cap = card.querySelector(".mwCap");
+        const show = () => {
+          const v = MARS_VIEWS[i];
+          img.style.opacity = 0; img.onload = () => { img.style.opacity = 1; };
+          img.onerror = () => { cap.insertAdjacentHTML("afterbegin", "<i>Can't load this photo right now (offline?).</i><br>"); };
+          img.src = `https://images-assets.nasa.gov/image/${v.id}/${v.id}~${v.size || "medium"}.jpg`; img.alt = v.title;
+          cap.innerHTML = `<b>${v.title}</b> · ${v.rover} rover · ${v.date}<br>${v.text}<div class="src">📚 Source: <a href="https://images.nasa.gov/details/${v.id}" target="_blank" rel="noopener">NASA Image and Video Library — ${v.id}</a> <i>(${v.credit})</i></div><div class="albDots">${MARS_VIEWS.map((_, k) => `<span class="${k === i ? "on" : ""}"></span>`).join("")}</div>`;
+        };
+        card.querySelector(".next").onclick = (e) => { e.stopPropagation(); i = (i + 1) % MARS_VIEWS.length; Sound.play("whoosh"); show(); };
+        card.querySelector(".prev").onclick = (e) => { e.stopPropagation(); i = (i + MARS_VIEWS.length - 1) % MARS_VIEWS.length; Sound.play("whoosh"); show(); };
+        const kd = (e) => { if (!document.body.contains(img)) { window.removeEventListener("keydown", kd); return; } if (e.key === "ArrowRight") card.querySelector(".next").click(); if (e.key === "ArrowLeft") card.querySelector(".prev").click(); };
+        window.addEventListener("keydown", kd);
+        show();
       },
     });
   },

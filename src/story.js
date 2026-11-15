@@ -45,7 +45,7 @@ const Story = {
   setup() {
     resetState(); UI.buildMeters();
     const N = Game.npc, P = Game.player;
-    Game.place(P, 29, 9, 1); Game.place(N.marcus, 28, 4, 1); Game.place(N.diego, 12, 25, 1); Game.place(N.layla, 34, 22, 0);
+    Game.place(P, 9, 9, 1); Game.place(N.marcus, 28, 4, 1); Game.place(N.diego, 12, 25, 1); Game.place(N.layla, 34, 22, 0);
     N.diego.follow = null; N.layla.follow = null; N.diego.hurt = false; P.helmet = false; for (const n of Object.values(N)) n.helmet = false;
     for (const c of Game.chars) c.visible = true;
     dynSolid.add(idx(53, 8)); dynSolid.add(idx(53, 9));
@@ -68,12 +68,22 @@ const Story = {
   // ------------------------------------------------------------ SCENE 1 — control room
   async scene1() {
     const N = Game.npc;
-    UI.banner("SOL 200 · CONTROL ROOM");
+    UI.banner("SOL 200 · CREW QUARTERS");
     await sleep(900);
     await UI.charCard("lead", "That's YOU! Every choice you make changes the story.");
     await UI.say("lead", "Sol 200. Earth is waiting for good news. I won't let them down.", { think: true });
     UI.toast("☀️ A <b>sol</b> is one day on Mars — a little longer than an Earth day.", 5000);
     UI.keysHint(true); Game.keysHintT = 0;
+    // objective 1 (optional): explore the quarters · objective 2: the Mars hologram table
+    const qItems = [["window", () => G.flags.window, "window"], ["photo", () => G.flags.photo, "photos"], ["sol", () => G.discovered.has("sol"), "clock"], ["gravity", () => G.discovered.has("gravity"), "scale"], ["air", () => G.discovered.has("air"), "air monitor"]];
+    const qSub = () => { const n = qItems.filter((q) => q[1]()).length; return n >= qItems.length ? `<span class="done">✓ Quarters explored (${n}/${qItems.length})</span>` : `★ Optional: explore the quarters (${n}/${qItems.length})`; };
+    UI.objective("Go to the Mars hologram in the Control Room", qSub());
+    const qIv = setInterval(() => UI.objectiveSub(qSub()), 500);
+    const ht = propById.holo_table;
+    Game.setTarget({ x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8 });
+    await new Promise((res) => { this.onHolo = res; });
+    clearInterval(qIv); Game.setTarget(null);
+    await UI.say("lead", "Gale, Jezero, Olympus... and somewhere down there, us. Okay. Time to check in with the team.", { think: true, mood: "calm" });
     UI.objective("Talk to {marcus} at the weather screen");
     Game.setTarget({ x: N.marcus.x, y: N.marcus.y });
     await Game.waitTalk("talk_marcus", N.marcus);

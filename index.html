@@ -253,6 +253,20 @@ body.touch.playing #touch { display: block; }
 .albDots span { width: .5em; height: .5em; border-radius: 50%; background: #3a4170; } .albDots span.on { background: #ffd34a; }
 .albCap { font-size: .82em; line-height: 1.4; min-height: 3.2em; text-align: center; }
 .albHint { font-size: .7em; opacity: .65; text-align: center; margin: .2em 0 0; }
+
+.album .photo.real { padding: 0; background: none; box-shadow: 0 .6em 1.4em rgba(0,0,0,.6); width: min(56vh, 400px, 72vw); }
+.album .photo.real .pimg { border: none; image-rendering: auto; border-radius: .2em; }
+.album .photo.real .pcap { display: none; }
+.mwCard { width: min(94vw, 820px) !important; }
+.mwFrame { position: relative; background: #1b1d2b; border: .5em solid #8b93a6; border-radius: 1.2em; box-shadow: inset 0 0 1.5em rgba(0,0,0,.8), 0 0 0 .2em #2a2e3c; overflow: hidden; height: min(32vh, 280px); display: flex; align-items: center; justify-content: center; }
+.mwImg { max-width: 100%; max-height: 100%; display: block; transition: opacity .4s; }
+.mwCap { font-size: .82em; line-height: 1.4; margin-top: .5em; text-align: center; }
+.mwCap .src { font-size: .85em; margin-top: .3em; }
+
+#objective .osub { font-size: .85em; color: #b8c4ff; margin-top: .2em; }
+#objective .osub .done { color: #5dff8a; }
+/* dialogue text: a little letter spacing so the pixel font letters never touch */
+#dlgText, .say span, #choice .choiceBtn, .card p { letter-spacing: .04em; word-spacing: .08em; }
 </style>
 </head>
 <body>
@@ -385,7 +399,7 @@ const BALANCE = {
   panels: { time: 65, tripAt: 10, good: 4, goodMission: +15, poorMission: +5 },
   // Extra outdoor radiation cost from REAL space weather (DONKI): quiet / M-class / X-class
   radiation: { quiet: 0, M: -3, X: -6 },
-  power: { time: 40, units: 6 },
+  power: { time: 26, units: 6 },
   d2A: { team: -10, time: 32 },
   d2B: { team: +20, time: 60 },
   d1APenaltyOnRosie: 10,                      // seconds lost if Diego is hurt
@@ -1497,13 +1511,14 @@ const PROPS = [
   { id: "watertank", type: "watertank", tx: 41, ty: 26, w: 1, h: 2, fact: "water", label: "Water Recycler" },
   // quarters
   { id: "bunk_lead", type: "bunk", tx: 3, ty: 4, w: 2, h: 2, color: "#e04848" },
-  { id: "bunk_marcus", type: "bunk", tx: 6, ty: 4, w: 2, h: 2, color: "#3b7dd8" },
-  { id: "bunk_diego", type: "bunk", tx: 9, ty: 4, w: 2, h: 2, color: "#f08a2a" },
-  { id: "bunk_layla", type: "bunk", tx: 12, ty: 4, w: 2, h: 2, color: "#4fb35e" },
-  { id: "photo_table", type: "phototable", tx: 7, ty: 8, w: 2, h: 1, label: "Crew Photo" },
+  { id: "bunk_marcus", type: "bunk", tx: 3, ty: 7, w: 2, h: 2, color: "#3b7dd8" },
+  { id: "bunk_diego", type: "bunk", tx: 13, ty: 4, w: 2, h: 2, color: "#f08a2a" },
+  { id: "bunk_layla", type: "bunk", tx: 13, ty: 7, w: 2, h: 2, color: "#4fb35e" },
+  { id: "mars_window", type: "bigwindow", tx: 7, ty: 4, w: 4, h: 1, solid: true, label: "Mars Window" },
+  { id: "photo_table", type: "phototable", tx: 8, ty: 7, w: 2, h: 1, label: "Crew Photo" },
   { id: "scale", type: "scale", tx: 13, ty: 10, w: 1, h: 1, fact: "gravity", label: "Weighing Scale" },
   { id: "clock", type: "clock", tx: 3, ty: 10, w: 1, h: 1, fact: "sol", label: "Mars Clock" },
-  { id: "window_q", type: "viewport", tx: 14, ty: 6, w: 1, h: 2, fact: "air", label: "Window" },
+  { id: "window_q", type: "airvent", tx: 6, ty: 10, w: 1, h: 1, fact: "air", label: "Air Monitor" },
   // airlock
   { id: "suits", type: "suits", tx: 45, ty: 6, w: 2, h: 1, fact: "radiation", label: "Spacesuits" },
   { id: "hatch", type: "hatch", tx: 53, ty: 8, w: 1, h: 2, solid: false, label: "Outer Hatch" },
@@ -2103,6 +2118,31 @@ function drawPropV2(g, p, t) {
       drawProp1(g, p, t);
       break;
     }
+    // ---------------------------------------------------------- BIG WINDOW looking out on Mars
+    case "bigwindow": {
+      const st = G.storm || 0, top = -30, h = 40;
+      R(-3, top - 3, W + 6, h + 6, "#2a2e3c"); R(-2, top - 2, W + 4, h + 4, "#8b93a6"); R(0, top, W, h, "#1b1d2b");
+      // sky, sun, hills, ground (inside the glass)
+      const gx = p.x + 2, gy = p.y + top + 2, gw = W - 4, gh = h - 4;
+      g.save(); g.beginPath(); g.rect(gx, gy, gw, gh); g.clip();
+      const sky = g.createLinearGradient(0, gy, 0, gy + gh); sky.addColorStop(0, "#e8a878"); sky.addColorStop(1, "#c87850"); g.fillStyle = sky; g.fillRect(gx, gy, gw, gh);
+      R(W - 16, top + 6, 5, 5, "#fff2d0"); R(W - 17, top + 7, 7, 3, "rgba(255,240,200,0.6)");
+      g.fillStyle = "#a85a34"; g.beginPath(); g.moveTo(gx, gy + gh - 12); for (let x = 0; x <= gw; x += 6) g.lineTo(gx + x, gy + gh - 14 + Math.sin(x * 0.3 + 1) * 3 + (x > 30 ? -4 * Math.sin((x - 30) * 0.1) : 0)); g.lineTo(gx + gw, gy + gh); g.lineTo(gx, gy + gh); g.fill();
+      R(2, top + h - 10, W - 4, 8, "#8a4426"); R(10, top + h - 7, 4, 2, "#6a3018"); R(40, top + h - 6, 6, 2, "#6a3018");
+      g.fillStyle = "rgba(240,170,110,0.55)"; for (let k = 0; k < 6; k++) g.fillRect(gx + ((k * 17 + t * (12 + k * 3)) % gw), gy + 6 + k * 4, 4, 1);
+      if (st > 0) { g.fillStyle = `rgba(150,75,35,${0.2 + st * 0.6})`; g.fillRect(gx, gy, gw, gh); }
+      R(W / 2 - 1, top, 2, h, "#8b93a6"); // window frame bar
+      g.fillStyle = "rgba(255,255,255,0.18)"; g.fillRect(gx + 3, gy + 2, 3, gh - 6); g.fillRect(gx + 8, gy + 2, 1, gh - 10);
+      g.restore();
+      R(-4, top + h + 1, W + 8, 3, "#6a7090"); // sill
+      glow(p.x + W / 2, p.y + top + h / 2, 34, "#ffb070", 0.25);
+      break;
+    }
+    case "airvent": {
+      R(1, -14, 14, 16, "#3a4052"); R(2, -13, 12, 9, "#0d1a2a"); R(3, -11, 4, 1, "#5dff8a"); R(3, -9, 8, 1, "#5dff8a"); R(3, -7, 6, 1, "#7fd0ff");
+      for (let i = 0; i < 3; i++) R(3, -3 + i * 2, 10, 1, "#262b3c");
+      break;
+    }
     // ---------------------------------------------------------- LOW SPACE TABLE + PHOTO ALBUM
     case "phototable": {
       // short legs + rounded metal top with a soft light strip
@@ -2262,7 +2302,8 @@ const UI = {
   },
   toast(msg, ms = 2200) { const t = $("#toast"); t.innerHTML = msg; t.classList.add("show"); clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove("show"), ms); },
   banner(txt) { const b = $("#roomBanner"); b.textContent = txt; b.classList.add("show"); clearTimeout(this._bt); this._bt = setTimeout(() => b.classList.remove("show"), 1800); },
-  objective(txt) { const o = $("#objective"); if (!txt) { o.classList.add("hidden"); return; } o.classList.remove("hidden"); o.querySelector("span").textContent = fill(txt); o.animate([{ transform: "scale(1.15)" }, { transform: "scale(1)" }], { duration: 400 }); },
+  objective(txt, sub) { const o = $("#objective"); if (!txt) { o.classList.add("hidden"); this.objectiveSub(null); return; } o.classList.remove("hidden"); o.querySelector("span").textContent = fill(txt); this.objectiveSub(sub || null); o.animate([{ transform: "scale(1.15)" }, { transform: "scale(1)" }], { duration: 400 }); },
+  objectiveSub(sub) { const o = $("#objective"); let e = o.querySelector(".osub"); if (!sub) { if (e) e.remove(); return; } if (!e) { e = el("div", "osub"); o.appendChild(e); } e.innerHTML = fill(sub); },
   timer(v, low) { const t = $("#timer"); if (v === null) { t.classList.add("hidden"); return; } t.classList.remove("hidden"); t.textContent = "⏱ " + Math.ceil(v); t.classList.toggle("low", !!low); },
   fade(on) { $("#fader").classList.toggle("on", on); return sleep(650); },
 
@@ -2503,8 +2544,9 @@ const Game = {
     for (const p of PROPS) {
       if (p.fact) this.addInteract({ id: "fact_" + p.id, x: p.x + p.pw / 2, y: p.y + p.ph + 8, label: "Inspect", name: p.label, fact: p.fact, use: () => UI.fact(p.fact), marker: () => !G.discovered.has(p.fact) ? "?" : null });
     }
+    const mw = propById.mars_window; this.addInteract({ id: "mwin", x: mw.x + mw.pw / 2, y: mw.y + mw.ph + 8, r: 30, label: "Look", name: "Mars window", use: () => MarsWindow.open(), marker: () => G.flags && G.flags.window ? null : "?" });
     const pt = propById.photo_table; this.addInteract({ id: "photo", x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo album", use: () => PhotoAlbum.open(), marker: () => G.flags && G.flags.photo ? null : "?" });
-    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", use: () => MarsGlobe.open() });
+    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", marker: () => Story.onHolo ? "!" : null, use: async () => { await MarsGlobe.open(); G.flags.holo = true; if (Story.onHolo) { const f = Story.onHolo; Story.onHolo = null; f(); } } });
     const hp = propById.hope; this.addInteract({ id: "hope", x: hp.x + 8, y: hp.y + hp.ph + 8, label: "Look", name: "Hope", use: () => Story.hope() });
   },
   addInteract(o) { o.r = o.r || 24; o.enabled = o.enabled || (() => true); this.interactables = this.interactables.filter((i) => i.id !== o.id); this.interactables.push(o); return o; },
@@ -2758,7 +2800,7 @@ const Story = {
   setup() {
     resetState(); UI.buildMeters();
     const N = Game.npc, P = Game.player;
-    Game.place(P, 29, 9, 1); Game.place(N.marcus, 28, 4, 1); Game.place(N.diego, 12, 25, 1); Game.place(N.layla, 34, 22, 0);
+    Game.place(P, 9, 9, 1); Game.place(N.marcus, 28, 4, 1); Game.place(N.diego, 12, 25, 1); Game.place(N.layla, 34, 22, 0);
     N.diego.follow = null; N.layla.follow = null; N.diego.hurt = false; P.helmet = false; for (const n of Object.values(N)) n.helmet = false;
     for (const c of Game.chars) c.visible = true;
     dynSolid.add(idx(53, 8)); dynSolid.add(idx(53, 9));
@@ -2781,12 +2823,22 @@ const Story = {
   // ------------------------------------------------------------ SCENE 1 — control room
   async scene1() {
     const N = Game.npc;
-    UI.banner("SOL 200 · CONTROL ROOM");
+    UI.banner("SOL 200 · CREW QUARTERS");
     await sleep(900);
     await UI.charCard("lead", "That's YOU! Every choice you make changes the story.");
     await UI.say("lead", "Sol 200. Earth is waiting for good news. I won't let them down.", { think: true });
     UI.toast("☀️ A <b>sol</b> is one day on Mars — a little longer than an Earth day.", 5000);
     UI.keysHint(true); Game.keysHintT = 0;
+    // objective 1 (optional): explore the quarters · objective 2: the Mars hologram table
+    const qItems = [["window", () => G.flags.window, "window"], ["photo", () => G.flags.photo, "photos"], ["sol", () => G.discovered.has("sol"), "clock"], ["gravity", () => G.discovered.has("gravity"), "scale"], ["air", () => G.discovered.has("air"), "air monitor"]];
+    const qSub = () => { const n = qItems.filter((q) => q[1]()).length; return n >= qItems.length ? `<span class="done">✓ Quarters explored (${n}/${qItems.length})</span>` : `★ Optional: explore the quarters (${n}/${qItems.length})`; };
+    UI.objective("Go to the Mars hologram in the Control Room", qSub());
+    const qIv = setInterval(() => UI.objectiveSub(qSub()), 500);
+    const ht = propById.holo_table;
+    Game.setTarget({ x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8 });
+    await new Promise((res) => { this.onHolo = res; });
+    clearInterval(qIv); Game.setTarget(null);
+    await UI.say("lead", "Gale, Jezero, Olympus... and somewhere down there, us. Okay. Time to check in with the team.", { think: true, mood: "calm" });
     UI.objective("Talk to {marcus} at the weather screen");
     Game.setTarget({ x: N.marcus.x, y: N.marcus.y });
     await Game.waitTalk("talk_marcus", N.marcus);
@@ -3819,7 +3871,7 @@ Minigames.power = function () {
   return canvasGame({ title: "Storm Night: Share the Power", sub: "Keep every bar <b>out of the red</b> until the storm passes. Tap a machine to switch it ON/OFF (or keys 1–5). Use more ⚡ than you have and the breaker trips!", speaker: "marcus", hint: "We only have 6 bolts of power. Switch machines on and off to keep them all alive." }, (api) => {
     const { g } = api; api.cv.style.cursor = "pointer";
     const parts = new Pool(160);
-    let t0 = 0, cap = 6, gust = { next: 9, warn: 0, left: 0 }, trip = 0, trips = 0, ended = false, shake = 0;
+    let t0 = 0, cap = 6, gust = { next: 7, warn: 0, left: 0 }, trip = 0, trips = 0, ended = false, shake = 0;
     const used = () => DEV.reduce((a, d) => a + (d.on ? d.need : 0), 0);
     const cardX = (i) => 14 + i * 92;
     const tripBreaker = () => { trip = 2.2; trips++; shake = 0.5; DEV.forEach((d) => (d.on = false)); Sound.play("zap"); Sound.play("error"); Sound.play("thud"); api.say("marcus", trips === 1 ? "Overload! The breaker tripped — everything is OFF! Never use more than we have." : "Overload again! Count the bolts before you switch on."); for (let k = 0; k < 30; k++) parts.spawn({ x: 240 + (Math.random() - 0.5) * 300, y: 40, vx: (Math.random() - 0.5) * 200, vy: Math.random() * 120, life: 0.6, s: 2, c: ["#ffd34a", "#fff", "#7fd0ff"][k % 3], g: 200 }); };
@@ -4097,13 +4149,10 @@ const MarsGlobe = {
 //  the arrows) to send the front photo to the back and bring up the next.
 // =====================================================================
 const ALBUM = [
-  { id: "training", title: "Training Base, Earth", date: "3 years ago", faces: [["marcus", "angry"], ["lead", "happy"], ["diego", "worried"], ["layla", "worried"]],
-    note: () => `Everyone is smiling for the camera... except ${CONFIG.NAMES.marcus}. And ${CONFIG.NAMES.diego} and ${CONFIG.NAMES.layla} won't look at ${CONFIG.NAMES.lead}.<br><i>Written on the back: <b>"Commander ${CONFIG.NAMES.lead} — he saved the training!"</b></i>` },
-  { id: "launch", title: "Launch Day", date: "Earth", faces: [["layla", "happy"], ["lead", "happy"], ["diego", "happy"], ["marcus", "calm"]], note: () => "The rocket that carried the crew to Mars. Seven months in space!" },
-  { id: "sol1", title: "Sol 1 — We made it!", date: "Mars", faces: [["diego", "happy"], ["lead", "happy"], ["layla", "happy"], ["marcus", "happy"]], note: () => "The first photo on Mars, in front of the new base. Even Marcus is smiling." },
-  { id: "rosie", title: "Rosie's first breath", date: "Sol 12", faces: [["diego", "happy"]], note: () => `${CONFIG.NAMES.diego} and Rosie, the day she made her first oxygen. He gave her a party hat.` },
-  { id: "dinner", title: "Team dinner", date: "Sol 100", faces: [["layla", "happy"], ["diego", "happy"], ["marcus", "calm"], ["lead", "happy"]], note: () => "Space food for 100 sols! Diego told jokes all night." },
-  { id: "hope", title: "Hope sprouts", date: "Sol 190", faces: [["layla", "happy"]], note: () => `${CONFIG.NAMES.layla} with Hope, the first sprout. "If it grows, it will be the first food grown on Mars."` },
+  { img: "img/crew/1.jpg", title: "Training Base, Earth", date: "3 years ago", note: () => `A selfie in the training hangar. Everyone is laughing... except ${CONFIG.NAMES.marcus}, with his arms crossed.<br><i>Written on the back: <b>"Commander ${CONFIG.NAMES.lead} — he saved the training!"</b></i>` },
+  { img: "img/crew/2.jpg", title: "Desert field training", date: "Earth", note: () => `Learning to read rocks and maps in a Mars-like desert. ${CONFIG.NAMES.marcus} checks the compass while everyone else jokes around.` },
+  { img: "img/crew/3.jpg", title: "Flight simulator", date: "Earth", note: () => `${CONFIG.NAMES.marcus} reads the checklist step by step. ${CONFIG.NAMES.lead} just grabs the controls.` },
+  { img: "img/crew/4.jpg", title: "Greenhouse training", date: "Earth", note: () => `Learning to grow lettuce for space. This is where ${CONFIG.NAMES.layla} first said: "One day, the first food on Mars."` },
 ];
 function drawAlbumPhoto(ph) {
   const W = 160, H = 112, c = mkCanvas(W, H), g = c.getContext("2d"); g.imageSmoothingEnabled = false;
@@ -4138,9 +4187,9 @@ const PhotoAlbum = {
       cls: "dark wide albumCard", closable: true, onMount: (card) => {
         const album = card.querySelector(".album"), cap = card.querySelector(".albCap"), dots = card.querySelector(".albDots");
         const cards = ALBUM.map((ph, i) => {
-          const d = el("div", "photo"); const cv = drawAlbumPhoto(ph); cv.className = "pimg";
-          d.appendChild(cv); d.appendChild(el("div", "pcap", `${ph.title}<span>${ph.date}</span>`)); album.appendChild(d);
-          return { d, ph, tilt: [-3, 2.5, -1.5, 3, -2.5, 1.5][i % 6] };
+          const d = el("div", "photo real"); const im = new Image(); im.src = ph.img; im.className = "pimg"; im.draggable = false; im.alt = ph.title;
+          d.appendChild(im); d.appendChild(el("div", "pcap", `${ph.title}<span>${ph.date}</span>`)); album.appendChild(d);
+          return { d, ph, tilt: [-3, 2.5, -1.5, 3][i % 4] };
         });
         let order = cards.map((_, i) => i); // order[0] = front
         const place = (anim = true) => {
@@ -4166,6 +4215,43 @@ const PhotoAlbum = {
         album.addEventListener("pointerup", up); album.addEventListener("pointercancel", up);
         const kd = (e) => { if (!document.body.contains(album)) { window.removeEventListener("keydown", kd); return; } if (e.key === "ArrowLeft") next(); if (e.key === "ArrowRight") prev(); };
         window.addEventListener("keydown", kd);
+      },
+    });
+  },
+};
+
+// =====================================================================
+//  MARS WINDOW — real photos of Mars' surface from NASA rovers.
+// =====================================================================
+const MARS_VIEWS = [
+  { id: "PIA16077", title: "The heights of Mount Sharp", rover: "Curiosity", date: "Aug 2012", credit: "NASA/JPL-Caltech", text: "Curiosity's view from its landing spot in Gale Crater. The mountain in the distance, Mount Sharp, is about 5 km tall." },
+  { id: "PIA21268", title: "A field of sand dunes", rover: "Curiosity", date: "Feb 2017", credit: "NASA/JPL-Caltech", text: "Ripples on a long sand dune in the Bagnold Dune Field. Mars wind slowly moves this sand." },
+  { id: "PIA19400", title: "Sunset in Gale Crater", rover: "Curiosity", date: "Apr 2015", credit: "NASA/JPL-Caltech/MSSS/Texas A&M Univ.", size: "small", text: "On Mars, sunsets glow blue! Fine dust in the air lets blue light pass near the Sun." },
+  { id: "PIA24921", title: "An ancient river delta", rover: "Perseverance", date: "2022", credit: "NASA/JPL-Caltech/ASU/MSSS", text: "Billions of years ago, a river flowed into a lake in Jezero Crater and left these layers of rock." },
+  { id: "PIA26373", title: "Looking up at the crater rim", rover: "Perseverance", date: "Aug 2024", credit: "NASA/JPL-Caltech/ASU/MSSS", text: "Perseverance looks south toward the rim of Jezero Crater, the next place it will climb." },
+];
+const MarsWindow = {
+  open() {
+    G.flags.window = true; let i = 0;
+    const html = `<div class="head"><div><h3>CREW QUARTERS · WINDOW</h3><h1>🪟 The view from Mars</h1></div></div>
+      <p style="font-size:.8em;margin:.2em 0 .5em">Our window shows the real Mars! These are <b>real photos</b> taken by NASA rovers.</p>
+      <div class="mwFrame"><img class="mwImg" alt=""><button class="albNav prev">◀</button><button class="albNav next">▶</button></div>
+      <div class="mwCap"></div>`;
+    return UI.card(html, [{ id: "ok", label: "Close", cls: "go" }], {
+      cls: "dark wide mwCard", closable: true, onMount: (card) => {
+        const img = card.querySelector(".mwImg"), cap = card.querySelector(".mwCap");
+        const show = () => {
+          const v = MARS_VIEWS[i];
+          img.style.opacity = 0; img.onload = () => { img.style.opacity = 1; };
+          img.onerror = () => { cap.insertAdjacentHTML("afterbegin", "<i>Can't load this photo right now (offline?).</i><br>"); };
+          img.src = `https://images-assets.nasa.gov/image/${v.id}/${v.id}~${v.size || "medium"}.jpg`; img.alt = v.title;
+          cap.innerHTML = `<b>${v.title}</b> · ${v.rover} rover · ${v.date}<br>${v.text}<div class="src">📚 Source: <a href="https://images.nasa.gov/details/${v.id}" target="_blank" rel="noopener">NASA Image and Video Library — ${v.id}</a> <i>(${v.credit})</i></div><div class="albDots">${MARS_VIEWS.map((_, k) => `<span class="${k === i ? "on" : ""}"></span>`).join("")}</div>`;
+        };
+        card.querySelector(".next").onclick = (e) => { e.stopPropagation(); i = (i + 1) % MARS_VIEWS.length; Sound.play("whoosh"); show(); };
+        card.querySelector(".prev").onclick = (e) => { e.stopPropagation(); i = (i + MARS_VIEWS.length - 1) % MARS_VIEWS.length; Sound.play("whoosh"); show(); };
+        const kd = (e) => { if (!document.body.contains(img)) { window.removeEventListener("keydown", kd); return; } if (e.key === "ArrowRight") card.querySelector(".next").click(); if (e.key === "ArrowLeft") card.querySelector(".prev").click(); };
+        window.addEventListener("keydown", kd);
+        show();
       },
     });
   },
@@ -5633,7 +5719,7 @@ window.addEventListener("DOMContentLoaded", () => {
   Intro.init();
   Intro.showStart();
   // Test hooks (used by the automated play-test; harmless for players)
-  window.__sol = { Intro, G, Game, Story, UI, Minigames, Scenes, Sound, SpaceWeather, PROPS, propById, MarsGlobe, MarsTex, PhotoAlbum };
+  window.__sol = { Intro, G, Game, Story, UI, Minigames, Scenes, Sound, SpaceWeather, PROPS, propById, MarsGlobe, MarsTex, PhotoAlbum, MarsWindow };
   if (/[?&]debug/.test(location.search)) Game.debugKeys = true;
 });
 </script>

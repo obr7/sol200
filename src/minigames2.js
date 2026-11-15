@@ -618,7 +618,7 @@ Minigames.power = function () {
   return canvasGame({ title: "Storm Night: Share the Power", sub: "Keep every bar <b>out of the red</b> until the storm passes. Tap a machine to switch it ON/OFF (or keys 1–5). Use more ⚡ than you have and the breaker trips!", speaker: "marcus", hint: "We only have 6 bolts of power. Switch machines on and off to keep them all alive." }, (api) => {
     const { g } = api; api.cv.style.cursor = "pointer";
     const parts = new Pool(160);
-    let t0 = 0, cap = 6, gust = { next: 9, warn: 0, left: 0 }, trip = 0, trips = 0, ended = false, shake = 0;
+    let t0 = 0, cap = 6, gust = { next: 7, warn: 0, left: 0 }, trip = 0, trips = 0, ended = false, shake = 0;
     const used = () => DEV.reduce((a, d) => a + (d.on ? d.need : 0), 0);
     const cardX = (i) => 14 + i * 92;
     const tripBreaker = () => { trip = 2.2; trips++; shake = 0.5; DEV.forEach((d) => (d.on = false)); Sound.play("zap"); Sound.play("error"); Sound.play("thud"); api.say("marcus", trips === 1 ? "Overload! The breaker tripped — everything is OFF! Never use more than we have." : "Overload again! Count the bolts before you switch on."); for (let k = 0; k < 30; k++) parts.spawn({ x: 240 + (Math.random() - 0.5) * 300, y: 40, vx: (Math.random() - 0.5) * 200, vy: Math.random() * 120, life: 0.6, s: 2, c: ["#ffd34a", "#fff", "#7fd0ff"][k % 3], g: 200 }); };

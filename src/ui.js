@@ -118,7 +118,8 @@ const UI = {
   },
   toast(msg, ms = 2200) { const t = $("#toast"); t.innerHTML = msg; t.classList.add("show"); clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove("show"), ms); },
   banner(txt) { const b = $("#roomBanner"); b.textContent = txt; b.classList.add("show"); clearTimeout(this._bt); this._bt = setTimeout(() => b.classList.remove("show"), 1800); },
-  objective(txt) { const o = $("#objective"); if (!txt) { o.classList.add("hidden"); return; } o.classList.remove("hidden"); o.querySelector("span").textContent = fill(txt); o.animate([{ transform: "scale(1.15)" }, { transform: "scale(1)" }], { duration: 400 }); },
+  objective(txt, sub) { const o = $("#objective"); if (!txt) { o.classList.add("hidden"); this.objectiveSub(null); return; } o.classList.remove("hidden"); o.querySelector("span").textContent = fill(txt); this.objectiveSub(sub || null); o.animate([{ transform: "scale(1.15)" }, { transform: "scale(1)" }], { duration: 400 }); },
+  objectiveSub(sub) { const o = $("#objective"); let e = o.querySelector(".osub"); if (!sub) { if (e) e.remove(); return; } if (!e) { e = el("div", "osub"); o.appendChild(e); } e.innerHTML = fill(sub); },
   timer(v, low) { const t = $("#timer"); if (v === null) { t.classList.add("hidden"); return; } t.classList.remove("hidden"); t.textContent = "⏱ " + Math.ceil(v); t.classList.toggle("low", !!low); },
   fade(on) { $("#fader").classList.toggle("on", on); return sleep(650); },
 
