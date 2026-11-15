@@ -75,37 +75,41 @@ const PhotoAlbum = {
 };
 
 // =====================================================================
-//  MARS WINDOW — real photos of Mars' surface from NASA rovers.
+//  MARS WINDOW — look out of the quarters window at a real NASA photo of
+//  Mars, shown in chunky pixels to match the game's art.
 // =====================================================================
-const MARS_VIEWS = [
-  { id: "PIA16077", title: "The heights of Mount Sharp", rover: "Curiosity", date: "Aug 2012", credit: "NASA/JPL-Caltech", text: "Curiosity's view from its landing spot in Gale Crater. The mountain in the distance, Mount Sharp, is about 5 km tall." },
-  { id: "PIA21268", title: "A field of sand dunes", rover: "Curiosity", date: "Feb 2017", credit: "NASA/JPL-Caltech", text: "Ripples on a long sand dune in the Bagnold Dune Field. Mars wind slowly moves this sand." },
-  { id: "PIA19400", title: "Sunset in Gale Crater", rover: "Curiosity", date: "Apr 2015", credit: "NASA/JPL-Caltech/MSSS/Texas A&M Univ.", size: "small", text: "On Mars, sunsets glow blue! Fine dust in the air lets blue light pass near the Sun." },
-  { id: "PIA24921", title: "An ancient river delta", rover: "Perseverance", date: "2022", credit: "NASA/JPL-Caltech/ASU/MSSS", text: "Billions of years ago, a river flowed into a lake in Jezero Crater and left these layers of rock." },
-  { id: "PIA26373", title: "Looking up at the crater rim", rover: "Perseverance", date: "Aug 2024", credit: "NASA/JPL-Caltech/ASU/MSSS", text: "Perseverance looks south toward the rim of Jezero Crater, the next place it will climb." },
-];
+const MARS_VIEW = { id: "PIA20843", title: "Butte M9a, Murray Buttes", rover: "Curiosity rover", date: "Aug 2016", credit: "NASA/JPL-Caltech/MSSS",
+  text: "A real view of Mars taken by NASA's Curiosity rover on the slopes of Mount Sharp. The flat-topped hill is about 5 m tall — its layers are old sand dunes turned to rock." };
 const MarsWindow = {
   open() {
-    G.flags.window = true; let i = 0;
-    const html = `<div class="head"><div><h3>CREW QUARTERS · WINDOW</h3><h1>🪟 The view from Mars</h1></div></div>
-      <p style="font-size:.8em;margin:.2em 0 .5em">Our window shows the real Mars! These are <b>real photos</b> taken by NASA rovers.</p>
-      <div class="mwFrame"><img class="mwImg" alt=""><button class="albNav prev">◀</button><button class="albNav next">▶</button></div>
-      <div class="mwCap"></div>`;
-    return UI.card(html, [{ id: "ok", label: "Close", cls: "go" }], {
+    G.flags.window = true;
+    const v = MARS_VIEW, url = `https://images-assets.nasa.gov/image/${v.id}/${v.id}~medium.jpg`;
+    const html = `<div class="mwWin"><canvas class="mwPix" width="200" height="100"></canvas><div class="mwBar"></div><div class="mwGlare"></div></div>
+      <div class="mwCap"><b>${v.title}</b> · ${v.rover} · ${v.date}<br>${v.text}<div class="src">📚 Real NASA photo: <a href="https://images.nasa.gov/details/${v.id}" target="_blank" rel="noopener">NASA Image and Video Library — ${v.id}</a> <i>(${v.credit})</i></div></div>`;
+    Sound.play("whoosh");
+    return UI.card(html, [{ id: "ok", label: "Step back", cls: "go" }], {
       cls: "dark wide mwCard", closable: true, onMount: (card) => {
-        const img = card.querySelector(".mwImg"), cap = card.querySelector(".mwCap");
-        const show = () => {
-          const v = MARS_VIEWS[i];
-          img.style.opacity = 0; img.onload = () => { img.style.opacity = 1; };
-          img.onerror = () => { cap.insertAdjacentHTML("afterbegin", "<i>Can't load this photo right now (offline?).</i><br>"); };
-          img.src = `https://images-assets.nasa.gov/image/${v.id}/${v.id}~${v.size || "medium"}.jpg`; img.alt = v.title;
-          cap.innerHTML = `<b>${v.title}</b> · ${v.rover} rover · ${v.date}<br>${v.text}<div class="src">📚 Source: <a href="https://images.nasa.gov/details/${v.id}" target="_blank" rel="noopener">NASA Image and Video Library — ${v.id}</a> <i>(${v.credit})</i></div><div class="albDots">${MARS_VIEWS.map((_, k) => `<span class="${k === i ? "on" : ""}"></span>`).join("")}</div>`;
+        const cv = card.querySelector(".mwPix"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+        const W = 200, H = 100, small = mkCanvas(W, H), sg = small.getContext("2d");
+        let ready = false;
+        // fallback: painted pixel Mars until the photo arrives (or if offline)
+        const paint = () => { const gr = sg.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, "#c8743c"); gr.addColorStop(0.55, "#e09a60"); gr.addColorStop(0.56, "#b86a3a"); gr.addColorStop(1, "#8a4426"); sg.fillStyle = gr; sg.fillRect(0, 0, W, H); sg.fillStyle = "#7a3a20"; for (let i = 0; i < 12; i++) sg.fillRect((i * 37) % W, 70 + (i * 13) % 25, 6 + (i % 3) * 4, 3 + (i % 2) * 2); };
+        paint();
+        const im = new Image(); im.crossOrigin = "anonymous";
+        im.onload = () => { const r = W / H, ir = im.width / im.height; let sw = im.width, sh = im.height, sx = 0, sy = 0; if (ir > r) { sw = im.height * r; sx = (im.width - sw) / 2; } else { sh = im.width / r; sy = (im.height - sh) / 2; } sg.imageSmoothingEnabled = true; sg.drawImage(im, sx, sy, sw, sh, 0, 0, W, H); ready = true; };
+        im.onerror = () => { card.querySelector(".mwCap").insertAdjacentHTML("afterbegin", "<i>Can't reach NASA right now — showing a painted view.</i><br>"); };
+        im.src = url;
+        const dust = Array.from({ length: 26 }, (_, i) => ({ x: Math.random() * W, y: Math.random() * H, v: 6 + Math.random() * 14, s: Math.random() < 0.3 ? 2 : 1 }));
+        let last = performance.now();
+        const loop = (now) => {
+          if (!document.body.contains(cv)) return;
+          const dt = Math.min(0.05, (now - last) / 1000); last = now; const t = now / 1000;
+          g.drawImage(small, Math.sin(t * 0.2) * 1.5 - 2, 0, W + 4, H); // tiny drift, like breathing on the glass
+          if ((G.storm || 0) > 0) { g.fillStyle = `rgba(150,75,35,${0.2 + G.storm * 0.5})`; g.fillRect(0, 0, W, H); }
+          g.fillStyle = "rgba(255,210,170,0.55)"; for (const d of dust) { d.x += d.v * dt; d.y += Math.sin(t + d.x) * 0.05; if (d.x > W) { d.x = -2; d.y = Math.random() * H; } g.fillRect(d.x | 0, d.y | 0, d.s, 1); }
+          requestAnimationFrame(loop);
         };
-        card.querySelector(".next").onclick = (e) => { e.stopPropagation(); i = (i + 1) % MARS_VIEWS.length; Sound.play("whoosh"); show(); };
-        card.querySelector(".prev").onclick = (e) => { e.stopPropagation(); i = (i + MARS_VIEWS.length - 1) % MARS_VIEWS.length; Sound.play("whoosh"); show(); };
-        const kd = (e) => { if (!document.body.contains(img)) { window.removeEventListener("keydown", kd); return; } if (e.key === "ArrowRight") card.querySelector(".next").click(); if (e.key === "ArrowLeft") card.querySelector(".prev").click(); };
-        window.addEventListener("keydown", kd);
-        show();
+        requestAnimationFrame(loop);
       },
     });
   },
