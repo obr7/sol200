@@ -96,7 +96,7 @@ const MarsWindow = {
         const paint = () => { const gr = sg.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, "#c8743c"); gr.addColorStop(0.55, "#e09a60"); gr.addColorStop(0.56, "#b86a3a"); gr.addColorStop(1, "#8a4426"); sg.fillStyle = gr; sg.fillRect(0, 0, W, H); sg.fillStyle = "#7a3a20"; for (let i = 0; i < 12; i++) sg.fillRect((i * 37) % W, 70 + (i * 13) % 25, 6 + (i % 3) * 4, 3 + (i % 2) * 2); };
         paint();
         const im = new Image(); // no CORS needed: we only draw the photo, never read its pixels
-        im.onload = () => { const r = W / H, ir = im.width / im.height; let sw = im.width, sh = im.height, sx = 0, sy = 0; if (ir > r) { sw = im.height * r; sx = (im.width - sw) / 2; } else { sh = im.width / r; sy = (im.height - sh) / 2; } sg.imageSmoothingEnabled = true; sg.drawImage(im, sx, sy, sw, sh, 0, 0, W, H); ready = true; };
+        im.onload = () => { const r = W / H, ir = im.width / im.height; let sw = im.width, sh = im.height, sx = 0, sy = 0; if (ir > r) { sw = im.height * r; sx = (im.width - sw) / 2; } else { sh = im.width / r; sy = (im.height - sh) / 2; } sg.imageSmoothingEnabled = true; sg.drawImage(im, sx, sy, sw, sh, 0, 0, W, H); sg.globalCompositeOperation = "soft-light"; sg.fillStyle = "rgba(255,110,40,0.55)"; sg.fillRect(0, 0, W, H); sg.globalCompositeOperation = "source-over"; ready = true; }; // light warm tint so it sits with the pixel art
         im.onerror = () => { card.querySelector(".mwCap").insertAdjacentHTML("afterbegin", "<i>Can't reach NASA right now — showing a painted view.</i><br>"); };
         im.src = url;
         const dust = Array.from({ length: 26 }, (_, i) => ({ x: Math.random() * W, y: Math.random() * H, v: 6 + Math.random() * 14, s: Math.random() < 0.3 ? 2 : 1 }));
