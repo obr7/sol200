@@ -37,9 +37,10 @@ const SuitCards = {
     const mini = (f) => `<div class="mini" style="--c:${f.c}"><div class="mIn"><div class="mF"><span class="mE">${f.e}</span><span class="mL">${f.label}</span><span class="mT">tap</span></div><div class="mB">${f.text}</div></div></div>`;
     const html = `<div class="lgWrap"><div class="lgRays"></div>
       <div class="lgScene"><div class="lgCard">
-        <div class="lgFace lgFront"><div class="lgNum">1 / 2</div><h3>SUIT UP · BRIEFING</h3><h1>${F.title}</h1><p>${F.intro}</p>
-          <div class="minis four">${F.facts.map(mini).join("")}</div>
-          <div class="lgHint">✨ Tap the small cards to learn each part · then tap the big card to turn it over</div></div>
+        <div class="lgFace lgFront"><div class="lgNum">1 / 2</div>
+          <div class="lgFrontGrid"><div><div class="lgIco">🧑‍🚀</div><h3>SUIT UP · BRIEFING</h3><h1>${F.title}</h1><p>${F.intro}</p>
+          <div class="lgHint">✨ Tap the small cards to learn each part<br>then tap the big card to turn it over</div></div>
+          <div class="minis four">${F.facts.map(mini).join("")}</div></div></div>
         <div class="lgFace lgBack"><div class="lgNum">2 / 2</div>
           <div class="lgBackGrid"><div class="lgPhoto"><img src="${ASSETS.salamPortrait}" alt="Salam Abu Alhayjaa" draggable="false"><span class="badge">${B.badge}</span></div>
           <div class="lgText"><h3>${B.badge}</h3><h1>${B.title}</h1><p>${B.intro}</p><div class="minis two">${B.facts.map(mini).join("")}</div><p class="lgOut">${B.outro}</p>

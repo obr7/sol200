@@ -274,7 +274,7 @@ body.touch.playing #touch { display: block; }
 .mwGlare { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255,255,255,.16) 0 6%, transparent 6% 9%, rgba(255,255,255,.08) 9% 11%, transparent 11%); }
 
 /* ---------- legendary suit briefing card ---------- */
-.card.legendCard { background: none !important; border: none !important; box-shadow: none !important; padding: 0 !important; width: min(94vw, 820px) !important; max-height: 96vh; overflow: visible; }
+.card.legendCard { background: none !important; border: none !important; box-shadow: none !important; padding: 0 !important; width: min(96vw, 62em, 1180px) !important; max-width: none !important; max-height: 96vh; overflow: visible; }
 .lgWrap { position: relative; padding: 1.2em; }
 .lgFx { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
 .lgRays { position: absolute; left: 50%; top: 50%; width: 160%; aspect-ratio: 1; transform: translate(-50%,-50%) scale(.3); border-radius: 50%; opacity: 0; pointer-events: none;
@@ -285,7 +285,7 @@ body.touch.playing #touch { display: block; }
 .lgCard { display: grid; transform-style: preserve-3d; transition: transform 1s cubic-bezier(.3,1.4,.4,1); cursor: pointer; border-radius: 1em; }
 .lgCard.flipped { transform: rotateY(180deg); cursor: default; }
 .lgFront { display: flex; flex-direction: column; justify-content: center; }
-.lgFace { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1em; padding: 1.1em 1.3em 1.2em; position: relative; color: #2a1a10;
+.lgFace { font-size: .95em; grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1em; padding: 1.1em 1.3em 1.2em; position: relative; color: #2a1a10;
   background: linear-gradient(160deg, #fff6df, #f3e2bc); border: .3em solid #c9952e; box-shadow: 0 0 0 .2em #5a3a14, 0 1em 2.5em rgba(0,0,0,.6); transition: box-shadow .35s; }
 .lgCard:not(.flipped):hover .lgFront { box-shadow: 0 0 0 .2em #5a3a14, 0 0 1.6em .3em rgba(255,200,90,.85), 0 0 4em 1em rgba(255,170,60,.45), 0 1em 2.5em rgba(0,0,0,.6); animation: lgPulse 1.6s ease-in-out infinite; }
 @keyframes lgPulse { 50% { box-shadow: 0 0 0 .2em #5a3a14, 0 0 2.2em .5em rgba(255,215,110,.95), 0 0 5em 1.5em rgba(255,170,60,.55), 0 1em 2.5em rgba(0,0,0,.6); } }
@@ -301,8 +301,8 @@ body.touch.playing #touch { display: block; }
 @keyframes lgBlink { 50% { opacity: .45; } }
 .minis { display: grid; gap: .6em; margin: .4em 0; }
 .minis.four { grid-template-columns: repeat(4, 1fr); }
-.minis.two { grid-template-columns: repeat(2, 1fr); } .minis.two .mini { height: 8.6em; } .minis.two .mB { font-size: .74em; }
-.mini { perspective: 700px; height: 7.4em; cursor: pointer; }
+.minis.two { grid-template-columns: repeat(2, 1fr); max-width: 100%; } .minis.two .mini { height: 6.6em; } .minis.two .mB { font-size: .74em; }
+.mini { perspective: 700px; height: 6.6em; cursor: pointer; }
 .mIn { position: relative; width: 100%; height: 100%; }
 .mini .mB { opacity: 0; pointer-events: none; } .mini.open .mB { opacity: 1; } .mini.open .mF { opacity: 0; }
 .mF, .mB { position: absolute; inset: 0; border-radius: .7em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: .5em; box-sizing: border-box;
@@ -314,7 +314,7 @@ body.touch.playing #touch { display: block; }
 .mL { font-weight: 700; font-size: .8em; margin-top: .25em; text-shadow: 0 .08em 0 rgba(0,0,0,.35); }
 .mT { font-size: .6em; opacity: .75; margin-top: .2em; letter-spacing: .1em; text-transform: uppercase; }
 .mini:hover .mF, .mini:hover .mB { box-shadow: 0 0 0 .12em #fff3c4, 0 0 1em .2em color-mix(in srgb, var(--c) 70%, #ffd34a), 0 0 2.2em .4em rgba(255,210,100,.35); transform: translateY(-.15em); }
-.lgBackGrid { display: grid; grid-template-columns: minmax(10em, 40%) 1fr; gap: 1.1em; align-items: start; }
+.lgBackGrid { display: grid; grid-template-columns: minmax(9em, 30%) 1fr; gap: 1.1em; align-items: start; }
 .lgPhoto { position: relative; }
 .lgPhoto img { width: 100%; display: block; border-radius: .6em; border: .25em solid #e0b84a; box-shadow: 0 0 1.4em rgba(255,200,90,.45); }
 .lgPhoto .badge { position: absolute; left: 50%; bottom: -.7em; transform: translateX(-50%); background: #e0b84a; color: #2a1a10; font-weight: 800; font-size: .65em; letter-spacing: .14em; padding: .3em .8em; border-radius: 1em; white-space: nowrap; box-shadow: 0 .2em 0 #6a4a14; }
@@ -335,6 +335,13 @@ body.touch.playing #touch { display: block; }
 #devPanel .dvB { background: #26305a; color: #fff; border: 1px solid #3a4a80; border-radius: 6px; padding: 6px 6px; cursor: pointer; font: inherit; font-size: 12px; text-align: left; }
 #devPanel .dvB:hover { background: #3a4a80; border-color: #ffd34a; }
 #devPanel select { font: inherit; }
+
+/* landscape layout: front = text left, 2x2 cards right; back = photo | text */
+.lgFrontGrid { display: grid; grid-template-columns: 1fr 1.25fr; gap: 1.2em; align-items: center; }
+.lgFrontGrid .minis.four { grid-template-columns: repeat(2, 1fr); margin: 0; }
+.lgFront .lgIco { font-size: 3.2em; line-height: 1; margin-bottom: .2em; filter: drop-shadow(0 .1em .15em rgba(0,0,0,.25)); }
+.lgPhoto img { aspect-ratio: 1; object-fit: cover; }
+@media (max-aspect-ratio: 1/1) { .lgFrontGrid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -4372,9 +4379,10 @@ const SuitCards = {
     const mini = (f) => `<div class="mini" style="--c:${f.c}"><div class="mIn"><div class="mF"><span class="mE">${f.e}</span><span class="mL">${f.label}</span><span class="mT">tap</span></div><div class="mB">${f.text}</div></div></div>`;
     const html = `<div class="lgWrap"><div class="lgRays"></div>
       <div class="lgScene"><div class="lgCard">
-        <div class="lgFace lgFront"><div class="lgNum">1 / 2</div><h3>SUIT UP · BRIEFING</h3><h1>${F.title}</h1><p>${F.intro}</p>
-          <div class="minis four">${F.facts.map(mini).join("")}</div>
-          <div class="lgHint">✨ Tap the small cards to learn each part · then tap the big card to turn it over</div></div>
+        <div class="lgFace lgFront"><div class="lgNum">1 / 2</div>
+          <div class="lgFrontGrid"><div><div class="lgIco">🧑‍🚀</div><h3>SUIT UP · BRIEFING</h3><h1>${F.title}</h1><p>${F.intro}</p>
+          <div class="lgHint">✨ Tap the small cards to learn each part<br>then tap the big card to turn it over</div></div>
+          <div class="minis four">${F.facts.map(mini).join("")}</div></div></div>
         <div class="lgFace lgBack"><div class="lgNum">2 / 2</div>
           <div class="lgBackGrid"><div class="lgPhoto"><img src="${ASSETS.salamPortrait}" alt="Salam Abu Alhayjaa" draggable="false"><span class="badge">${B.badge}</span></div>
           <div class="lgText"><h3>${B.badge}</h3><h1>${B.title}</h1><p>${B.intro}</p><div class="minis two">${B.facts.map(mini).join("")}</div><p class="lgOut">${B.outro}</p>
