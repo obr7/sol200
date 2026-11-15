@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="SOL 200 — a Mars outpost survival game for kids 7–12. Built for NASA Space Apps Challenge 2026 (Junior Astronaut Mission Trainer). Uses NASA DONKI space-weather data.">
+<meta name="generator" content="Code written with AI assistance (Claude by Anthropic) — see Credits screen.">
+<title>SOL 200 — Junior Astronaut Mission Trainer</title>
+<style>/*CSS*/</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="screen"></canvas>
+  <div id="hud" class="layer off">
+    <div id="meters"></div>
+    <div id="objective" class="hidden"><b>OBJECTIVE</b><span></span></div>
+    <div id="topright">
+      <button class="iconbtn" id="btnMap" title="Base map (M)">🗺️</button>
+      <button class="iconbtn" id="btnJournal" title="Discovery journal (J)">📖<span class="badge" id="jcount">0</span></button>
+      <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
+    </div>
+    <div id="minimapWrap" title="Base map (M)"><canvas id="minimap" width="240" height="132"></canvas><div id="mmLabel"></div></div>
+    <div id="timer" class="hidden">0</div>
+    <div id="roomBanner"></div>
+    <div id="prompt" class="hidden"></div>
+    <div id="toast"></div>
+  </div>
+  <div id="touch" class="layer"><div id="stick"><div id="knob"></div></div><button id="abtn">A</button></div>
+  <div id="ui" class="layer"></div>
+  <div id="fader"></div>
+</div>
+<div id="rotate">📱↻<br><br>Turn your phone sideways to play!</div>
+<script>/*JS*/</script>
+</body>
+</html>
