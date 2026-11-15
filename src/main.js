@@ -17,7 +17,7 @@ const Game = {
   keys: {}, joy: { x: 0, y: 0 }, trail: [], lastStepSound: 0, onRoomEnter: null, freeze: false,
 
   init() {
-    buildMap(); initProps(); renderStaticMap(); buildCharSprites(); buildPortraits();
+    buildMap(); initProps(); renderStaticMap(); buildCharSprites(); buildCharSprites2(); buildPortraits();
     this.player = makeChar("lead", "lead", 29, 9); this.player.speed = 78; this.player.dir = 1;
     this.npc.marcus = makeChar("marcus", "marcus", 28, 4); this.npc.marcus.dir = 1;
     this.npc.diego = makeChar("diego", "diego", 12, 25);
@@ -208,7 +208,7 @@ const Game = {
     for (const i of this.interactables) {
       if (!i.enabled() || !i.marker) continue;
       const m = i.marker(); if (!m) continue;
-      const x = Math.round(i.x), y = Math.round((i.npc ? i.npc.y - 34 : i.y - 30) + Math.sin(t * 4) * 2);
+      const x = Math.round(i.x), y = Math.round((i.npc ? i.npc.y - (CHAR_STYLE === "v2" ? 43 : 34) : i.y - 30) + Math.sin(t * 4) * 2);
       if (!visible(i.x, i.y - 10)) continue;
       g.fillStyle = m === "!" ? "#ffd34a" : "#7ad8ff"; g.fillRect(x - 4, y - 6, 9, 10); g.fillStyle = "#1b1d2b"; g.fillRect(x - 4, y + 4, 9, 1); g.fillRect(x, y + 4, 1, 2);
       g.font = "bold 8px monospace"; g.fillStyle = "#1b1d2b"; g.textAlign = "center"; g.fillText(m, x + 0.5, y + 2.5); g.textAlign = "left";
@@ -225,7 +225,7 @@ const Game = {
     }
     if (this.target && this.guidePath && this.guidePath.length > 1) {
       const P = this.player;
-      const a = Math.atan2(this.target.y - P.y, this.target.x - P.x), r = 20 + Math.sin(t * 6) * 3;
+      const a = Math.atan2(this.target.y - P.y, this.target.x - P.x), r = 34 + Math.sin(t * 6) * 3;
       const ax = P.x + Math.cos(a) * r, ay = P.y - 4 + Math.sin(a) * r;
       g.save(); g.translate(Math.round(ax), Math.round(ay)); g.rotate(a); g.fillStyle = "#ffd34a"; g.strokeStyle = "#5a2e10"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(9, 0); g.lineTo(-4, -7); g.lineTo(-1, 0); g.lineTo(-4, 7); g.closePath(); g.stroke(); g.fill(); g.restore();
     }
@@ -256,10 +256,20 @@ const Game = {
       else { vx = dx / d; vy = dy / d; }
     }
     if (c !== this.player && !c.path && !c.follow && !vx && !vy && this.mode === "play") { const P = this.player, dx = P.x - c.x, dy = P.y - c.y; if (Math.hypot(dx, dy) < 44) c.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 2 : 3) : (dy < 0 ? 1 : 0); }
-    const len = Math.hypot(vx, vy);
+    let len = Math.hypot(vx, vy);
+    // smooth start / stop for the player (ease in and out instead of instant speed)
+    if (c === this.player) {
+      const want = len > 0 ? 1 : 0;
+      c.sv = (c.sv || 0) + (want - (c.sv || 0)) * Math.min(1, dt * (want ? 11 : 18));
+      if (len > 0) { c.lvx = vx / Math.max(1, len); c.lvy = vy / Math.max(1, len); }
+      else if (c.sv > 0.05 && !c.path && (c.lvx || c.lvy)) { vx = c.lvx; vy = c.lvy; len = 1; }
+      if (UI.busy() || this.freeze) { c.sv = 0; if (!c.path) len = 0; }
+    }
     if (len > 0) {
       vx /= Math.max(1, len); vy /= Math.max(1, len);
-      const sp = c.speed * (c === this.player && this.room === "outside" ? 0.85 : 1) * (c.follow ? 1.15 : 1);
+      const ease = c === this.player && !c.path ? Math.max(0.15, c.sv || 0) : 1;
+      const sp = c.speed * ease * (c === this.player && this.room === "outside" ? 0.85 : 1) * (c.follow ? 1.15 : 1);
+      const ox = c.x, oy = c.y;
       const nx = c.x + vx * sp * dt, ny = c.y + vy * sp * dt;
       const ignore = !!c.path && c !== this.player && c.ghost;
       let moved = false;
@@ -267,9 +277,10 @@ const Game = {
       if (ignore || boxFree(c.x, ny)) { c.y = ny; moved = true; }
       if (!moved && c.path) { c.path = null; const cb = c.onArrive; c.onArrive = null; if (cb) cb(); }
       c.dir = Math.abs(vx) > Math.abs(vy) ? (vx < 0 ? 2 : 3) : (vy < 0 ? 1 : 0);
-      c.moving = moved; c.walkT += dt;
-      if (moved && c === this.player) { const f = Math.floor(c.walkT * 8) % 2; if (f !== this._lf) { this._lf = f; Sound.play("step", this.room === "outside" ? "sand" : "metal"); } }
-    } else { c.moving = false; c.walkT = 0; }
+      const dist = Math.hypot(c.x - ox, c.y - oy);
+      c.moving = moved && dist > 0.05; c.walkT += dt; c.walkDist = (c.walkDist || 0) + dist; c.idleT = 0;
+      if (c.moving && c === this.player) { const st = Math.floor(c.walkDist / 16); if (st !== this._lf) { this._lf = st; Sound.play("step", this.room === "outside" ? "sand" : "metal"); } }
+    } else { c.moving = false; c.walkT = 0; c.idleT = (c.idleT || 0) + dt; }
   },
   loop(now) {
     document.body.classList.toggle("playing", this.mode === "play");
@@ -290,7 +301,7 @@ const Game = {
       // prompt
       const pr = $("#prompt");
       const it = this.mode === "play" && !this.freeze && !UI.busy() ? this.nearestInteract() : null;
-      if (it) { pr.classList.remove("hidden"); const sx = (it.x - Cam.x) * this.scale, sy = ((it.npc ? it.npc.y - 30 : it.y - 26) - Cam.y) * this.scale; pr.style.left = sx + "px"; pr.style.top = sy + "px"; const key = document.body.classList.contains("touch") ? "A" : "Space"; pr.innerHTML = `<kbd>${key}</kbd>${it.label}${it.name ? " · " + fill(it.name) : ""}`; $("#abtn").textContent = it.label.split(" ")[0]; }
+      if (it) { pr.classList.remove("hidden"); const sx = (it.x - Cam.x) * this.scale, sy = ((it.npc ? it.npc.y - (CHAR_STYLE === "v2" ? 40 : 30) : it.y - 26) - Cam.y) * this.scale; pr.style.left = sx + "px"; pr.style.top = sy + "px"; const key = document.body.classList.contains("touch") ? "A" : "Space"; pr.innerHTML = `<kbd>${key}</kbd>${it.label}${it.name ? " · " + fill(it.name) : ""}`; $("#abtn").textContent = it.label.split(" ")[0]; }
       else { pr.classList.add("hidden"); $("#abtn").textContent = "A"; }
     } else if (this.mode === "intro") {
       Intro.frame(dt, t);

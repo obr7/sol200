@@ -163,6 +163,7 @@ function drawProp1(g, p, t) {
 
 // ---------------------------------------------------------------- characters
 function drawCharacter(g, c, t) {
+  if (CHAR_STYLE === "v2") return drawCharacterV2(g, c, t);
   const set = CharSprites[c.sprite + (c.helmet ? "_h" : "")];
   if (!set) return;
   const frame = c.moving ? (Math.floor(c.walkT * 8) % 4) : 0;

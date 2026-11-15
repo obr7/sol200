@@ -182,6 +182,7 @@ const UI = {
       <div class="slider">🔊 Sound effects <input id="sSfx" type="range" min="0" max="1" step="0.05" value="${S.sfx}"></div>
       <div class="slider"><label><input id="sVoice" type="checkbox" ${S.voice ? "checked" : ""}> 🗣️ Narrator voice in the intro</label></div>
       <div class="slider"><label><input id="sMute" type="checkbox" ${S.muted ? "checked" : ""}> 🔇 Mute everything</label></div>
+      <div class="slider">🧑‍🚀 Character style <select id="sChar" style="font-family:inherit;font-size:1em"><option value="v2" ${CHAR_STYLE === "v2" ? "selected" : ""}>New (detailed)</option><option value="v1" ${CHAR_STYLE !== "v2" ? "selected" : ""}>Classic</option></select></div>
       <p style="font-size:.8em">Controls: <b>Arrows / WASD</b> to move · <b>Space / E</b> to talk & use · <b>Click</b> anywhere to walk there · <b>M</b> map · <b>J</b> journal</p>`;
     return this.card(html, [{ id: "src", label: "NASA data & credits", cls: "alt" }, { id: "ok", label: "Done", cls: "go" }], {
       closable: true, onMount: (c) => {
@@ -189,6 +190,8 @@ const UI = {
         c.querySelector("#sSfx").oninput = (e) => { Sound.setSfx(+e.target.value); Sound.play("click"); };
         c.querySelector("#sVoice").onchange = (e) => Sound.setVoice(e.target.checked);
         c.querySelector("#sMute").onchange = () => Sound.toggleMute();
+        c.querySelector("#sChar").onchange = (e) => { e.stopPropagation(); setCharStyle(e.target.value); };
+        c.querySelector("#sChar").onkeydown = (e) => e.stopPropagation();
       },
     }).then((id) => { if (id === "src") return this.credits(); });
   },

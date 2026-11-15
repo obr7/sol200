@@ -37,9 +37,8 @@ function drawPropV2(g, p, t) {
       if (p.screen === "sun") {
         g.fillStyle = "#1a0e26"; g.fillRect(sx, sy, sw, sh);
         const pulse = Math.sin(t * 3) * 0.6;
-        g.fillStyle = "#ff8a20"; g.beginPath(); g.arc(sx + 9, sy + 7, 5 + pulse, 0, 7); g.fill();
-        g.fillStyle = "#ffd060"; g.beginPath(); g.arc(sx + 8, sy + 6, 3, 0, 7); g.fill();
-        g.strokeStyle = "#ff6a2a"; g.beginPath(); g.arc(sx + 13, sy + 4, 4, Math.PI, Math.PI * 1.9); g.stroke();
+        g.fillStyle = "#ff8a20"; g.beginPath(); g.arc(sx + 10, sy + 7, 5 + pulse, 0, 7); g.fill();
+        g.fillStyle = "#ffd060"; g.beginPath(); g.arc(sx + 10, sy + 7, 3, 0, 7); g.fill();
         const lv = SpaceWeather.status === "loading" || SpaceWeather.status === "idle" ? 1 : { quiet: 1, M: 2, X: 3 }[SpaceWeather.risk()];
         for (let i = 0; i < 3; i++) { g.fillStyle = i < lv ? ["#5dff8a", "#ffb020", "#ff4a4a"][i] : "#2a2440"; g.fillRect(sx + sw - 14 + i * 4, sy + 10 - i * 3, 3, 3 + i * 3); }
         if (SpaceWeather.status === "live") { g.fillStyle = (t * 2 | 0) % 2 ? "#5dff8a" : "#1a5a2a"; g.fillRect(sx + sw - 3, sy + 1, 2, 2); }

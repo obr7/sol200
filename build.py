@@ -3,7 +3,7 @@
 import pathlib
 root = pathlib.Path(__file__).parent
 src = root / "src"
-order = ["config", "data", "audio", "sprites", "world", "render", "props2", "ui", "main", "story", "minigames", "scenes", "introfx", "intro", "boot"]
+order = ["config", "data", "audio", "sprites", "sprites2", "world", "render", "props2", "ui", "main", "story", "minigames", "scenes", "introfx", "intro", "boot"]
 js = "\n".join(f"// ---- {n}.js ----\n" + (src / f"{n}.js").read_text() for n in order)
 css = (src / "style.css").read_text()
 html = (src / "index.html").read_text()
