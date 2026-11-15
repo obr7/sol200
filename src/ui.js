@@ -194,6 +194,7 @@ const UI = {
       <div class="slider"><label><input id="sVoice" type="checkbox" ${S.voice ? "checked" : ""}> 🗣️ Narrator voice in the intro</label></div>
       <div class="slider"><label><input id="sMute" type="checkbox" ${S.muted ? "checked" : ""}> 🔇 Mute everything</label></div>
       <div class="slider">🧑‍🚀 Character style <select id="sChar" style="font-family:inherit;font-size:1em"><option value="team" ${CHAR_STYLE === "team" ? "selected" : ""}>Team art (default)</option><option value="v2" ${CHAR_STYLE === "v2" ? "selected" : ""}>Code-drawn v2</option><option value="v1" ${CHAR_STYLE === "v1" ? "selected" : ""}>Classic</option></select></div>
+      <div class="slider"><label><input id="sDev" type="checkbox" ${Dev.on ? "checked" : ""}> 🛠 Developer mode (skip &amp; jump for testing)</label></div>
       <p style="font-size:.8em">Controls: <b>Arrows / WASD</b> to move · <b>Space / E</b> to talk & use · <b>Click</b> anywhere to walk there · <b>M</b> map · <b>J</b> journal</p>`;
     return this.card(html, [{ id: "src", label: "NASA data & credits", cls: "alt" }, { id: "ok", label: "Done", cls: "go" }], {
       closable: true, onMount: (c) => {
@@ -203,6 +204,7 @@ const UI = {
         c.querySelector("#sMute").onchange = () => Sound.toggleMute();
         c.querySelector("#sChar").onchange = (e) => { e.stopPropagation(); setCharStyle(e.target.value); };
         c.querySelector("#sChar").onkeydown = (e) => e.stopPropagation();
+        c.querySelector("#sDev").onchange = (e) => { Dev.set(e.target.checked); if (e.target.checked) UI.toast("🛠 Developer mode on — use the 🛠 button (top centre) or press N to skip", 4000); };
       },
     }).then((id) => { if (id === "src") return this.credits(); });
   },

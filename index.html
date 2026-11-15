@@ -272,6 +272,69 @@ body.touch.playing #touch { display: block; }
 .mwPix { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 .mwBar { position: absolute; top: 0; bottom: 0; left: 50%; width: .9em; margin-left: -.45em; background: #8b93a6; box-shadow: inset .2em 0 0 #aab2c4, inset -.2em 0 0 #5a6070; }
 .mwGlare { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255,255,255,.16) 0 6%, transparent 6% 9%, rgba(255,255,255,.08) 9% 11%, transparent 11%); }
+
+/* ---------- legendary suit briefing card ---------- */
+.card.legendCard { background: none !important; border: none !important; box-shadow: none !important; padding: 0 !important; width: min(94vw, 820px) !important; max-height: 96vh; overflow: visible; }
+.lgWrap { position: relative; padding: 1.2em; }
+.lgFx { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.lgRays { position: absolute; left: 50%; top: 50%; width: 160%; aspect-ratio: 1; transform: translate(-50%,-50%) scale(.3); border-radius: 50%; opacity: 0; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, rgba(255,214,110,.55) 0 6deg, transparent 6deg 18deg); mask-image: radial-gradient(circle, #000 0 30%, transparent 62%); -webkit-mask-image: radial-gradient(circle, #000 0 30%, transparent 62%); }
+.lgWrap.reveal .lgRays { animation: lgRays 2.4s ease-out forwards; }
+@keyframes lgRays { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.3) rotate(0deg); } 18% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.15) rotate(90deg); } }
+.lgScene { perspective: 1600px; position: relative; z-index: 2; }
+.lgCard { display: grid; transform-style: preserve-3d; transition: transform 1s cubic-bezier(.3,1.4,.4,1); cursor: pointer; border-radius: 1em; }
+.lgCard.flipped { transform: rotateY(180deg); cursor: default; }
+.lgFront { display: flex; flex-direction: column; justify-content: center; }
+.lgFace { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1em; padding: 1.1em 1.3em 1.2em; position: relative; color: #2a1a10;
+  background: linear-gradient(160deg, #fff6df, #f3e2bc); border: .3em solid #c9952e; box-shadow: 0 0 0 .2em #5a3a14, 0 1em 2.5em rgba(0,0,0,.6); transition: box-shadow .35s; }
+.lgCard:not(.flipped):hover .lgFront { box-shadow: 0 0 0 .2em #5a3a14, 0 0 1.6em .3em rgba(255,200,90,.85), 0 0 4em 1em rgba(255,170,60,.45), 0 1em 2.5em rgba(0,0,0,.6); animation: lgPulse 1.6s ease-in-out infinite; }
+@keyframes lgPulse { 50% { box-shadow: 0 0 0 .2em #5a3a14, 0 0 2.2em .5em rgba(255,215,110,.95), 0 0 5em 1.5em rgba(255,170,60,.55), 0 1em 2.5em rgba(0,0,0,.6); } }
+.lgBack { transform: rotateY(180deg); background: linear-gradient(160deg, #1d2a22, #0f1a16); color: #f4ecd8; border-color: #e0b84a; }
+.lgWrap.reveal .lgBack { box-shadow: 0 0 0 .2em #5a3a14, 0 0 2.5em .6em rgba(255,210,100,.7), 0 1em 2.5em rgba(0,0,0,.6); }
+.lgFace h3 { margin: 0; font-size: .75em; letter-spacing: .14em; color: #a0601a; }
+.lgBack h3 { color: #ffd34a; }
+.lgFace h1 { margin: .15em 0 .3em; font-size: 1.35em; color: #b0451a; }
+.lgBack h1 { color: #ffe9a8; }
+.lgFace p { margin: .2em 0 .5em; font-size: .86em; line-height: 1.45; }
+.lgNum { position: absolute; right: 1em; top: .8em; font-size: .7em; font-weight: 700; opacity: .6; }
+.lgHint { text-align: center; font-size: .75em; color: #8a5a1a; margin-top: .6em; animation: lgBlink 1.8s ease-in-out infinite; }
+@keyframes lgBlink { 50% { opacity: .45; } }
+.minis { display: grid; gap: .6em; margin: .4em 0; }
+.minis.four { grid-template-columns: repeat(4, 1fr); }
+.minis.two { grid-template-columns: repeat(2, 1fr); } .minis.two .mini { height: 8.6em; } .minis.two .mB { font-size: .74em; }
+.mini { perspective: 700px; height: 7.4em; cursor: pointer; }
+.mIn { position: relative; width: 100%; height: 100%; }
+.mini .mB { opacity: 0; pointer-events: none; } .mini.open .mB { opacity: 1; } .mini.open .mF { opacity: 0; }
+.mF, .mB { position: absolute; inset: 0; border-radius: .7em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: .5em; box-sizing: border-box;
+  border: .18em solid var(--c); transition: box-shadow .3s, transform .3s; }
+.mF { background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c) 45%, #fff), color-mix(in srgb, var(--c) 80%, #000)); color: #fff; }
+.mB { background: color-mix(in srgb, var(--c) 14%, #fffaf0); color: #2a1a10; font-size: .78em; line-height: 1.35; }
+.lgBack .mB { background: color-mix(in srgb, var(--c) 22%, #13201a); color: #f4ecd8; }
+.mE { font-size: 2em; filter: drop-shadow(0 .1em .1em rgba(0,0,0,.35)); }
+.mL { font-weight: 700; font-size: .8em; margin-top: .25em; text-shadow: 0 .08em 0 rgba(0,0,0,.35); }
+.mT { font-size: .6em; opacity: .75; margin-top: .2em; letter-spacing: .1em; text-transform: uppercase; }
+.mini:hover .mF, .mini:hover .mB { box-shadow: 0 0 0 .12em #fff3c4, 0 0 1em .2em color-mix(in srgb, var(--c) 70%, #ffd34a), 0 0 2.2em .4em rgba(255,210,100,.35); transform: translateY(-.15em); }
+.lgBackGrid { display: grid; grid-template-columns: minmax(10em, 40%) 1fr; gap: 1.1em; align-items: start; }
+.lgPhoto { position: relative; }
+.lgPhoto img { width: 100%; display: block; border-radius: .6em; border: .25em solid #e0b84a; box-shadow: 0 0 1.4em rgba(255,200,90,.45); }
+.lgPhoto .badge { position: absolute; left: 50%; bottom: -.7em; transform: translateX(-50%); background: #e0b84a; color: #2a1a10; font-weight: 800; font-size: .65em; letter-spacing: .14em; padding: .3em .8em; border-radius: 1em; white-space: nowrap; box-shadow: 0 .2em 0 #6a4a14; }
+.lgOut { font-weight: 700; color: #ffe9a8; }
+.lgBack .src { font-size: .7em; opacity: .8; } .lgBack .src a { color: #ffd34a; }
+.lgGo { margin-top: .5em; float: right; font-size: 1em; }
+@media (max-aspect-ratio: 1/1) { .minis.four { grid-template-columns: repeat(2, 1fr); } .lgBackGrid { grid-template-columns: 1fr; } .lgPhoto { max-width: 14em; margin: 0 auto; } }
+
+/* developer mode */
+#devBtn { position: fixed; top: .5em; left: 50%; transform: translateX(-50%); z-index: 9999; font-size: 18px; width: 2.2em; height: 2.2em; border-radius: 50%; border: 2px solid #ffd34a; background: #1b1d2b; color: #fff; cursor: pointer; display: none; }
+#devPanel { position: fixed; top: 3.2em; left: 50%; transform: translateX(-50%); z-index: 9999; width: min(94vw, 560px); max-height: 80vh; overflow: auto; background: rgba(14,16,30,.97); border: 2px solid #ffd34a; border-radius: 10px; padding: 10px 12px; color: #e8eeff; font: 13px/1.3 system-ui, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,.6); }
+#devPanel.hidden { display: none; }
+#devPanel .dvHead { font-weight: 700; color: #ffd34a; display: flex; justify-content: space-between; margin-bottom: 6px; }
+#devPanel .dvX { background: none; border: none; color: #fff; cursor: pointer; font-size: 14px; }
+#devPanel .dvRow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+#devPanel .dvT { margin: 8px 0 4px; font-weight: 700; color: #9ad0ff; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; }
+#devPanel .dvGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+#devPanel .dvB { background: #26305a; color: #fff; border: 1px solid #3a4a80; border-radius: 6px; padding: 6px 6px; cursor: pointer; font: inherit; font-size: 12px; text-align: left; }
+#devPanel .dvB:hover { background: #3a4a80; border-color: #ffd34a; }
+#devPanel select { font: inherit; }
 </style>
 </head>
 <body>
@@ -2383,6 +2446,7 @@ const UI = {
       <div class="slider"><label><input id="sVoice" type="checkbox" ${S.voice ? "checked" : ""}> 🗣️ Narrator voice in the intro</label></div>
       <div class="slider"><label><input id="sMute" type="checkbox" ${S.muted ? "checked" : ""}> 🔇 Mute everything</label></div>
       <div class="slider">🧑‍🚀 Character style <select id="sChar" style="font-family:inherit;font-size:1em"><option value="team" ${CHAR_STYLE === "team" ? "selected" : ""}>Team art (default)</option><option value="v2" ${CHAR_STYLE === "v2" ? "selected" : ""}>Code-drawn v2</option><option value="v1" ${CHAR_STYLE === "v1" ? "selected" : ""}>Classic</option></select></div>
+      <div class="slider"><label><input id="sDev" type="checkbox" ${Dev.on ? "checked" : ""}> 🛠 Developer mode (skip &amp; jump for testing)</label></div>
       <p style="font-size:.8em">Controls: <b>Arrows / WASD</b> to move · <b>Space / E</b> to talk & use · <b>Click</b> anywhere to walk there · <b>M</b> map · <b>J</b> journal</p>`;
     return this.card(html, [{ id: "src", label: "NASA data & credits", cls: "alt" }, { id: "ok", label: "Done", cls: "go" }], {
       closable: true, onMount: (c) => {
@@ -2392,6 +2456,7 @@ const UI = {
         c.querySelector("#sMute").onchange = () => Sound.toggleMute();
         c.querySelector("#sChar").onchange = (e) => { e.stopPropagation(); setCharStyle(e.target.value); };
         c.querySelector("#sChar").onkeydown = (e) => e.stopPropagation();
+        c.querySelector("#sDev").onchange = (e) => { Dev.set(e.target.checked); if (e.target.checked) UI.toast("🛠 Developer mode on — use the 🛠 button (top centre) or press N to skip", 4000); };
       },
     }).then((id) => { if (id === "src") return this.credits(); });
   },
@@ -2965,6 +3030,7 @@ const Story = {
     Game.setTarget({ x: 48 * T, y: 8 * T + 8 });
     await Game.waitRoom("airlock");
     Game.setTarget(null);
+    await SuitCards.open();
     const suit = await Minigames.suitUp();
     if (suit && !suit.mistakes) meter({ safety: 3 }, "🧑‍🚀 Perfect suit check — careful work!");
     Sound.setMood("tension");
@@ -4263,6 +4329,213 @@ const MarsWindow = {
         requestAnimationFrame(loop);
       },
     });
+  },
+};
+
+// ---- suitcards.js ----
+// =====================================================================
+//  SUIT BRIEFING CARDS — one big "legendary" card with two faces.
+//  Face 1: why astronauts wear spacesuits. Click → it flips with a burst of
+//  gold, the screen shakes, and Face 2 shows a real person: Salam Abu Alhayjaa.
+//  Each fact is a small flip card (emoji front, sentence back).
+// =====================================================================
+// TODO: confirm with Salam — card 2 text and photo need her approval before publishing.
+const SUIT_CARDS = {
+  front: {
+    title: "Why do astronauts wear spacesuits?",
+    intro: "A spacesuit is like a tiny spaceship you wear, so every part of the suit has a job:",
+    facts: [
+      { e: "🛡️", label: "Pressure layers", c: "#4a8aff", text: "<b>Pressure layers</b> hold the air around your body." },
+      { e: "🫁", label: "Oxygen tank", c: "#2ec4b6", text: "<b>An oxygen tank</b> gives you air to breathe." },
+      { e: "🔥", label: "Heating system", c: "#ff8a3a", text: "<b>A heating system</b> keeps you warm." },
+      { e: "🧤", label: "Sealed gloves", c: "#b07adf", text: "<b>Sealed gloves and joints</b> keep the dust out." },
+    ],
+  },
+  back: {
+    badge: "REAL PERSON",
+    title: "Salam Abu Alhayjaa, from Jordan.",
+    intro: "Real engineers build these suits, and Salam is one of them. She is a Jordanian mechanical engineer who:",
+    facts: [
+      { e: "🛠️", label: "4 spacesuits", c: "#e0a93a", text: "<b>designed four spacesuits</b> over two years," },
+      { e: "🚀", label: "A first for Jordan", c: "#2f9e5a", text: "was chosen as the <b>first Jordanian woman astronaut candidate</b> for an advanced space training program in the USA." },
+    ],
+    outro: "Real people are building the suits for Mars right now.",
+    img: "img/salam.jpg",
+    source: { name: "Al Jazeera", url: "https://www.ajnet.me/family/2025/6/15/%D8%A3%D9%88%D9%84-%D8%A3%D8%B1%D8%AF%D9%86%D9%8A%D8%A9-%D8%AA%D8%B1%D8%B4%D8%AD-%D9%84%D8%B1%D8%AD%D9%84%D8%A9-%D9%81%D8%B6%D8%A7%D8%A6%D9%8A%D8%A9-%D8%B3%D9%84%D8%A7%D9%85" },
+  },
+};
+const ASSETS = { salamPortrait: SUIT_CARDS.back.img };
+
+const SuitCards = {
+  open() {
+    const F = SUIT_CARDS.front, B = SUIT_CARDS.back;
+    const mini = (f) => `<div class="mini" style="--c:${f.c}"><div class="mIn"><div class="mF"><span class="mE">${f.e}</span><span class="mL">${f.label}</span><span class="mT">tap</span></div><div class="mB">${f.text}</div></div></div>`;
+    const html = `<div class="lgWrap"><div class="lgRays"></div>
+      <div class="lgScene"><div class="lgCard">
+        <div class="lgFace lgFront"><div class="lgNum">1 / 2</div><h3>SUIT UP · BRIEFING</h3><h1>${F.title}</h1><p>${F.intro}</p>
+          <div class="minis four">${F.facts.map(mini).join("")}</div>
+          <div class="lgHint">✨ Tap the small cards to learn each part · then tap the big card to turn it over</div></div>
+        <div class="lgFace lgBack"><div class="lgNum">2 / 2</div>
+          <div class="lgBackGrid"><div class="lgPhoto"><img src="${ASSETS.salamPortrait}" alt="Salam Abu Alhayjaa" draggable="false"><span class="badge">${B.badge}</span></div>
+          <div class="lgText"><h3>${B.badge}</h3><h1>${B.title}</h1><p>${B.intro}</p><div class="minis two">${B.facts.map(mini).join("")}</div><p class="lgOut">${B.outro}</p>
+          <div class="src">📚 Source: <a href="${B.source.url}" target="_blank" rel="noopener">${B.source.name}</a></div>
+          <button class="btn go lgGo">Suit up! ▶</button></div></div></div>
+      </div></div><canvas class="lgFx"></canvas></div>`;
+    return UI.card(html, [], {
+      cls: "legendCard", noKey: true, onMount: (card, done) => {
+        const wrap = card.querySelector(".lgWrap"), lg = card.querySelector(".lgCard"), fx = card.querySelector(".lgFx"), g = fx.getContext("2d");
+        const parts = []; let hoverEl = null, flipped = false, alive = true;
+        const size = () => { const r = wrap.getBoundingClientRect(); fx.width = r.width; fx.height = r.height; };
+        size(); window.addEventListener("resize", size);
+        const rel = (el) => { const a = el.getBoundingClientRect(), b = wrap.getBoundingClientRect(); return { x: a.left - b.left, y: a.top - b.top, w: a.width, h: a.height }; };
+        const spawnEdge = (r, n, big) => { for (let i = 0; i < n; i++) { const s = Math.random() * 2 * (r.w + r.h); let x, y; if (s < r.w) { x = r.x + s; y = r.y; } else if (s < r.w + r.h) { x = r.x + r.w; y = r.y + s - r.w; } else if (s < 2 * r.w + r.h) { x = r.x + s - r.w - r.h; y = r.y + r.h; } else { x = r.x; y = r.y + s - 2 * r.w - r.h; } parts.push({ x, y, vx: (Math.random() - 0.5) * 20, vy: -15 - Math.random() * 30, life: 1, max: 0.8 + Math.random() * 0.8, s: big ? 2 + Math.random() * 2.5 : 1.2 + Math.random() * 1.6, tw: Math.random() * 6 }); } };
+        const burst = (cx, cy, n) => { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = 120 + Math.random() * 420; parts.push({ x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 1, max: 1 + Math.random() * 1.2, s: 2 + Math.random() * 3.5, tw: Math.random() * 6, drag: 1 }); } };
+        card.querySelectorAll(".mini").forEach((m) => {
+          m.addEventListener("pointerenter", () => { hoverEl = m; Sound.play("hover"); });
+          m.addEventListener("pointerleave", () => { if (hoverEl === m) hoverEl = null; });
+          m.addEventListener("click", (e) => { e.stopPropagation(); const inn = m.querySelector(".mIn"); inn.animate([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], { duration: 160, easing: "ease-in" }).onfinish = () => { m.classList.toggle("open"); inn.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1.06)" }, { transform: "scaleX(1)" }], { duration: 260, easing: "ease-out" }); }; Sound.play("click"); const r = rel(m); burst(r.x + r.w / 2, r.y + r.h / 2, 18); });
+        });
+        lg.addEventListener("pointerenter", () => { if (!hoverEl) hoverEl = lg; });
+        lg.addEventListener("pointermove", () => { if (!hoverEl) hoverEl = lg; });
+        lg.addEventListener("pointerleave", () => { if (hoverEl === lg) hoverEl = null; });
+        const flip = () => {
+          if (flipped) return; flipped = true; hoverEl = null;
+          lg.classList.add("flipped"); wrap.classList.add("reveal");
+          Sound.play("success"); Sound.play("power"); setTimeout(() => Sound.play("good"), 450);
+          Cam.shake = 0.5;
+          wrap.animate([{ transform: "translate(0,0)" }, { transform: "translate(-9px,5px)" }, { transform: "translate(8px,-6px)" }, { transform: "translate(-6px,-4px)" }, { transform: "translate(5px,6px)" }, { transform: "translate(-3px,2px)" }, { transform: "translate(0,0)" }], { duration: 520, easing: "ease-out" });
+          const r = rel(lg); setTimeout(() => burst(r.x + r.w / 2, r.y + r.h / 2, 160), 280);
+        };
+        lg.addEventListener("click", (e) => { if (e.target.closest(".mini, a, .lgGo")) return; flip(); });
+        card.querySelector(".lgGo").addEventListener("click", (e) => { e.stopPropagation(); Sound.play("click"); alive = false; window.removeEventListener("resize", size); done("ok"); });
+        // keyboard: Space/Enter flips, then continues
+        UI.active.onAction = () => { if (!flipped) flip(); else card.querySelector(".lgGo").click(); };
+        let last = performance.now();
+        const loop = (now) => {
+          if (!alive || !document.body.contains(fx)) return;
+          const dt = Math.min(0.05, (now - last) / 1000); last = now;
+          if (hoverEl) spawnEdge(rel(hoverEl), hoverEl === lg ? 2 : 1, hoverEl === lg);
+          g.clearRect(0, 0, fx.width, fx.height); g.globalCompositeOperation = "lighter";
+          for (let i = parts.length - 1; i >= 0; i--) {
+            const p = parts[i]; p.life -= dt / p.max; if (p.life <= 0) { parts.splice(i, 1); continue; }
+            if (p.drag) { p.vx *= Math.pow(0.15, dt); p.vy = p.vy * Math.pow(0.15, dt) + 40 * dt; }
+            p.x += p.vx * dt; p.y += p.vy * dt; p.tw += dt * 10;
+            const a = p.life * (0.6 + Math.sin(p.tw) * 0.4), s = p.s;
+            g.fillStyle = `rgba(255,${200 + ((p.tw * 7) % 50) | 0},${90 + ((p.tw * 13) % 60) | 0},${a})`;
+            g.beginPath(); g.arc(p.x, p.y, s, 0, 7); g.fill();
+            if (s > 2.5) { g.fillStyle = `rgba(255,240,190,${a * 0.5})`; g.fillRect(p.x - s * 2, p.y - 0.5, s * 4, 1); g.fillRect(p.x - 0.5, p.y - s * 2, 1, s * 4); }
+          }
+          g.globalCompositeOperation = "source-over";
+          requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+      },
+    });
+  },
+};
+
+// ---- devmode.js ----
+// =====================================================================
+//  DEVELOPER MODE (Settings → Developer mode). For fast testing:
+//  • ⏭ Skip: ends the current dialogue, card, choice or mini-game.
+//  • ⏩ Auto-skip dialogue: every line advances by itself.
+//  • Jump to any point in the story (with the decisions you pick).
+//  • Open any mini-game or card on its own.
+//  Shortcut while on: N = skip.
+// =====================================================================
+const Dev = {
+  on: false, auto: false,
+  init() {
+    try { this.on = localStorage.getItem("sol200_dev") === "1"; } catch (e) {}
+    const b = el("button", "", "🛠"); b.id = "devBtn"; b.title = "Developer mode"; b.onclick = (e) => { e.stopPropagation(); this.toggle(); };
+    document.body.appendChild(b);
+    const p = el("div"); p.id = "devPanel"; p.className = "hidden"; document.body.appendChild(p); this.panel = p; ["pointerdown", "click", "mousedown", "touchstart"].forEach((ev) => p.addEventListener(ev, (e) => e.stopPropagation()));
+    this.render(); this.show();
+    window.addEventListener("keydown", (e) => { if (this.on && (e.key === "n" || e.key === "N") && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) { e.preventDefault(); this.skip(); } });
+    setInterval(() => { if (this.on && this.auto) this.skip(true); }, 120);
+    // ?jump=<point>&d1=A&d2=B → start right there (used by the Jump buttons)
+    const q = new URLSearchParams(location.search);
+    if (q.get("jump")) setTimeout(() => this.startAt(q.get("jump"), q.get("d1"), q.get("d2")), 300);
+  },
+  set(on) { this.on = on; try { localStorage.setItem("sol200_dev", on ? "1" : "0"); } catch (e) {} this.show(); },
+  show() { $("#devBtn").style.display = this.on ? "block" : "none"; if (!this.on) this.panel.classList.add("hidden"); },
+  toggle() { this.panel.classList.toggle("hidden"); },
+  POINTS: [
+    ["scene1", "1 · Quarters (start)"], ["marcus", "2 · Marcus (control)"], ["scene2", "3 · Diego (workshop)"], ["scene3", "4 · Layla + Garden"],
+    ["scene4", "5 · Storm · decision 1"], ["pathA", "6A · Go outside (suit + panels)"], ["pathB", "6B · Stay inside (power)"],
+    ["scene5", "7 · Rosie · decision 2"], ["ending", "8 · Ending + results"],
+  ],
+  GAMES: [
+    ["garden", "Garden Check"], ["brush", "Panels: brush"], ["pebbles", "Panels: pebbles"], ["tilt", "Panels: tilt"], ["cards", "Suit cards"], ["suit", "Suit Up"],
+    ["power", "Storm Night (power)"], ["wiresE", "Rosie (easy)"], ["wiresH", "Rosie (hard)"], ["globe", "Mars globe"], ["album", "Photo album"], ["window", "Mars window"],
+  ],
+  render() {
+    const sel = (id, opts) => `<select id="${id}">${opts.map((o) => `<option>${o}</option>`).join("")}</select>`;
+    this.panel.innerHTML = `<div class="dvHead">🛠 Developer mode <button class="dvX">✕</button></div>
+      <div class="dvRow"><button class="dvB" data-a="skip">⏭ Skip (N)</button><label><input type="checkbox" class="dvAuto"> ⏩ Auto-skip dialogue</label></div>
+      <div class="dvRow">Decision 1 ${sel("dvD1", ["A", "B"])} Decision 2 ${sel("dvD2", ["A", "B"])}</div>
+      <div class="dvT">Jump to</div><div class="dvGrid">${this.POINTS.map(([k, n]) => `<button class="dvB" data-j="${k}">${n}</button>`).join("")}</div>
+      <div class="dvT">Open a mini-game / card</div><div class="dvGrid">${this.GAMES.map(([k, n]) => `<button class="dvB" data-g="${k}">${n}</button>`).join("")}</div>
+      <div class="dvRow"><button class="dvB" data-a="meters">Meters 50/50/50</button><button class="dvB" data-a="journal">Unlock journal</button></div>`;
+    const P = this.panel;
+    P.querySelector(".dvX").onclick = () => this.toggle();
+    P.querySelector(".dvAuto").onchange = (e) => { this.auto = e.target.checked; };
+    P.querySelectorAll("select").forEach((s) => { s.onkeydown = (e) => e.stopPropagation(); });
+    P.querySelectorAll("[data-a]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); const a = b.dataset.a; if (a === "skip") this.skip(); if (a === "meters") { G.meters = { ...BALANCE.start }; UI.buildMeters(); } if (a === "journal") { for (const k in FACTS) G.discovered.add(k); UI.toast("📖 All discoveries unlocked"); } }));
+    P.querySelectorAll("[data-j]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); const u = new URL(location.href); u.searchParams.set("jump", b.dataset.j); u.searchParams.set("d1", P.querySelector("#dvD1").value); u.searchParams.set("d2", P.querySelector("#dvD2").value); location.href = u.toString(); }));
+    P.querySelectorAll("[data-g]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); this.openGame(b.dataset.g); }));
+  },
+  // finish whatever is on screen right now
+  skip(onlyTalk) {
+    const a = UI.active;
+    if (a && a.type === "say") { a.onAction(); a.onAction && UI.active === a && a.onAction(); return; }
+    if (onlyTalk) return;
+    if (Minigames.cancelCurrent) { Minigames.cancelCurrent({ ok: true, damage: 0, mistakes: 0, total: {}, lost: [], failed: {}, trips: 0, delay: 0 }); return; }
+    if (a && a.type === "choice") { const o = document.querySelector(".choiceBtn"); if (o) o.click(); return; }
+    const m = $("#modal");
+    if (m) {
+      m.querySelectorAll(".flip:not(.on)").forEach((f) => f.click());
+      const lg = m.querySelector(".lgCard"); if (lg && !lg.classList.contains("flipped")) { lg.click(); setTimeout(() => m.querySelector(".lgGo")?.click(), 400); return; }
+      const go = m.querySelector(".lgGo"); if (go) { go.click(); return; }
+      setTimeout(() => { const btns = [...m.querySelectorAll(".btn")].filter((x) => !x.disabled); if (btns.length) btns[btns.length - 1].click(); else if (a && a.onAction) a.onAction(); }, 50);
+      return;
+    }
+    // in the world: go to the target / use the "!" object
+    const P = Game.player, it = Game.interactables.find((i) => i.enabled() && i.marker && i.marker() === "!");
+    if (it) { P.x = it.x; P.y = it.y - 2; Game.useInteractable(it); return; }
+    if (Game.target) { P.x = Game.target.x; P.y = Game.target.y; }
+  },
+  // start the story at a given point
+  async startAt(k, d1, d2) {
+    if (typeof Intro !== "undefined" && Intro.running) Intro.finish = () => {};
+    UI.clear(); Story.setup(); Game.introSeen = true;
+    Game.mode = "play"; $("#hud").classList.remove("off"); Sound.init && Sound.init();
+    const N = Game.npc, P = Game.player;
+    G.d1 = d1 || "A"; G.d2 = d2 || "B";
+    const inControl = () => { Game.place(P, 29, 9, 1); Game.place(N.marcus, 27, 5, 0); Game.place(N.diego, 33, 7, 2); Game.place(N.layla, 25, 7, 3); };
+    Sound.setMood("calm"); Sound.startLoop("hum");
+    UI.toast(`🛠 Dev jump: ${k}${["pathA", "pathB", "scene5", "ending"].includes(k) ? ` (d1 ${G.d1}${k === "ending" ? `, d2 ${G.d2}` : ""})` : ""}`, 2500);
+    switch (k) {
+      case "scene1": return Story.scene1();
+      case "marcus": Game.place(P, 29, 9, 1); G.flags.holo = true; Story.onHolo = null; UI.objective("Talk to {marcus} at the weather screen"); Game.setTarget({ x: N.marcus.x, y: N.marcus.y }); await Game.waitTalk("talk_marcus", N.marcus); Game.setTarget(null); return Story.scene2();
+      case "scene2": Game.place(P, 10, 17, 0); return Story.scene2();
+      case "scene3": Game.place(P, 31, 19, 0); return Story.scene3();
+      case "scene4": inControl(); return Story.scene4();
+      case "pathA": inControl(); G.d1 = "A"; await Story.pathA(); return Story.scene5();
+      case "pathB": inControl(); G.d1 = "B"; await Story.pathB(); return Story.scene5();
+      case "scene5": inControl(); if (G.d1 === "A") G.flags.diegoHurt = true; return Story.scene5();
+      case "ending": Game.place(P, 12, 26, 1); Game.place(N.diego, 10, 25, 3); Game.place(N.marcus, 14, 25, 2); Game.place(N.layla, 12, 28, 1); return Story.ending();
+    }
+  },
+  openGame(k) {
+    if (Minigames.cancelCurrent) Minigames.cancelCurrent();
+    if (!G.trays[0].problem) ["water", "light", "heat"].forEach((p, i) => { G.trays[i] = { problem: p }; });
+    const run = {
+      garden: () => Minigames.garden(), brush: () => Minigames.panel_brush(0), pebbles: () => Minigames.panel_pebbles(1), tilt: () => Minigames.panel_tilt(2),
+      cards: () => SuitCards.open(), suit: () => Minigames.suitUp(), power: () => Minigames.power(), wiresE: () => Minigames.wires({ time: 60, hints: true }),
+      wiresH: () => Minigames.wires({ time: 30, hints: false, hard: true }), globe: () => MarsGlobe.open(), album: () => PhotoAlbum.open(), window: () => MarsWindow.open(),
+    }[k];
+    if (run) Promise.resolve(run()).then((r) => console.log("[dev]", k, r));
   },
 };
 
@@ -5727,8 +6000,9 @@ window.addEventListener("DOMContentLoaded", () => {
   Game.init();
   Intro.init();
   Intro.showStart();
+  Dev.init();
   // Test hooks (used by the automated play-test; harmless for players)
-  window.__sol = { Intro, G, Game, Story, UI, Minigames, Scenes, Sound, SpaceWeather, PROPS, propById, MarsGlobe, MarsTex, PhotoAlbum, MarsWindow };
+  window.__sol = { Intro, G, Game, Story, UI, Minigames, Scenes, Sound, SpaceWeather, PROPS, propById, MarsGlobe, MarsTex, PhotoAlbum, MarsWindow, SuitCards, Dev };
   if (/[?&]debug/.test(location.search)) Game.debugKeys = true;
 });
 </script>

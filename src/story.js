@@ -205,6 +205,7 @@ const Story = {
     Game.setTarget({ x: 48 * T, y: 8 * T + 8 });
     await Game.waitRoom("airlock");
     Game.setTarget(null);
+    await SuitCards.open();
     const suit = await Minigames.suitUp();
     if (suit && !suit.mistakes) meter({ safety: 3 }, "🧑‍🚀 Perfect suit check — careful work!");
     Sound.setMood("tension");
