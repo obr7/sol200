@@ -170,6 +170,16 @@ function drawPropV2(g, p, t) {
       glow(p.x + W / 2, p.y + top + h / 2, 34, "#ffb070", 0.25);
       break;
     }
+    case "scale": {
+      // body-weight scale with a glowing display (on Mars you weigh about 38% of your Earth weight)
+      R(0, 2, 16, 13, "#5a6278"); R(1, 1, 14, 13, "#c9d0de"); R(1, 1, 14, 1, "#eef1f7"); R(1, 13, 14, 1, "#8e97ad");
+      R(3, 3, 10, 4, "#0d1a2a"); R(4, 4, 8, 2, "#123326");
+      const blink = ((t * 1.5) | 0) % 2; g.fillStyle = blink ? "#5dff8a" : "#3ad06a";
+      [[4, 4], [4, 5], [6, 4], [6, 5], [7, 5], [9, 4], [9, 5], [10, 4], [11, 4], [11, 5]].forEach(([a, b]) => g.fillRect(Math.round(p.x + a), Math.round(p.y + b), 1, 1));
+      R(3, 8, 4, 4, "#aab2c4"); R(9, 8, 4, 4, "#aab2c4"); R(4, 9, 2, 2, "#8e97ad"); R(10, 9, 2, 2, "#8e97ad"); // foot pads
+      glow(p.x + 8, p.y + 5, 10, "#5dff8a", 0.15);
+      break;
+    }
     case "airvent": {
       R(1, -14, 14, 16, "#3a4052"); R(2, -13, 12, 9, "#0d1a2a"); R(3, -11, 4, 1, "#5dff8a"); R(3, -9, 8, 1, "#5dff8a"); R(3, -7, 6, 1, "#7fd0ff");
       for (let i = 0; i < 3; i++) R(3, -3 + i * 2, 10, 1, "#262b3c");
