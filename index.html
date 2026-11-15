@@ -342,6 +342,15 @@ body.touch.playing #touch { display: block; }
 .lgFront .lgIco { font-size: 3.2em; line-height: 1; margin-bottom: .2em; filter: drop-shadow(0 .1em .15em rgba(0,0,0,.25)); }
 .lgPhoto img { aspect-ratio: 1; object-fit: cover; }
 @media (max-aspect-ratio: 1/1) { .lgFrontGrid { grid-template-columns: 1fr; } }
+
+.mF .mL, .mB { letter-spacing: .06em; word-spacing: .1em; }
+.lgFlipBtn { display: none; margin: .7em auto 0; font: inherit; font-weight: 800; font-size: 1.05em; padding: .55em 1.3em; border-radius: 2em; border: .15em solid #8a5a14; cursor: pointer; color: #3a2414;
+  background: linear-gradient(#ffe48a, #f0b53a); box-shadow: 0 .25em 0 #8a5a14, 0 0 1.2em rgba(255,200,80,.8); animation: lgFlipPulse 1.1s ease-in-out infinite; letter-spacing: .05em; }
+.lgFront.ready .lgFlipBtn { display: block; }
+.lgFront.ready .lgHint { display: none; }
+@keyframes lgFlipPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); box-shadow: 0 .25em 0 #8a5a14, 0 0 2em rgba(255,210,90,1); } }
+.lgFront.ready::after { content: "↻"; position: absolute; right: .5em; bottom: .3em; font-size: 2.2em; color: #c9952e; animation: lgSpin 2s linear infinite; opacity: .8; }
+@keyframes lgSpin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -2419,6 +2428,14 @@ const UI = {
       },
     });
   },
+  // short, kid-friendly version for mission briefs
+  spaceWeatherMini() {
+    const SW = SpaceWeather, risk = SW.risk(), lv = { quiet: 0, M: 1, X: 2 }[risk], f = SW.flares[0];
+    const word = ["calm 😌", "a bit busy 😐", "very busy 😬"][lv];
+    return `<div style="margin:.3em 0">The Sun is <b>${word}</b> today${f ? ` (biggest recent flare: <span class="cls ${f.classType[0]}">${f.classType}</span>)` : ""}.</div>
+      <div class="sun-meter"><div style="${lv === 0 ? "background:#7dff9a" : ""}">LOW</div><div style="${lv === 1 ? "background:#ffb020" : ""}">MEDIUM</div><div style="${lv === 2 ? "background:#ff4a4a" : ""}">HIGH</div></div>
+      <div style="font-size:.75em;opacity:.75">${SW.status === "live" ? "● Live from NASA DONKI" : "● From a saved NASA DONKI record"}</div>`;
+  },
   spaceWeatherHtml() {
     const SW = SpaceWeather, risk = SW.risk();
     const badge = SW.status === "live" ? `<b style="color:#0a8a3a">● LIVE from NASA DONKI</b> (last 30 days, updated ${SW.fetchedAt.toLocaleString()})` : `<b style="color:#b06a00">● ARCHIVED NASA record</b> (live data not reachable right now)`;
@@ -3028,8 +3045,8 @@ const Story = {
     await SpaceWeather.load();
     const risk = SpaceWeather.risk();
     const radCost = BALANCE.radiation[risk];
-    await UI.card(`<h3>MISSION BRIEF</h3><div class="big">☀️</div><h1>Clean the Panels</h1><p>The base gets its power from the Sun through solar panels. When dust covers them, light can't reach them, and power drops. If we clean them before the storm, we keep more power. But outside is dangerous: you can't see well, and time is short.</p>
-      <div class="real"><span class="tag">REAL NASA SPACE WEATHER CHECK</span><br>Outside, the base walls can't protect you from radiation from the Sun.${UI.spaceWeatherHtml()}<br><b>${radCost ? `Sun is active → going outside costs ${radCost} extra SAFETY.` : "The Sun is calm right now → no extra radiation cost."}</b></div>${UI.srcHtml(["donki", "marsStorm2024"])}`,
+    await UI.card(`<h3>MISSION BRIEF</h3><h1>☀️ Clean the Panels</h1><p>Dust is covering our solar panels, so the base is losing power. Go out, clean them, and come back fast — the storm is coming!</p>
+      <div class="real"><span class="tag">REAL NASA DATA · TODAY'S SUN</span><br>Outside, there are no walls to block the Sun's radiation.${UI.spaceWeatherMini()}<b>${radCost ? `Busy Sun → going outside costs ${radCost} Safety.` : "Calm Sun → no extra danger today."}</b></div>${UI.srcHtml(["donki"])}`,
       [{ id: "go", label: "Suit up! 🧑‍🚀", cls: "go" }], { cls: "wide" });
     if (radCost) meter({ safety: radCost }, "☢️ Real solar activity: extra radiation outside!");
     UI.objective("Go to the Airlock with {diego}");
@@ -4381,7 +4398,8 @@ const SuitCards = {
       <div class="lgScene"><div class="lgCard">
         <div class="lgFace lgFront"><div class="lgNum">1 / 2</div>
           <div class="lgFrontGrid"><div><div class="lgIco">🧑‍🚀</div><h3>SUIT UP · BRIEFING</h3><h1>${F.title}</h1><p>${F.intro}</p>
-          <div class="lgHint">✨ Tap the small cards to learn each part<br>then tap the big card to turn it over</div></div>
+          <div class="lgHint">✨ Tap each small card to learn what it does <span class="lgCount">(0/4)</span></div>
+          <button class="lgFlipBtn">↻ Flip the card</button></div>
           <div class="minis four">${F.facts.map(mini).join("")}</div></div></div>
         <div class="lgFace lgBack"><div class="lgNum">2 / 2</div>
           <div class="lgBackGrid"><div class="lgPhoto"><img src="${ASSETS.salamPortrait}" alt="Salam Abu Alhayjaa" draggable="false"><span class="badge">${B.badge}</span></div>
@@ -4401,7 +4419,7 @@ const SuitCards = {
         card.querySelectorAll(".mini").forEach((m) => {
           m.addEventListener("pointerenter", () => { hoverEl = m; Sound.play("hover"); });
           m.addEventListener("pointerleave", () => { if (hoverEl === m) hoverEl = null; });
-          m.addEventListener("click", (e) => { e.stopPropagation(); const inn = m.querySelector(".mIn"); inn.animate([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], { duration: 160, easing: "ease-in" }).onfinish = () => { m.classList.toggle("open"); inn.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1.06)" }, { transform: "scaleX(1)" }], { duration: 260, easing: "ease-out" }); }; Sound.play("click"); const r = rel(m); burst(r.x + r.w / 2, r.y + r.h / 2, 18); });
+          m.addEventListener("click", (e) => { e.stopPropagation(); m.dataset.seen = 1; const fr = card.querySelector(".lgFront"), n = fr.querySelectorAll(".mini[data-seen]").length; const cnt = fr.querySelector(".lgCount"); if (cnt) cnt.textContent = `(${n}/4)`; if (n >= 4 && !fr.classList.contains("ready")) { fr.classList.add("ready"); Sound.play("good"); const r2 = rel(fr.querySelector(".lgFlipBtn")); burst(r2.x + r2.w / 2, r2.y + r2.h / 2, 40); } const inn = m.querySelector(".mIn"); inn.animate([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], { duration: 160, easing: "ease-in" }).onfinish = () => { m.classList.toggle("open"); inn.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1.06)" }, { transform: "scaleX(1)" }], { duration: 260, easing: "ease-out" }); }; Sound.play("click"); const r = rel(m); burst(r.x + r.w / 2, r.y + r.h / 2, 18); });
         });
         lg.addEventListener("pointerenter", () => { if (!hoverEl) hoverEl = lg; });
         lg.addEventListener("pointermove", () => { if (!hoverEl) hoverEl = lg; });
@@ -4415,6 +4433,7 @@ const SuitCards = {
           const r = rel(lg); setTimeout(() => burst(r.x + r.w / 2, r.y + r.h / 2, 160), 280);
         };
         lg.addEventListener("click", (e) => { if (e.target.closest(".mini, a, .lgGo")) return; flip(); });
+        card.querySelector(".lgFlipBtn").addEventListener("pointerenter", () => { hoverEl = lg; });
         card.querySelector(".lgGo").addEventListener("click", (e) => { e.stopPropagation(); Sound.play("click"); alive = false; window.removeEventListener("resize", size); done("ok"); });
         // keyboard: Space/Enter flips, then continues
         UI.active.onAction = () => { if (!flipped) flip(); else card.querySelector(".lgGo").click(); };

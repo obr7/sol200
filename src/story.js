@@ -196,8 +196,8 @@ const Story = {
     await SpaceWeather.load();
     const risk = SpaceWeather.risk();
     const radCost = BALANCE.radiation[risk];
-    await UI.card(`<h3>MISSION BRIEF</h3><div class="big">☀️</div><h1>Clean the Panels</h1><p>The base gets its power from the Sun through solar panels. When dust covers them, light can't reach them, and power drops. If we clean them before the storm, we keep more power. But outside is dangerous: you can't see well, and time is short.</p>
-      <div class="real"><span class="tag">REAL NASA SPACE WEATHER CHECK</span><br>Outside, the base walls can't protect you from radiation from the Sun.${UI.spaceWeatherHtml()}<br><b>${radCost ? `Sun is active → going outside costs ${radCost} extra SAFETY.` : "The Sun is calm right now → no extra radiation cost."}</b></div>${UI.srcHtml(["donki", "marsStorm2024"])}`,
+    await UI.card(`<h3>MISSION BRIEF</h3><h1>☀️ Clean the Panels</h1><p>Dust is covering our solar panels, so the base is losing power. Go out, clean them, and come back fast — the storm is coming!</p>
+      <div class="real"><span class="tag">REAL NASA DATA · TODAY'S SUN</span><br>Outside, there are no walls to block the Sun's radiation.${UI.spaceWeatherMini()}<b>${radCost ? `Busy Sun → going outside costs ${radCost} Safety.` : "Calm Sun → no extra danger today."}</b></div>${UI.srcHtml(["donki"])}`,
       [{ id: "go", label: "Suit up! 🧑‍🚀", cls: "go" }], { cls: "wide" });
     if (radCost) meter({ safety: radCost }, "☢️ Real solar activity: extra radiation outside!");
     UI.objective("Go to the Airlock with {diego}");

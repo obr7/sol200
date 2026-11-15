@@ -160,6 +160,14 @@ const UI = {
       },
     });
   },
+  // short, kid-friendly version for mission briefs
+  spaceWeatherMini() {
+    const SW = SpaceWeather, risk = SW.risk(), lv = { quiet: 0, M: 1, X: 2 }[risk], f = SW.flares[0];
+    const word = ["calm 😌", "a bit busy 😐", "very busy 😬"][lv];
+    return `<div style="margin:.3em 0">The Sun is <b>${word}</b> today${f ? ` (biggest recent flare: <span class="cls ${f.classType[0]}">${f.classType}</span>)` : ""}.</div>
+      <div class="sun-meter"><div style="${lv === 0 ? "background:#7dff9a" : ""}">LOW</div><div style="${lv === 1 ? "background:#ffb020" : ""}">MEDIUM</div><div style="${lv === 2 ? "background:#ff4a4a" : ""}">HIGH</div></div>
+      <div style="font-size:.75em;opacity:.75">${SW.status === "live" ? "● Live from NASA DONKI" : "● From a saved NASA DONKI record"}</div>`;
+  },
   spaceWeatherHtml() {
     const SW = SpaceWeather, risk = SW.risk();
     const badge = SW.status === "live" ? `<b style="color:#0a8a3a">● LIVE from NASA DONKI</b> (last 30 days, updated ${SW.fetchedAt.toLocaleString()})` : `<b style="color:#b06a00">● ARCHIVED NASA record</b> (live data not reachable right now)`;

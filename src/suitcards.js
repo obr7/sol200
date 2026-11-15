@@ -39,7 +39,8 @@ const SuitCards = {
       <div class="lgScene"><div class="lgCard">
         <div class="lgFace lgFront"><div class="lgNum">1 / 2</div>
           <div class="lgFrontGrid"><div><div class="lgIco">🧑‍🚀</div><h3>SUIT UP · BRIEFING</h3><h1>${F.title}</h1><p>${F.intro}</p>
-          <div class="lgHint">✨ Tap the small cards to learn each part<br>then tap the big card to turn it over</div></div>
+          <div class="lgHint">✨ Tap each small card to learn what it does <span class="lgCount">(0/4)</span></div>
+          <button class="lgFlipBtn">↻ Flip the card</button></div>
           <div class="minis four">${F.facts.map(mini).join("")}</div></div></div>
         <div class="lgFace lgBack"><div class="lgNum">2 / 2</div>
           <div class="lgBackGrid"><div class="lgPhoto"><img src="${ASSETS.salamPortrait}" alt="Salam Abu Alhayjaa" draggable="false"><span class="badge">${B.badge}</span></div>
@@ -59,7 +60,7 @@ const SuitCards = {
         card.querySelectorAll(".mini").forEach((m) => {
           m.addEventListener("pointerenter", () => { hoverEl = m; Sound.play("hover"); });
           m.addEventListener("pointerleave", () => { if (hoverEl === m) hoverEl = null; });
-          m.addEventListener("click", (e) => { e.stopPropagation(); const inn = m.querySelector(".mIn"); inn.animate([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], { duration: 160, easing: "ease-in" }).onfinish = () => { m.classList.toggle("open"); inn.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1.06)" }, { transform: "scaleX(1)" }], { duration: 260, easing: "ease-out" }); }; Sound.play("click"); const r = rel(m); burst(r.x + r.w / 2, r.y + r.h / 2, 18); });
+          m.addEventListener("click", (e) => { e.stopPropagation(); m.dataset.seen = 1; const fr = card.querySelector(".lgFront"), n = fr.querySelectorAll(".mini[data-seen]").length; const cnt = fr.querySelector(".lgCount"); if (cnt) cnt.textContent = `(${n}/4)`; if (n >= 4 && !fr.classList.contains("ready")) { fr.classList.add("ready"); Sound.play("good"); const r2 = rel(fr.querySelector(".lgFlipBtn")); burst(r2.x + r2.w / 2, r2.y + r2.h / 2, 40); } const inn = m.querySelector(".mIn"); inn.animate([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], { duration: 160, easing: "ease-in" }).onfinish = () => { m.classList.toggle("open"); inn.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1.06)" }, { transform: "scaleX(1)" }], { duration: 260, easing: "ease-out" }); }; Sound.play("click"); const r = rel(m); burst(r.x + r.w / 2, r.y + r.h / 2, 18); });
         });
         lg.addEventListener("pointerenter", () => { if (!hoverEl) hoverEl = lg; });
         lg.addEventListener("pointermove", () => { if (!hoverEl) hoverEl = lg; });
@@ -73,6 +74,7 @@ const SuitCards = {
           const r = rel(lg); setTimeout(() => burst(r.x + r.w / 2, r.y + r.h / 2, 160), 280);
         };
         lg.addEventListener("click", (e) => { if (e.target.closest(".mini, a, .lgGo")) return; flip(); });
+        card.querySelector(".lgFlipBtn").addEventListener("pointerenter", () => { hoverEl = lg; });
         card.querySelector(".lgGo").addEventListener("click", (e) => { e.stopPropagation(); Sound.play("click"); alive = false; window.removeEventListener("resize", size); done("ok"); });
         // keyboard: Space/Enter flips, then continues
         UI.active.onAction = () => { if (!flipped) flip(); else card.querySelector(".lgGo").click(); };
