@@ -206,14 +206,14 @@ body.touch.playing #touch { display: block; }
 
 /* canvas mini-games */
 .cgcard { width: auto !important; max-width: 96vw; }
-.cgwrap { background: #000; border-radius: .5em; overflow: hidden; border: .2em solid #3a4170; width: min(88vw, calc((100vh - 15em) * 1.7778)); margin: 0 auto; }
+.cgwrap { background: #000; border-radius: .5em; overflow: hidden; border: .2em solid #3a4170; width: min(88vw, calc((100cqh - 15em) * 1.7778)); margin: 0 auto; }
 .cg { width: 100%; display: block; image-rendering: pixelated; cursor: none; touch-action: none; }
-.cgcard p, .cgcard .say { max-width: min(88vw, calc((100vh - 15em) * 1.7778)); }
+.cgcard p, .cgcard .say { max-width: min(88vw, calc((100cqh - 15em) * 1.7778)); }
 /* Mars hologram globe */
 .globeCard { width: min(94vw, 780px) !important; max-height: 96vh; overflow-y: auto; }
 .globeWrap { display: flex; gap: .8em; align-items: stretch; justify-content: center; }
 @media (max-aspect-ratio: 1/1) { .globeWrap { flex-wrap: wrap; } }
-.globeView { position: relative; flex: 0 0 auto; width: min(calc(100vh - 17em), 46vw, 360px); min-width: 9em; align-self: flex-start; height: auto; aspect-ratio: 1; background: radial-gradient(circle, #10203a 0%, #05060c 70%); border-radius: .6em; border: .15em solid #2a4a7a; overflow: hidden; }
+.globeView { position: relative; flex: 0 0 auto; width: min(calc(100cqh - 17em), 46vw, 360px); min-width: 9em; align-self: flex-start; height: auto; aspect-ratio: 1; background: radial-gradient(circle, #10203a 0%, #05060c 70%); border-radius: .6em; border: .15em solid #2a4a7a; overflow: hidden; }
 .globeCv { width: 100%; height: 100%; display: block; image-rendering: pixelated; cursor: grab; touch-action: none; }
 .globeCv:active { cursor: grabbing; }
 .globeHint { position: absolute; left: 0; right: 0; bottom: .3em; text-align: center; font-size: .7em; opacity: .75; pointer-events: none; }
@@ -240,7 +240,7 @@ body.touch.playing #touch { display: block; }
 
 /* crew photo album (3D stack) */
 .albumCard { width: min(92vw, 720px) !important; }
-.albumStage { position: relative; height: min(44vh, 300px); perspective: 900px; margin: .3em 0; }
+.albumStage { position: relative; height: min(calc(100cqh - 21em), 300px); perspective: 900px; margin: .3em 0; }
 .album { position: absolute; inset: 0; transform-style: preserve-3d; touch-action: none; }
 .album .photo { position: absolute; left: 50%; top: 52%; width: min(52vh, 360px, 70vw); background: #fbf6ea; padding: .55em .55em 0; border-radius: .25em; box-shadow: 0 .6em 1.4em rgba(0,0,0,.55); cursor: grab; user-select: none; }
 .album .photo:active { cursor: grabbing; }
@@ -254,7 +254,7 @@ body.touch.playing #touch { display: block; }
 .albCap { font-size: .82em; line-height: 1.4; min-height: 3.2em; text-align: center; }
 .albHint { font-size: .7em; opacity: .65; text-align: center; margin: .2em 0 0; }
 
-.album .photo.real { padding: 0; background: none; box-shadow: 0 .6em 1.4em rgba(0,0,0,.6); width: min(56vh, 400px, 72vw); }
+.album .photo.real { padding: 0; background: none; box-shadow: 0 .6em 1.4em rgba(0,0,0,.6); width: min(calc((100cqh - 23em) * 1.33), 400px, 72vw); }
 .album .photo.real .pimg { border: none; image-rendering: auto; border-radius: .2em; }
 .album .photo.real .pcap { display: none; }
 .mwCard { width: min(94vw, 820px) !important; }
@@ -268,7 +268,7 @@ body.touch.playing #touch { display: block; }
 
 /* window view */
 .mwCard { background: #15161f !important; }
-.mwWin { position: relative; margin: .2em auto 1.6em; width: min(84vw, calc((100vh - 15em) * 2), 760px); aspect-ratio: 2 / 1; border: 1.1em solid #8b93a6; border-radius: 1.6em; box-shadow: 0 0 0 .3em #2a2e3c, inset 0 0 0 .25em #5a6070, 0 1.2em 0 -.2em #6a7090, 0 0 3em rgba(255,140,80,.25); overflow: hidden; background: #1b1d2b; }
+.mwWin { position: relative; margin: .2em auto 1.6em; width: min(84vw, calc((100cqh - 19em) * 2), 760px); aspect-ratio: 2 / 1; border: 1.1em solid #8b93a6; border-radius: 1.6em; box-shadow: 0 0 0 .3em #2a2e3c, inset 0 0 0 .25em #5a6070, 0 1.2em 0 -.2em #6a7090, 0 0 3em rgba(255,140,80,.25); overflow: hidden; background: #1b1d2b; }
 .mwPix { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 .mwBar { position: absolute; top: 0; bottom: 0; left: 50%; width: .9em; margin-left: -.45em; background: #8b93a6; box-shadow: inset .2em 0 0 #aab2c4, inset -.2em 0 0 #5a6070; }
 .mwGlare { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255,255,255,.16) 0 6%, transparent 6% 9%, rgba(255,255,255,.08) 9% 11%, transparent 11%); }
@@ -374,6 +374,12 @@ body.touch.playing #touch { display: block; }
 .spName { font-weight: 800; font-size: .8em; margin-top: 1.1em; }
 .sp.calm.on .spName { color: #1f8a3a; } .sp.busy.on .spName { color: #c06a00; } .sp.angry.on .spName { color: #d0261a; }
 .spSub { font-size: .65em; opacity: .8; }
+
+/* no scrollbars on windows: content is fitted instead (still scrollable by wheel/touch if ever needed) */
+.card, .globeCard, .albumCard, .mwCard, .legendCard { scrollbar-width: none; }
+.card::-webkit-scrollbar { display: none; }
+
+#stage { container-type: size; }
 </style>
 </head>
 <body>
@@ -2663,7 +2669,7 @@ const Game = {
     }
     const mw = propById.mars_window; this.addInteract({ id: "mwin", x: mw.x + mw.pw / 2, y: mw.y + mw.ph + 8, r: 30, label: "Look", name: "Mars window", use: () => MarsWindow.open(), marker: () => G.flags && G.flags.window ? null : "?" });
     const pt = propById.photo_table; this.addInteract({ id: "photo", x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo album", use: () => PhotoAlbum.open(), marker: () => G.flags && G.flags.photo ? null : "?" });
-    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", marker: () => Story.onHolo ? "!" : null, use: async () => { await MarsGlobe.open(); G.flags.holo = true; if (Story.onHolo) { const f = Story.onHolo; Story.onHolo = null; f(); } } });
+    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", marker: () => Story.onHolo ? "!" : G.flags && G.flags.holo ? null : "?", use: async () => { await MarsGlobe.open(); G.flags.holo = true; if (Story.onHolo) { const f = Story.onHolo; Story.onHolo = null; f(); } } });
     const hp = propById.hope; this.addInteract({ id: "hope", x: hp.x + 8, y: hp.y + hp.ph + 8, label: "Look", name: "Hope", use: () => Story.hope() });
   },
   addInteract(o) { o.r = o.r || 24; o.enabled = o.enabled || (() => true); this.interactables = this.interactables.filter((i) => i.id !== o.id); this.interactables.push(o); return o; },
@@ -2732,10 +2738,20 @@ const Game = {
     for (const i of this.interactables) {
       if (!i.enabled() || !i.marker) continue;
       const m = i.marker(); if (!m) continue;
-      const x = Math.round(i.x), y = Math.round((i.npc ? i.npc.y - charHeadOffset() : i.y - 30) + Math.sin(t * 4) * 2);
+      const x = Math.round(i.x), y = Math.round((i.npc ? i.npc.y - charHeadOffset() : i.y - 30) + Math.round(Math.sin(t * 2.5 + i.x * 0.05)));
       if (!visible(i.x, i.y - 10)) continue;
-      g.fillStyle = m === "!" ? "#ffd34a" : "#7ad8ff"; g.fillRect(x - 4, y - 6, 9, 10); g.fillStyle = "#1b1d2b"; g.fillRect(x - 4, y + 4, 9, 1); g.fillRect(x, y + 4, 1, 2);
-      g.font = "bold 8px monospace"; g.fillStyle = "#1b1d2b"; g.textAlign = "center"; g.fillText(m, x + 0.5, y + 2.5); g.textAlign = "left";
+      // a small pixel chat bubble: "?" = something to discover, "!" = your next task
+      const near = Math.hypot(i.x - this.player.x, i.y - this.player.y) < 44, imp = m === "!";
+      const fill = imp ? "#ffd34a" : "#f4f1e8", ink = imp ? "#5a2e10" : "#2f6fd0", edge = "#1b1d2b";
+      g.globalAlpha = near || imp ? 1 : 0.72;
+      const bx = x - 5, by = y - 7 - (near ? 1 : 0), bw = 11, bh = 9;
+      g.fillStyle = edge; g.fillRect(bx + 1, by - 1, bw - 2, 1); g.fillRect(bx + 1, by + bh, bw - 2, 1); g.fillRect(bx - 1 + 1, by, 1, bh); g.fillRect(bx + bw - 1, by, 1, bh);
+      g.fillStyle = fill; g.fillRect(bx + 1, by, bw - 2, bh);
+      g.fillStyle = edge; g.fillRect(bx + 2, by + bh + 1, 2, 1); g.fillRect(bx + 2, by + bh + 2, 1, 1); g.fillStyle = fill; g.fillRect(bx + 3, by + bh, 1, 1); // tail
+      g.fillStyle = ink;
+      if (imp) { g.fillRect(x, by + 2, 1, 4); g.fillRect(x, by + 7, 1, 1); }
+      else { g.fillRect(x - 1, by + 1, 3, 1); g.fillRect(x - 2, by + 2, 1, 1); g.fillRect(x + 2, by + 2, 1, 2); g.fillRect(x + 1, by + 4, 1, 1); g.fillRect(x, by + 5, 1, 1); g.fillRect(x, by + 7, 1, 1); }
+      g.globalAlpha = 1;
     }
     // guide arrow toward objective
     if (this.target && this.guidePath && this.guidePath.length > 2) {
@@ -3394,7 +3410,7 @@ function canvasGame({ title, sub, tag = "MINI-TASK", speaker = "layla", hint, wi
           say: (who, txt) => mgSay(sayBox, who, txt),
           timer: (txt) => { tmr.innerHTML = txt || ""; },
           finished: false,
-          finish(res) { if (api.finished) return; api.finished = true; cancelAnimationFrame(api.raf); window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); Minigames.cancelCurrent = null; setTimeout(() => { done("ok"); resolve(res); }, res && res.delay != null ? res.delay : 0); },
+          finish(res) { if (api.finished) return; api.finished = true; cancelAnimationFrame(api.raf); window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); if (api._fit) window.removeEventListener("resize", api._fit); Minigames.cancelCurrent = null; setTimeout(() => { done("ok"); resolve(res); }, res && res.delay != null ? res.delay : 0); },
           keys: {},
         };
         if (hint) api.say(speaker, hint);
@@ -3415,6 +3431,11 @@ function canvasGame({ title, sub, tag = "MINI-TASK", speaker = "layla", hint, wi
           try { api.frame && api.frame(dt, api.t); } catch (er) { console.error(er); }
           api.raf = requestAnimationFrame(loop);
         };
+        // shrink the canvas until the whole card fits on screen (no scrollbar)
+        const wrapEl = card.querySelector(".cgwrap");
+        const fit = () => { if (!wrapEl || !card.isConnected) return; wrapEl.style.width = ""; let w = wrapEl.getBoundingClientRect().width; for (let i = 0; i < 30 && card.scrollHeight > card.clientHeight + 1 && w > 200; i++) { w *= 0.95; wrapEl.style.width = w + "px"; } };
+        api._fit = fit; requestAnimationFrame(fit); setTimeout(fit, 120); window.addEventListener("resize", fit);
+        const say0 = api.say; api.say = (who, txt) => { say0(who, txt); if (card.scrollHeight > card.clientHeight + 1) fit(); };
         window.__mg = api; setup(api);
         api.raf = requestAnimationFrame(loop);
       },

@@ -141,7 +141,7 @@ const Game = {
     }
     const mw = propById.mars_window; this.addInteract({ id: "mwin", x: mw.x + mw.pw / 2, y: mw.y + mw.ph + 8, r: 30, label: "Look", name: "Mars window", use: () => MarsWindow.open(), marker: () => G.flags && G.flags.window ? null : "?" });
     const pt = propById.photo_table; this.addInteract({ id: "photo", x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo album", use: () => PhotoAlbum.open(), marker: () => G.flags && G.flags.photo ? null : "?" });
-    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", marker: () => Story.onHolo ? "!" : null, use: async () => { await MarsGlobe.open(); G.flags.holo = true; if (Story.onHolo) { const f = Story.onHolo; Story.onHolo = null; f(); } } });
+    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", marker: () => Story.onHolo ? "!" : G.flags && G.flags.holo ? null : "?", use: async () => { await MarsGlobe.open(); G.flags.holo = true; if (Story.onHolo) { const f = Story.onHolo; Story.onHolo = null; f(); } } });
     const hp = propById.hope; this.addInteract({ id: "hope", x: hp.x + 8, y: hp.y + hp.ph + 8, label: "Look", name: "Hope", use: () => Story.hope() });
   },
   addInteract(o) { o.r = o.r || 24; o.enabled = o.enabled || (() => true); this.interactables = this.interactables.filter((i) => i.id !== o.id); this.interactables.push(o); return o; },
@@ -210,10 +210,20 @@ const Game = {
     for (const i of this.interactables) {
       if (!i.enabled() || !i.marker) continue;
       const m = i.marker(); if (!m) continue;
-      const x = Math.round(i.x), y = Math.round((i.npc ? i.npc.y - charHeadOffset() : i.y - 30) + Math.sin(t * 4) * 2);
+      const x = Math.round(i.x), y = Math.round((i.npc ? i.npc.y - charHeadOffset() : i.y - 30) + Math.round(Math.sin(t * 2.5 + i.x * 0.05)));
       if (!visible(i.x, i.y - 10)) continue;
-      g.fillStyle = m === "!" ? "#ffd34a" : "#7ad8ff"; g.fillRect(x - 4, y - 6, 9, 10); g.fillStyle = "#1b1d2b"; g.fillRect(x - 4, y + 4, 9, 1); g.fillRect(x, y + 4, 1, 2);
-      g.font = "bold 8px monospace"; g.fillStyle = "#1b1d2b"; g.textAlign = "center"; g.fillText(m, x + 0.5, y + 2.5); g.textAlign = "left";
+      // a small pixel chat bubble: "?" = something to discover, "!" = your next task
+      const near = Math.hypot(i.x - this.player.x, i.y - this.player.y) < 44, imp = m === "!";
+      const fill = imp ? "#ffd34a" : "#f4f1e8", ink = imp ? "#5a2e10" : "#2f6fd0", edge = "#1b1d2b";
+      g.globalAlpha = near || imp ? 1 : 0.72;
+      const bx = x - 5, by = y - 7 - (near ? 1 : 0), bw = 11, bh = 9;
+      g.fillStyle = edge; g.fillRect(bx + 1, by - 1, bw - 2, 1); g.fillRect(bx + 1, by + bh, bw - 2, 1); g.fillRect(bx - 1 + 1, by, 1, bh); g.fillRect(bx + bw - 1, by, 1, bh);
+      g.fillStyle = fill; g.fillRect(bx + 1, by, bw - 2, bh);
+      g.fillStyle = edge; g.fillRect(bx + 2, by + bh + 1, 2, 1); g.fillRect(bx + 2, by + bh + 2, 1, 1); g.fillStyle = fill; g.fillRect(bx + 3, by + bh, 1, 1); // tail
+      g.fillStyle = ink;
+      if (imp) { g.fillRect(x, by + 2, 1, 4); g.fillRect(x, by + 7, 1, 1); }
+      else { g.fillRect(x - 1, by + 1, 3, 1); g.fillRect(x - 2, by + 2, 1, 1); g.fillRect(x + 2, by + 2, 1, 2); g.fillRect(x + 1, by + 4, 1, 1); g.fillRect(x, by + 5, 1, 1); g.fillRect(x, by + 7, 1, 1); }
+      g.globalAlpha = 1;
     }
     // guide arrow toward objective
     if (this.target && this.guidePath && this.guidePath.length > 2) {

@@ -23,7 +23,7 @@ function canvasGame({ title, sub, tag = "MINI-TASK", speaker = "layla", hint, wi
           say: (who, txt) => mgSay(sayBox, who, txt),
           timer: (txt) => { tmr.innerHTML = txt || ""; },
           finished: false,
-          finish(res) { if (api.finished) return; api.finished = true; cancelAnimationFrame(api.raf); window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); Minigames.cancelCurrent = null; setTimeout(() => { done("ok"); resolve(res); }, res && res.delay != null ? res.delay : 0); },
+          finish(res) { if (api.finished) return; api.finished = true; cancelAnimationFrame(api.raf); window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); if (api._fit) window.removeEventListener("resize", api._fit); Minigames.cancelCurrent = null; setTimeout(() => { done("ok"); resolve(res); }, res && res.delay != null ? res.delay : 0); },
           keys: {},
         };
         if (hint) api.say(speaker, hint);
@@ -44,6 +44,11 @@ function canvasGame({ title, sub, tag = "MINI-TASK", speaker = "layla", hint, wi
           try { api.frame && api.frame(dt, api.t); } catch (er) { console.error(er); }
           api.raf = requestAnimationFrame(loop);
         };
+        // shrink the canvas until the whole card fits on screen (no scrollbar)
+        const wrapEl = card.querySelector(".cgwrap");
+        const fit = () => { if (!wrapEl || !card.isConnected) return; wrapEl.style.width = ""; let w = wrapEl.getBoundingClientRect().width; for (let i = 0; i < 30 && card.scrollHeight > card.clientHeight + 1 && w > 200; i++) { w *= 0.95; wrapEl.style.width = w + "px"; } };
+        api._fit = fit; requestAnimationFrame(fit); setTimeout(fit, 120); window.addEventListener("resize", fit);
+        const say0 = api.say; api.say = (who, txt) => { say0(who, txt); if (card.scrollHeight > card.clientHeight + 1) fit(); };
         window.__mg = api; setup(api);
         api.raf = requestAnimationFrame(loop);
       },
