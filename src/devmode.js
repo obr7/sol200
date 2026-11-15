@@ -17,10 +17,12 @@ const Dev = {
     window.addEventListener("keydown", (e) => { if (this.on && (e.key === "n" || e.key === "N") && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) { e.preventDefault(); this.skip(); } });
     setInterval(() => { if (this.on && this.auto) this.skip(true); }, 120);
     // ?jump=<point>&d1=A&d2=B → start right there (used by the Jump buttons)
-    const q = new URLSearchParams(location.search);
-    if (q.get("jump")) setTimeout(() => this.startAt(q.get("jump"), q.get("d1"), q.get("d2")), 300);
+    const q = new URLSearchParams(location.search), jump = q.get("jump");
+    this.cleanUrl(); // a refresh never jumps again: the normal game (with the intro) comes back
+    if (jump && this.on) setTimeout(() => this.startAt(jump, q.get("d1"), q.get("d2")), 300);
   },
-  set(on) { this.on = on; try { localStorage.setItem("sol200_dev", on ? "1" : "0"); } catch (e) {} this.show(); },
+  cleanUrl() { try { const u = new URL(location.href); ["jump", "d1", "d2"].forEach((k) => u.searchParams.delete(k)); history.replaceState(null, "", u.toString()); } catch (e) {} },
+  set(on) { this.on = on; if (!on) { this.auto = false; this.cleanUrl(); const a = this.panel && this.panel.querySelector(".dvAuto"); if (a) a.checked = false; } try { localStorage.setItem("sol200_dev", on ? "1" : "0"); } catch (e) {} this.show(); },
   show() { $("#devBtn").style.display = this.on ? "block" : "none"; if (!this.on) this.panel.classList.add("hidden"); },
   toggle() { this.panel.classList.toggle("hidden"); },
   POINTS: [
@@ -71,7 +73,7 @@ const Dev = {
   // start the story at a given point
   async startAt(k, d1, d2) {
     if (typeof Intro !== "undefined" && Intro.running) Intro.finish = () => {};
-    UI.clear(); Story.setup(); Game.introSeen = true;
+    UI.clear(); Story.setup();
     Game.mode = "play"; $("#hud").classList.remove("off"); Sound.init && Sound.init();
     const N = Game.npc, P = Game.player;
     G.d1 = d1 || "A"; G.d2 = d2 || "B";
