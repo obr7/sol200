@@ -4,8 +4,8 @@
 //  per-character idle gesture. Toggle in Settings (New / Classic).
 // =====================================================================
 const CHAR_STYLE_KEY = "sol200_charstyle";
-let CHAR_STYLE = (() => { try { return localStorage.getItem(CHAR_STYLE_KEY) || "v2"; } catch (e) { return "v2"; } })();
-function setCharStyle(v) { CHAR_STYLE = v; try { localStorage.setItem(CHAR_STYLE_KEY, v); } catch (e) {} }
+let CHAR_STYLE = (() => { try { const v = localStorage.getItem(CHAR_STYLE_KEY); return v === "v1" || v === "v2" || v === "team" ? (v === "v2" && !localStorage.getItem("sol200_teamseen") ? "team" : v) : "team"; } catch (e) { return "team"; } })();
+function setCharStyle(v) { CHAR_STYLE = v; try { localStorage.setItem(CHAR_STYLE_KEY, v); localStorage.setItem("sol200_teamseen", "1"); } catch (e) {} }
 
 const V2 = {
   suit: "#f2f4f8", suitS: "#d3d9e4", suitD: "#aab3c4", suitL: "#ffffff",

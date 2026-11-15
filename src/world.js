@@ -193,6 +193,23 @@ function renderStaticMap() {
       if (near2 && !near) R(X, Y + 13, T, 3, "#3a4060");
     }
   }
+  // ink lines (team sprite style): dark edge where floor meets wall, darker grout, bevels
+  for (let y = 0; y < MH; y++) for (let x = 0; x < 54; x++) {
+    const X = x * T, Y = y * T;
+    if (isFloor(x, y)) {
+      const f = floorMap[idx(x, y)];
+      if (f !== FLOOR.sand) { R(X, Y + 15, T, 1, "rgba(8,6,14,0.35)"); R(X + 15, Y, 1, T, "rgba(8,6,14,0.35)"); R(X, Y, T, 1, "rgba(255,255,255,0.06)"); }
+      if (!isFloor(x, y - 1)) { R(X, Y, T, 2, "#0d0b12"); R(X, Y + 2, T, 3, "rgba(0,0,0,0.28)"); }
+      if (!isFloor(x - 1, y)) { R(X, Y, 1, T, "#0d0b12"); R(X + 1, Y, 2, T, "rgba(0,0,0,0.2)"); }
+      if (!isFloor(x + 1, y)) { R(X + 15, Y, 1, T, "#0d0b12"); R(X + 13, Y, 2, T, "rgba(0,0,0,0.2)"); }
+      if (!isFloor(x, y + 1)) R(X, Y + 15, T, 1, "#0d0b12");
+    } else {
+      const below = isFloor(x, y + 1);
+      if (below && !isFloor(x, y - 1)) R(X, Y, T, 1, "#0d0b12"); // top of a wall face
+      if (below) { if (!isFloor(x - 1, y) && !isFloor(x - 1, y + 1)) R(X, Y, 1, T, "#0d0b12"); if (!isFloor(x + 1, y) && !isFloor(x + 1, y + 1)) R(X + 15, Y, 1, T, "#0d0b12"); }
+      else if (isFloor(x, y + 2)) R(X, Y + 15, T, 1, "#0d0b12"); // cap above a wall face
+    }
+  }
   // base hull edge outside
   for (let y = 0; y < MH; y++) { if (y === 8 || y === 9) continue; R(54 * T, y * T, T, T, "#2c3146"); R(54 * T + 12, y * T, 4, T, "#3a4060"); }
 }

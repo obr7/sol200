@@ -163,6 +163,7 @@ function drawProp1(g, p, t) {
 
 // ---------------------------------------------------------------- characters
 function drawCharacter(g, c, t) {
+  if (CHAR_STYLE === "team") return drawCharacterTeam(g, c, t);
   if (CHAR_STYLE === "v2") return drawCharacterV2(g, c, t);
   const set = CharSprites[c.sprite + (c.helmet ? "_h" : "")];
   if (!set) return;
@@ -211,7 +212,7 @@ function renderWorld(g, t, dt) {
   const list = [];
   for (const p of PROPS) {
     if (p.x + p.pw < cx - 20 || p.x > cx + VW + 20 || p.y + p.ph < cy - 40 || p.y > cy + VH + 20) continue;
-    list.push({ y: p.y + p.ph, d: () => drawProp(g, p, t) });
+    list.push({ y: p.y + p.ph, d: () => drawPropOutlined(g, p, t, cx, cy) });
   }
   for (const c of Game.chars) { if (!c.visible) continue; if (c !== P && !visible(c.x, c.y - 4)) continue; list.push({ y: c.y, d: () => drawCharacter(g, c, t) }); }
   list.sort((a, b) => a.y - b.y);
@@ -275,5 +276,19 @@ function corridorMask() {
     if (lit) g.fillRect(x * T, y * T, T, T);
   }
   return _cMask;
+}
+// draw a prop with a dark 1-px outline (matches the team's sprite style)
+let _pcv, _pg, _scv, _sg;
+function drawPropOutlined(g, p, t) {
+  if (p.type === "rock" && G.storm) return drawProp(g, p, t);
+  const bx = Math.floor(p.x - 10), by = Math.floor(p.y - 52), bw = p.pw + 20, bh = p.ph + 62;
+  if (!_pcv) { _pcv = mkCanvas(160, 160); _pg = _pcv.getContext("2d"); _scv = mkCanvas(160, 160); _sg = _scv.getContext("2d"); }
+  if (bw > _pcv.width || bh > _pcv.height) { _pcv.width = _scv.width = Math.max(bw, _pcv.width); _pcv.height = _scv.height = Math.max(bh, _pcv.height); }
+  _pg.setTransform(1, 0, 0, 1, 0, 0); _pg.clearRect(0, 0, bw, bh);
+  _pg.setTransform(1, 0, 0, 1, -bx, -by); drawProp(_pg, p, t); _pg.setTransform(1, 0, 0, 1, 0, 0);
+  _sg.globalCompositeOperation = "source-over"; _sg.clearRect(0, 0, bw, bh); _sg.drawImage(_pcv, 0, 0);
+  _sg.globalCompositeOperation = "source-in"; _sg.fillStyle = "#120f18"; _sg.fillRect(0, 0, bw, bh); _sg.globalCompositeOperation = "source-over";
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) g.drawImage(_scv, 0, 0, bw, bh, bx + dx, by + dy, bw, bh);
+  g.drawImage(_pcv, 0, 0, bw, bh, bx, by, bw, bh);
 }
 function hexA(hex, a) { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }

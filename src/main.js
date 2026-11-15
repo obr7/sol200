@@ -208,7 +208,7 @@ const Game = {
     for (const i of this.interactables) {
       if (!i.enabled() || !i.marker) continue;
       const m = i.marker(); if (!m) continue;
-      const x = Math.round(i.x), y = Math.round((i.npc ? i.npc.y - (CHAR_STYLE === "v2" ? 43 : 34) : i.y - 30) + Math.sin(t * 4) * 2);
+      const x = Math.round(i.x), y = Math.round((i.npc ? i.npc.y - charHeadOffset() : i.y - 30) + Math.sin(t * 4) * 2);
       if (!visible(i.x, i.y - 10)) continue;
       g.fillStyle = m === "!" ? "#ffd34a" : "#7ad8ff"; g.fillRect(x - 4, y - 6, 9, 10); g.fillStyle = "#1b1d2b"; g.fillRect(x - 4, y + 4, 9, 1); g.fillRect(x, y + 4, 1, 2);
       g.font = "bold 8px monospace"; g.fillStyle = "#1b1d2b"; g.textAlign = "center"; g.fillText(m, x + 0.5, y + 2.5); g.textAlign = "left";
@@ -301,7 +301,7 @@ const Game = {
       // prompt
       const pr = $("#prompt");
       const it = this.mode === "play" && !this.freeze && !UI.busy() ? this.nearestInteract() : null;
-      if (it) { pr.classList.remove("hidden"); const sx = (it.x - Cam.x) * this.scale, sy = ((it.npc ? it.npc.y - (CHAR_STYLE === "v2" ? 40 : 30) : it.y - 26) - Cam.y) * this.scale; pr.style.left = sx + "px"; pr.style.top = sy + "px"; const key = document.body.classList.contains("touch") ? "A" : "Space"; pr.innerHTML = `<kbd>${key}</kbd>${it.label}${it.name ? " · " + fill(it.name) : ""}`; $("#abtn").textContent = it.label.split(" ")[0]; }
+      if (it) { pr.classList.remove("hidden"); const sx = (it.x - Cam.x) * this.scale, sy = ((it.npc ? it.npc.y - (charHeadOffset() - 4) : it.y - 26) - Cam.y) * this.scale; pr.style.left = sx + "px"; pr.style.top = sy + "px"; const key = document.body.classList.contains("touch") ? "A" : "Space"; pr.innerHTML = `<kbd>${key}</kbd>${it.label}${it.name ? " · " + fill(it.name) : ""}`; $("#abtn").textContent = it.label.split(" ")[0]; }
       else { pr.classList.add("hidden"); $("#abtn").textContent = "A"; }
     } else if (this.mode === "intro") {
       Intro.frame(dt, t);

@@ -2,7 +2,7 @@
 //  MINI-GAMES — Garden Check, Clean the Panels, Share the Power,
 //  Restart Rosie, and the flip cards.
 // =====================================================================
-function miniPortrait(id) { const c = mkCanvas(42, 42); c.getContext("2d").drawImage(getPortrait(id, false, false), 0, 0); c.style.background = shade(CHAR_SPECS[id].stripe, 0.4); c.style.borderRadius = ".3em"; return c; }
+function miniPortrait(id) { const c = mkCanvas(42, 42); c.getContext("2d").drawImage(portraitFor(id, false, false), 0, 0); c.style.background = shade(CHAR_SPECS[id].stripe, 0.4); c.style.borderRadius = ".3em"; return c; }
 function mgSay(box, id, text) { box.innerHTML = ""; box.appendChild(miniPortrait(id)); box.appendChild(el("span", "", fill(text))); box.animate([{ transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 250 }); }
 
 const Minigames = {
