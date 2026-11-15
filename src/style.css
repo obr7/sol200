@@ -214,3 +214,6 @@ body.touch.playing #touch { display: block; }
 .siteBtn.on, .siteBtn:hover { background: #2a4a7a; border-color: #ffd34a; }
 .siteInfo { font-size: .82em; line-height: 1.4; background: rgba(0,0,0,.3); padding: .6em; border-radius: .4em; flex: 1; }
 .siteInfo .coord { font-size: .85em; opacity: .7; }
+
+#iskip { position: absolute; right: 1em; bottom: 1em; z-index: 30; font: inherit; font-size: .85em; padding: .45em 1em; border-radius: .5em; border: .12em solid rgba(255,255,255,.35); background: rgba(0,0,0,.45); color: #fff; cursor: pointer; opacity: .75; transition: opacity .2s, background .2s; }
+#iskip:hover { opacity: 1; background: rgba(0,0,0,.7); border-color: #ffd34a; }

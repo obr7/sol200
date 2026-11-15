@@ -100,6 +100,7 @@ const Intro = {
     UI.clear();
     const sub = el("div"); sub.id = "isub"; sub.className = "hidden"; UI.root.appendChild(sub);
     this.subEl = sub;
+    const sk = el("button", "", "Skip ⏭"); sk.id = "iskip"; sk.onclick = (e) => { e.stopPropagation(); this.skip(); }; UI.root.appendChild(sk); this.skipEl = sk;
     if (this.debug) { const d = el("div"); d.id = "idebug"; UI.root.appendChild(d); this.dbgEl = d; }
     const q = location.search.match(/[?&]intro=([\d.]+)/);
     const jump = fromShot ?? (q ? parseFloat(q[1]) : null);
@@ -213,9 +214,17 @@ const Intro = {
     if (this.s >= this.endT) this.finish();
     this.prevS = this.s;
   },
+  skip() {
+    if (!this.running || this.skipping) return;
+    this.skipping = true; Sound.play("click");
+    for (const n of this.narrCues || []) { if (n.src) try { n.src.stop(); } catch (e) {} n.started = n.ended = true; }
+    try { speechSynthesis.cancel(); } catch (e) {}
+    ["alarm", "hum", "steam", "engine", "wind", "storm", "crackle"].forEach((k) => Sound.stopLoop(k));
+    this.finish();
+  },
   finish() {
     if (!this.running) return;
-    this.running = false; if (this.subEl) this.subEl.remove(); if (this.dbgEl) this.dbgEl.remove();
+    this.running = false; if (this.subEl) this.subEl.remove(); if (this.skipEl) this.skipEl.remove(); if (this.dbgEl) this.dbgEl.remove();
     if (this.music) { this.music.h.stop(0.6); this.music = null; } // gameplay music takes over (crossfade)
     Sound.duck(false);
     if (!this.handedOff) Story.setup();
