@@ -89,7 +89,7 @@ function renderMars(img, S, centerLon, tilt, tex, holo, t) {
     const rm = T.rim[i]; r += rm * 255 * 0.55; g += rm * 150 * 0.55; b += rm * 110 * 0.55; // thin dusty atmosphere
     if (holo) {
       const row = (i / S) | 0, scan = (row + ((t * 20) | 0)) % 3 === 0 ? 0.7 : 1;
-      r = (r * 0.75 + 30) * scan; g = (g * 0.75 + 70) * scan; b = (b * 0.75 + 90) * scan;
+      r = (r * 1.05 + 12) * scan; g = (g * 0.9 + 30) * scan; b = (b * 0.85 + 45) * scan;
       d[o + 3] = 225;
     } else d[o + 3] = 255;
     d[o] = r; d[o + 1] = g; d[o + 2] = b;
