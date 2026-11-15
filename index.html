@@ -2513,6 +2513,7 @@ const UI = {
       <div class="slider"><label><input id="sVoice" type="checkbox" ${S.voice ? "checked" : ""}> 🗣️ Narrator voice in the intro</label></div>
       <div class="slider"><label><input id="sMute" type="checkbox" ${S.muted ? "checked" : ""}> 🔇 Mute everything</label></div>
       <div class="slider">🧑‍🚀 Character style <select id="sChar" style="font-family:inherit;font-size:1em"><option value="team" ${CHAR_STYLE === "team" ? "selected" : ""}>Team art (default)</option><option value="v2" ${CHAR_STYLE === "v2" ? "selected" : ""}>Code-drawn v2</option><option value="v1" ${CHAR_STYLE === "v1" ? "selected" : ""}>Classic</option></select></div>
+      <div class="slider">💾 Your progress is saved on this device. <button class="btn alt" id="sReset" style="font-size:.8em;margin-left:.4em">🔄 Reset the whole game</button></div>
       <div class="slider"><label><input id="sDev" type="checkbox" ${Dev.on ? "checked" : ""}> 🛠 Developer mode (skip &amp; jump for testing)</label></div>
       <p style="font-size:.8em">Controls: <b>Arrows / WASD</b> to move · <b>Space / E</b> to talk & use · <b>Click</b> anywhere to walk there · <b>M</b> map · <b>J</b> journal</p>`;
     return this.card(html, [{ id: "src", label: "NASA data & credits", cls: "alt" }, { id: "ok", label: "Done", cls: "go" }], {
@@ -2523,6 +2524,7 @@ const UI = {
         c.querySelector("#sMute").onchange = () => Sound.toggleMute();
         c.querySelector("#sChar").onchange = (e) => { e.stopPropagation(); setCharStyle(e.target.value); };
         c.querySelector("#sChar").onkeydown = (e) => e.stopPropagation();
+        c.querySelector("#sReset").onclick = async (e) => { e.stopPropagation(); const ok = await UI.card(`<h1>🔄 Reset the whole game?</h1><p>This deletes everything saved on this device: your journal discoveries and the places you explored. The game starts again from the very beginning, with the intro.</p><p style="font-size:.8em">Your sound settings stay the same.</p>`, [{ id: "no", label: "Cancel", cls: "alt" }, { id: "yes", label: "Yes, reset everything", cls: "go" }], { closable: true }); if (ok === "yes") Game.resetProgress(); };
         c.querySelector("#sDev").onchange = (e) => { Dev.set(e.target.checked); if (e.target.checked) UI.toast("🛠 Developer mode on — use the 🛠 button (top centre) or press N to skip", 4000); };
       },
     }).then((id) => { if (id === "src") return this.credits(); });
@@ -2568,7 +2570,7 @@ const Game = {
     this.npc.diego = makeChar("diego", "diego", 12, 25);
     this.npc.layla = makeChar("layla", "layla", 34, 22);
     this.chars = [this.player, this.npc.marcus, this.npc.diego, this.npc.layla];
-    try { const s = JSON.parse(localStorage.getItem("sol200_progress") || "{}"); (s.discovered || []).forEach((k) => G.discovered.add(k)); this.introSeen = !!s.introSeen; } catch (e) {}
+    try { const s = JSON.parse(localStorage.getItem("sol200_progress") || "{}"); (s.discovered || []).forEach((k) => G.discovered.add(k)); (s.seen || []).forEach((k) => this.seen.add(k)); this.introSeen = !!s.introSeen; } catch (e) {}
     this.buildFactInteractables();
     UI.init(); UI.buildMeters(); this.updateJournal();
     this.setupInput(); this.resize(); window.addEventListener("resize", () => this.resize());
@@ -2585,7 +2587,10 @@ const Game = {
       else UI.toast("Full screen isn't supported here. Tip: add the page to your Home Screen.");
     } catch (e) {}
   },
-  saveProgress() { try { localStorage.setItem("sol200_progress", JSON.stringify({ discovered: [...G.discovered], introSeen: this.introSeen })); } catch (e) {} },
+  seen: new Set(), // non-fact things the player has looked at (window, photos, hologram) — saved like discoveries
+  markSeen(k) { this.seen.add(k); this.saveProgress(); },
+  saveProgress() { try { localStorage.setItem("sol200_progress", JSON.stringify({ discovered: [...G.discovered], seen: [...this.seen], introSeen: this.introSeen })); } catch (e) {} },
+  resetProgress() { try { localStorage.removeItem("sol200_progress"); } catch (e) {} const u = new URL(location.href); u.search = ""; location.href = u.toString(); },
   updateJournal() { $("#jcount").textContent = G.discovered.size; },
 
   // ------------------------------------------------------------ resize (16:9 letterbox)
@@ -2682,11 +2687,11 @@ const Game = {
   // ------------------------------------------------------------ interactables
   buildFactInteractables() {
     for (const p of PROPS) {
-      if (p.fact) this.addInteract({ id: "fact_" + p.id, top: markerTop(p), x: p.x + p.pw / 2, y: p.y + p.ph + 8, label: "Inspect", name: p.label, fact: p.fact, use: () => { G.flags["seen_" + p.fact] = true; return UI.fact(p.fact); }, marker: () => (G.flags && G.flags["seen_" + p.fact]) ? null : "?" }); // per playthrough, so every new game shows them again
+      if (p.fact) this.addInteract({ id: "fact_" + p.id, top: markerTop(p), x: p.x + p.pw / 2, y: p.y + p.ph + 8, label: "Inspect", name: p.label, fact: p.fact, use: () => UI.fact(p.fact), marker: () => !G.discovered.has(p.fact) ? "?" : null });
     }
-    const mw = propById.mars_window; this.addInteract({ id: "mwin", top: markerTop(mw), x: mw.x + mw.pw / 2, y: mw.y + mw.ph + 8, r: 30, label: "Look", name: "Mars window", use: () => MarsWindow.open(), marker: () => G.flags && G.flags.window ? null : "?" });
-    const pt = propById.photo_table; this.addInteract({ id: "photo", top: markerTop(pt), x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo album", use: () => PhotoAlbum.open(), marker: () => G.flags && G.flags.photo ? null : "?" });
-    const ht = propById.holo_table; this.addInteract({ id: "holo", top: markerTop(ht), x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", marker: () => Story.onHolo ? "!" : G.flags && G.flags.holo ? null : "?", use: async () => { await MarsGlobe.open(); G.flags.holo = true; if (Story.onHolo) { const f = Story.onHolo; Story.onHolo = null; f(); } } });
+    const mw = propById.mars_window; this.addInteract({ id: "mwin", top: markerTop(mw), x: mw.x + mw.pw / 2, y: mw.y + mw.ph + 8, r: 30, label: "Look", name: "Mars window", use: () => MarsWindow.open(), marker: () => Game.seen.has("window") ? null : "?" });
+    const pt = propById.photo_table; this.addInteract({ id: "photo", top: markerTop(pt), x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo album", use: () => PhotoAlbum.open(), marker: () => Game.seen.has("photo") ? null : "?" });
+    const ht = propById.holo_table; this.addInteract({ id: "holo", top: markerTop(ht), x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", marker: () => Story.onHolo ? "!" : Game.seen.has("holo") ? null : "?", use: async () => { await MarsGlobe.open(); G.flags.holo = true; Game.markSeen("holo"); if (Story.onHolo) { const f = Story.onHolo; Story.onHolo = null; f(); } } });
     const hp = propById.hope; this.addInteract({ id: "hope", x: hp.x + 8, y: hp.y + hp.ph + 8, label: "Look", name: "Hope", use: () => Story.hope() });
   },
   addInteract(o) { o.r = o.r || 24; o.enabled = o.enabled || (() => true); this.interactables = this.interactables.filter((i) => i.id !== o.id); this.interactables.push(o); return o; },
@@ -2981,7 +2986,7 @@ const Story = {
     UI.toast("☀️ A <b>sol</b> is one day on Mars — a little longer than an Earth day.", 5000);
     UI.keysHint(true); Game.keysHintT = 0;
     // objective 1 (optional): explore the quarters · objective 2: the Mars hologram table
-    const qItems = [["window", () => G.flags.window, "window"], ["photo", () => G.flags.photo, "photos"], ["sol", () => G.flags.seen_sol, "clock"], ["gravity", () => G.flags.seen_gravity, "scale"], ["air", () => G.flags.seen_air, "air monitor"]];
+    const qItems = [["window", () => Game.seen.has("window"), "window"], ["photo", () => Game.seen.has("photo"), "photos"], ["sol", () => G.discovered.has("sol"), "clock"], ["gravity", () => G.discovered.has("gravity"), "scale"], ["air", () => G.discovered.has("air"), "air monitor"]];
     const qSub = () => { const n = qItems.filter((q) => q[1]()).length; return n >= qItems.length ? `<span class="done">✓ Quarters explored (${n}/${qItems.length})</span>` : `★ Optional: explore the quarters (${n}/${qItems.length})`; };
     UI.objective("Go to the Mars hologram in the Control Room", qSub());
     const qIv = setInterval(() => UI.objectiveSub(qSub()), 500);
@@ -4336,7 +4341,7 @@ function drawAlbumPhoto(ph) {
 }
 const PhotoAlbum = {
   open() {
-    G.flags.photo = true;
+    G.flags.photo = true; Game.markSeen("photo");
     const html = `<div class="head"><div><h3>CREW QUARTERS</h3><h1>📷 Crew Photo Album</h1></div></div>
       <div class="albumStage"><div class="album"></div><button class="albNav prev">◀</button><button class="albNav next">▶</button></div>
       <div class="albDots"></div><div class="albCap"></div><p class="albHint">🖐️ Drag the photo left or right (or use ◀ ▶ keys)</p>`;
@@ -4385,7 +4390,7 @@ const MARS_VIEW = { id: "PIA20843", title: "Butte M9a, Murray Buttes", rover: "C
   text: "A real view of Mars taken by NASA's Curiosity rover on the slopes of Mount Sharp. The flat-topped hill is about 5 m tall — its layers are old sand dunes turned to rock." };
 const MarsWindow = {
   open() {
-    G.flags.window = true;
+    G.flags.window = true; Game.markSeen("window");
     const v = MARS_VIEW, url = `https://images-assets.nasa.gov/image/${v.id}/${v.id}~medium.jpg`;
     const html = `<div class="mwWin"><canvas class="mwPix" width="200" height="100"></canvas><div class="mwBar"></div><div class="mwGlare"></div></div>
       <div class="mwCap"><b>${v.title}</b> · ${v.rover} · ${v.date}<br>${v.text}<div class="src">📚 Real NASA photo: <a href="https://images.nasa.gov/details/${v.id}" target="_blank" rel="noopener">NASA Image and Video Library — ${v.id}</a> <i>(${v.credit})</i></div></div>`;

@@ -202,6 +202,7 @@ const UI = {
       <div class="slider"><label><input id="sVoice" type="checkbox" ${S.voice ? "checked" : ""}> 🗣️ Narrator voice in the intro</label></div>
       <div class="slider"><label><input id="sMute" type="checkbox" ${S.muted ? "checked" : ""}> 🔇 Mute everything</label></div>
       <div class="slider">🧑‍🚀 Character style <select id="sChar" style="font-family:inherit;font-size:1em"><option value="team" ${CHAR_STYLE === "team" ? "selected" : ""}>Team art (default)</option><option value="v2" ${CHAR_STYLE === "v2" ? "selected" : ""}>Code-drawn v2</option><option value="v1" ${CHAR_STYLE === "v1" ? "selected" : ""}>Classic</option></select></div>
+      <div class="slider">💾 Your progress is saved on this device. <button class="btn alt" id="sReset" style="font-size:.8em;margin-left:.4em">🔄 Reset the whole game</button></div>
       <div class="slider"><label><input id="sDev" type="checkbox" ${Dev.on ? "checked" : ""}> 🛠 Developer mode (skip &amp; jump for testing)</label></div>
       <p style="font-size:.8em">Controls: <b>Arrows / WASD</b> to move · <b>Space / E</b> to talk & use · <b>Click</b> anywhere to walk there · <b>M</b> map · <b>J</b> journal</p>`;
     return this.card(html, [{ id: "src", label: "NASA data & credits", cls: "alt" }, { id: "ok", label: "Done", cls: "go" }], {
@@ -212,6 +213,7 @@ const UI = {
         c.querySelector("#sMute").onchange = () => Sound.toggleMute();
         c.querySelector("#sChar").onchange = (e) => { e.stopPropagation(); setCharStyle(e.target.value); };
         c.querySelector("#sChar").onkeydown = (e) => e.stopPropagation();
+        c.querySelector("#sReset").onclick = async (e) => { e.stopPropagation(); const ok = await UI.card(`<h1>🔄 Reset the whole game?</h1><p>This deletes everything saved on this device: your journal discoveries and the places you explored. The game starts again from the very beginning, with the intro.</p><p style="font-size:.8em">Your sound settings stay the same.</p>`, [{ id: "no", label: "Cancel", cls: "alt" }, { id: "yes", label: "Yes, reset everything", cls: "go" }], { closable: true }); if (ok === "yes") Game.resetProgress(); };
         c.querySelector("#sDev").onchange = (e) => { Dev.set(e.target.checked); if (e.target.checked) UI.toast("🛠 Developer mode on — use the 🛠 button (top centre) or press N to skip", 4000); };
       },
     }).then((id) => { if (id === "src") return this.credits(); });

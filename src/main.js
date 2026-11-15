@@ -26,7 +26,7 @@ const Game = {
     this.npc.diego = makeChar("diego", "diego", 12, 25);
     this.npc.layla = makeChar("layla", "layla", 34, 22);
     this.chars = [this.player, this.npc.marcus, this.npc.diego, this.npc.layla];
-    try { const s = JSON.parse(localStorage.getItem("sol200_progress") || "{}"); (s.discovered || []).forEach((k) => G.discovered.add(k)); this.introSeen = !!s.introSeen; } catch (e) {}
+    try { const s = JSON.parse(localStorage.getItem("sol200_progress") || "{}"); (s.discovered || []).forEach((k) => G.discovered.add(k)); (s.seen || []).forEach((k) => this.seen.add(k)); this.introSeen = !!s.introSeen; } catch (e) {}
     this.buildFactInteractables();
     UI.init(); UI.buildMeters(); this.updateJournal();
     this.setupInput(); this.resize(); window.addEventListener("resize", () => this.resize());
@@ -43,7 +43,10 @@ const Game = {
       else UI.toast("Full screen isn't supported here. Tip: add the page to your Home Screen.");
     } catch (e) {}
   },
-  saveProgress() { try { localStorage.setItem("sol200_progress", JSON.stringify({ discovered: [...G.discovered], introSeen: this.introSeen })); } catch (e) {} },
+  seen: new Set(), // non-fact things the player has looked at (window, photos, hologram) — saved like discoveries
+  markSeen(k) { this.seen.add(k); this.saveProgress(); },
+  saveProgress() { try { localStorage.setItem("sol200_progress", JSON.stringify({ discovered: [...G.discovered], seen: [...this.seen], introSeen: this.introSeen })); } catch (e) {} },
+  resetProgress() { try { localStorage.removeItem("sol200_progress"); } catch (e) {} const u = new URL(location.href); u.search = ""; location.href = u.toString(); },
   updateJournal() { $("#jcount").textContent = G.discovered.size; },
 
   // ------------------------------------------------------------ resize (16:9 letterbox)
@@ -140,11 +143,11 @@ const Game = {
   // ------------------------------------------------------------ interactables
   buildFactInteractables() {
     for (const p of PROPS) {
-      if (p.fact) this.addInteract({ id: "fact_" + p.id, top: markerTop(p), x: p.x + p.pw / 2, y: p.y + p.ph + 8, label: "Inspect", name: p.label, fact: p.fact, use: () => { G.flags["seen_" + p.fact] = true; return UI.fact(p.fact); }, marker: () => (G.flags && G.flags["seen_" + p.fact]) ? null : "?" }); // per playthrough, so every new game shows them again
+      if (p.fact) this.addInteract({ id: "fact_" + p.id, top: markerTop(p), x: p.x + p.pw / 2, y: p.y + p.ph + 8, label: "Inspect", name: p.label, fact: p.fact, use: () => UI.fact(p.fact), marker: () => !G.discovered.has(p.fact) ? "?" : null });
     }
-    const mw = propById.mars_window; this.addInteract({ id: "mwin", top: markerTop(mw), x: mw.x + mw.pw / 2, y: mw.y + mw.ph + 8, r: 30, label: "Look", name: "Mars window", use: () => MarsWindow.open(), marker: () => G.flags && G.flags.window ? null : "?" });
-    const pt = propById.photo_table; this.addInteract({ id: "photo", top: markerTop(pt), x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo album", use: () => PhotoAlbum.open(), marker: () => G.flags && G.flags.photo ? null : "?" });
-    const ht = propById.holo_table; this.addInteract({ id: "holo", top: markerTop(ht), x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", marker: () => Story.onHolo ? "!" : G.flags && G.flags.holo ? null : "?", use: async () => { await MarsGlobe.open(); G.flags.holo = true; if (Story.onHolo) { const f = Story.onHolo; Story.onHolo = null; f(); } } });
+    const mw = propById.mars_window; this.addInteract({ id: "mwin", top: markerTop(mw), x: mw.x + mw.pw / 2, y: mw.y + mw.ph + 8, r: 30, label: "Look", name: "Mars window", use: () => MarsWindow.open(), marker: () => Game.seen.has("window") ? null : "?" });
+    const pt = propById.photo_table; this.addInteract({ id: "photo", top: markerTop(pt), x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo album", use: () => PhotoAlbum.open(), marker: () => Game.seen.has("photo") ? null : "?" });
+    const ht = propById.holo_table; this.addInteract({ id: "holo", top: markerTop(ht), x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", marker: () => Story.onHolo ? "!" : Game.seen.has("holo") ? null : "?", use: async () => { await MarsGlobe.open(); G.flags.holo = true; Game.markSeen("holo"); if (Story.onHolo) { const f = Story.onHolo; Story.onHolo = null; f(); } } });
     const hp = propById.hope; this.addInteract({ id: "hope", x: hp.x + 8, y: hp.y + hp.ph + 8, label: "Look", name: "Hope", use: () => Story.hope() });
   },
   addInteract(o) { o.r = o.r || 24; o.enabled = o.enabled || (() => true); this.interactables = this.interactables.filter((i) => i.id !== o.id); this.interactables.push(o); return o; },

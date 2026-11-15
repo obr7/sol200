@@ -33,7 +33,7 @@ function drawAlbumPhoto(ph) {
 }
 const PhotoAlbum = {
   open() {
-    G.flags.photo = true;
+    G.flags.photo = true; Game.markSeen("photo");
     const html = `<div class="head"><div><h3>CREW QUARTERS</h3><h1>📷 Crew Photo Album</h1></div></div>
       <div class="albumStage"><div class="album"></div><button class="albNav prev">◀</button><button class="albNav next">▶</button></div>
       <div class="albDots"></div><div class="albCap"></div><p class="albHint">🖐️ Drag the photo left or right (or use ◀ ▶ keys)</p>`;
@@ -82,7 +82,7 @@ const MARS_VIEW = { id: "PIA20843", title: "Butte M9a, Murray Buttes", rover: "C
   text: "A real view of Mars taken by NASA's Curiosity rover on the slopes of Mount Sharp. The flat-topped hill is about 5 m tall — its layers are old sand dunes turned to rock." };
 const MarsWindow = {
   open() {
-    G.flags.window = true;
+    G.flags.window = true; Game.markSeen("window");
     const v = MARS_VIEW, url = `https://images-assets.nasa.gov/image/${v.id}/${v.id}~medium.jpg`;
     const html = `<div class="mwWin"><canvas class="mwPix" width="200" height="100"></canvas><div class="mwBar"></div><div class="mwGlare"></div></div>
       <div class="mwCap"><b>${v.title}</b> · ${v.rover} · ${v.date}<br>${v.text}<div class="src">📚 Real NASA photo: <a href="https://images.nasa.gov/details/${v.id}" target="_blank" rel="noopener">NASA Image and Video Library — ${v.id}</a> <i>(${v.credit})</i></div></div>`;
