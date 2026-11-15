@@ -193,3 +193,9 @@ body.touch.playing #touch { display: block; }
 .solnote b { color: var(--gold); }
 .cs-hint { font-size: .75em !important; }
 .clickstart .btn { margin: .2em; }
+
+/* canvas mini-games */
+.cgcard { width: auto !important; max-width: 96vw; }
+.cgwrap { background: #000; border-radius: .5em; overflow: hidden; border: .2em solid #3a4170; width: min(88vw, calc((100vh - 15em) * 1.7778)); margin: 0 auto; }
+.cg { width: 100%; display: block; image-rendering: pixelated; cursor: none; touch-action: none; }
+.cgcard p, .cgcard .say { max-width: min(88vw, calc((100vh - 15em) * 1.7778)); }

@@ -128,18 +128,19 @@ const Story = {
     const probs = ["water", "light", "heat"].sort(() => Math.random() - 0.5);
     probs.forEach((p, i) => { G.trays[i] = { problem: p }; if (p === "light") G.trays[i].lightOff = true; });
     UI.objective("Garden Check: fix the 3 sick trays");
-    await Minigames.garden();
-    meter(BALANCE.gardenCheck, "🌱 All three trays are healthy!");
+    const gres = await Minigames.garden();
+    const lost = (gres && gres.damage) || 0;
+    meter({ mission: Math.max(2, BALANCE.gardenCheck.mission - lost * 3) }, lost ? `🌱 Trays healthy — but ${lost} ${lost > 1 ? "leaves" : "leaf"} lost.` : "🌱 All three trays are healthy!");
     await UI.talk([
       ["layla", "Thank you! I named this one Hope. If it grows, it will be the first food grown on Mars."],
       ["layla", "{lead}... {marcus} says the dust storm is getting bigger. You're listening to him, right?"],
       ["lead", "I..."],
     ]);
     // ALARM
-    G.alarm = true; Sound.startLoop("alarm"); Sound.setMood("tension"); Cam.shake = 0.6; G.storm = 0.25;
+    G.alarm = true; Sound.setMood("tension"); Cam.shake = 0.6; G.storm = 0.25;
     await sleep(700);
     await UI.say("marcus", "{lead}! Control room, now!", { radio: true });
-    Sound.stopLoop("alarm");
+
     UI.objective("Hurry to the Control Room!");
     Game.setTarget({ x: 29 * T + 8, y: 7 * T });
     N.layla.follow = Game.player;
@@ -157,7 +158,7 @@ const Story = {
     await Game.walkNpc(P, 29 * T + 8, 7 * T + 4); P.dir = 1;
     Game.place(N.layla, 25, 7, 3); N.marcus.dir = 0; N.diego.dir = 2;
     Game.freeze = false;
-    G.alarm = true; Sound.startLoop("alarm");
+    G.alarm = true;
     await UI.talk([
       ["marcus", "The storm changed direction. It will hit us in one hour."],
       ["marcus", "Dust is covering the solar panels. Our power is dropping."],
@@ -169,7 +170,7 @@ const Story = {
       ["diego", "Guys... time is running out."],
       ["layla", "If the power drops too low, the garden heaters stop... and Hope won't survive."],
     ]);
-    Sound.stopLoop("alarm");
+    G.alarm = false; // decision time: sound and red light stop together
     const c = await UI.choose("You are {lead}. What will you do?", ["Let's go out and clean the panels. {diego}, with me!", "Fine... we stay inside and share the power."]);
     G.d1 = c === 0 ? "A" : "B";
     if (G.d1 === "A") await this.pathA(); else await this.pathB();
@@ -249,16 +250,16 @@ const Story = {
   async scene5() {
     const N = Game.npc, P = Game.player;
     // the storm hits
-    G.storm = 0.8; G.alarm = true; Sound.startLoop("alarm"); Sound.startLoop("wind"); Sound.startLoop("storm"); Cam.shake = 1.2; Sound.play("rumble", 3);
+    G.storm = 0.8; G.alarm = true; Sound.startLoop("wind"); Sound.startLoop("storm"); Cam.shake = 1.2; Sound.play("rumble", 3);
     G.rosieBroken = true;
     UI.toast("🚨 ALARM: the oxygen machine stopped!", 3500);
     await sleep(1800);
-    Sound.stopLoop("alarm");
+
     UI.objective("Get to the Workshop — Rosie stopped!");
     Game.place(N.diego, 10, 25, 3); Game.place(N.marcus, 14, 25, 2); Game.place(N.layla, 12, 28, 1);
     Game.setTarget({ x: 12 * T + 8, y: 26 * T });
     await Game.waitRoom("workshop");
-    Game.setTarget(null);
+    Game.setTarget(null); G.alarm = false;
     Game.freeze = true; await Game.walkNpc(P, 12 * T + 8, 26 * T + 4); P.dir = 1; Game.freeze = false;
     N.diego.dir = 3; N.marcus.dir = 2; N.layla.dir = 1;
     UI.toast("🫧 OXYGEN IS DROPPING", 2500);
@@ -278,12 +279,12 @@ const Story = {
     if (G.flags.diegoHurt) time -= BALANCE.d1APenaltyOnRosie;
     let ok = await Minigames.wires({ time, hints: G.d2 === "B" });
     if (!ok) {
-      Sound.play("fail"); G.alarm = true; Sound.startLoop("alarm");
+      Sound.play("fail"); G.alarm = true;
       await UI.say("layla", "Oxygen is running out! Emergency helmets on!");
       P.helmet = true; for (const n of Object.values(N)) n.helmet = true;
       meter(BALANCE.rosie.fail, "🫧 Oxygen ran low — helmets on.");
       await UI.say("marcus", "Breathe slowly. We try again, together this time.");
-      Sound.stopLoop("alarm"); G.alarm = false;
+      G.alarm = false;
       ok = await Minigames.wires({ time: 0, hints: true });
     }
     G.rosieBroken = false; Sound.play("power"); Particles.sparkle(propById.rosie.x + 24, propById.rosie.y);
@@ -298,7 +299,7 @@ const Story = {
   // ------------------------------------------------------------ ENDING
   async ending() {
     const N = Game.npc;
-    Sound.stopLoop("wind"); Sound.stopLoop("storm"); Sound.stopLoop("alarm"); G.alarm = false;
+    Sound.stopLoop("wind"); Sound.stopLoop("storm"); G.alarm = false;
     for (let s = G.storm; s >= 0; s -= 0.05) { G.storm = Math.max(0, s); await sleep(60); }
     G.storm = 0; G.power = Math.max(G.power, 0.6);
     await UI.say("marcus", "The storm is moving away. The danger is over... for today.");

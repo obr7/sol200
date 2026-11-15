@@ -63,40 +63,45 @@ const Minigames = {
     const B = BALANCE.panels;
     return new Promise((resolve) => {
       let time = B.time, cleaned = 0, tripped = false;
-      const presses = [0, 0, 0, 0, 0, 0];
       G.panels = [0.9, 0.9, 0.9, 0.9, 0.9, 0.9];
-      UI.objective(`Clean the solar panels! Press ${document.body.classList.contains("touch") ? "A" : "Space"} ${B.pressesPerPanel}× at each one`);
-      UI.toast(`☀️ Clean as many panels as you can — <b>${B.time} seconds!</b>`, 3000);
+      UI.objective(`Clean the solar panels! Walk to a panel and press ${document.body.classList.contains("touch") ? "A" : "Space"}`);
+      UI.toast(`☀️ Clean as many panels as you can — <b>${B.time - B.tripAt} seconds!</b> Each panel has a different job.`, 3500);
       const ids = [];
       for (let n = 0; n < 6; n++) {
         const p = propById["panel" + n]; const id = "scrub" + n; ids.push(id);
-        Game.addInteract({ id, x: p.x + p.pw / 2, y: p.y + p.ph + 8, r: 30, label: "Scrub", name: `Panel ${n + 1}`, marker: () => "!", use: () => {
-          presses[n]++; Sound.play("scrub"); Particles.dust(p.x + 8 + Math.random() * 30, p.y + 10, 8); Cam.shake = 0.08;
-          G.panels[n] = 0.9 * (1 - presses[n] / B.pressesPerPanel); p.state.progress = presses[n] / B.pressesPerPanel;
-          if (presses[n] >= B.pressesPerPanel) { G.panels[n] = 0; p.state.progress = 0; cleaned++; Sound.play("good"); Particles.sparkle(p.x + 24, p.y + 8); Game.removeInteract(id); UI.toast(`✨ Panel clean! ${cleaned}/6`); if (cleaned === 6) time = Math.min(time, B.tripAt + 0.01); }
+        const job = PANEL_JOBS[n % PANEL_JOBS.length];
+        Game.addInteract({ id, x: p.x + p.pw / 2, y: p.y + p.ph + 8, r: 30, label: job === "brush" ? "Brush" : job === "pebbles" ? "Clear rocks" : "Tilt", name: `Panel ${n + 1}`, marker: () => "!", use: async () => {
+          if (tripped || G.panels[n] === 0) return;
+          const res = await Minigames.panelJob(n, () => Math.max(0, time - B.tripAt));
+          if (res && res.ok && !tripped) {
+            G.panels[n] = 0; cleaned++; Sound.play("good"); Particles.sparkle(p.x + 24, p.y + 8); Game.removeInteract(id);
+            UI.toast(`✨ Panel ${n + 1} done! ${cleaned}/6`);
+            if (cleaned === 6) time = Math.min(time, B.tripAt + 0.01);
+          }
         } });
       }
       Game.setTarget(null);
       const N = Game.npc;
       Story.panelsMission = (dt) => {
-        if (UI.busy() || tripped) return;
-        time -= dt; UI.timer(time, time < B.tripAt + 5);
+        if (tripped) return;
+        if (UI.busy() && !Minigames.cancelCurrent) return; // dialogue pauses the clock, panel jobs don't
+        time -= dt; UI.timer(Math.max(0, time - B.tripAt), time < B.tripAt + 8);
         G.storm = 0.3 + (1 - time / B.time) * 0.6;
         if (Math.random() < dt * 0.6) Cam.shake = 0.15;
-        // Diego "cleans" the panel nearest to him visually
         if (time <= B.tripAt) {
           tripped = true; Story.panelsMission = null; UI.timer(null);
           (async () => {
+            if (Minigames.cancelCurrent) { Minigames.cancelCurrent(); await sleep(350); }
             N.diego.follow = null; Sound.play("thud"); Cam.shake = 0.5; N.diego.hurt = true; Particles.dust(N.diego.x, N.diego.y, 14);
             await UI.say("diego", "Ow! I tripped! My glove is torn!");
             await UI.say("lead", "Back inside! Now!");
-            ids.forEach((i) => Game.removeInteract(i)); PROPS.forEach((p) => { if (p.type === "panel") p.state.progress = 0; });
+            ids.forEach((i) => Game.removeInteract(i));
             resolve({ cleaned, good: cleaned >= B.good });
           })();
         }
       };
-      // early warning line
-      setTimeout(() => { if (!tripped) UI.say("diego", "Faster, {lead}! I can barely see anything!").then(() => {}); }, (B.time - B.tripAt - 14) * 1000);
+      // early warning line (a toast if a panel job is open)
+      setTimeout(() => { if (tripped) return; if (Minigames.cancelCurrent || UI.busy()) UI.toast("🧑‍🔧 Diego: Faster, Commander! I can barely see anything!", 3000); else UI.say("diego", "Faster, {lead}! I can barely see anything!"); }, Math.max(8, (B.time - B.tripAt) * 0.55) * 1000);
     });
   },
 

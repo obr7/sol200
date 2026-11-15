@@ -284,6 +284,8 @@ const Game = {
   },
   loop(now) {
     document.body.classList.toggle("playing", this.mode === "play");
+    // the alarm sound always follows the red alarm light (they start and stop together)
+    { const want = !!G.alarm && (this.mode === "play" || this.mode === "cutscene"); if (want && !this._alarmOn) { this._alarmOn = true; Sound.startLoop("alarm"); } else if (!want && this._alarmOn) { this._alarmOn = false; Sound.stopLoop("alarm"); } } // alarm sound always follows the red light
     const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; const t = now / 1000;
     if (this.mode === "play" || this.mode === "cutscene") {
       for (const c of this.chars) this.updateChar(c, dt);

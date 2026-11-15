@@ -102,7 +102,7 @@ const BALANCE = {
   gardenCheck: { mission: +10 },
   d1A: { safety: -15, team: -10 },            // go outside
   d1B: { safety: +10, mission: -10 },         // stay inside
-  panels: { time: 45, tripAt: 10, pressesPerPanel: 5, good: 5, goodMission: +15, poorMission: +5 },
+  panels: { time: 70, tripAt: 10, good: 5, goodMission: +15, poorMission: +5 },
   // Extra outdoor radiation cost from REAL space weather (DONKI): quiet / M-class / X-class
   radiation: { quiet: 0, M: -3, X: -6 },
   power: { time: 30, units: 6 },
