@@ -11,3 +11,4 @@ html = html.replace("/*CSS*/", css).replace("/*JS*/", js.replace("</script>", "<
 (root / "dist").mkdir(exist_ok=True)
 (root / "dist" / "index.html").write_text(html)
 print("built dist/index.html", len(html) // 1024, "KB")
+(root / "index.html").write_text(html)
