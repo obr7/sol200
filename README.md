@@ -1,61 +1,82 @@
 # SOL 200 — Junior Astronaut Mission Trainer
 
-A browser game for kids ages 7–12, built for the **NASA Space Apps Challenge 2026** (*Junior Astronaut Mission Trainer*).
-You play the commander of a 4-person Mars base on Sol 200, the day a dust storm hits. You balance **Safety**, **Mission** and **Team**: every choice has a cost.
+**Play now:** https://obr7.github.io/sol200/
 
-## Play / deploy
+SOL 200 is a free browser game for children aged 7 to 12, made for the **NASA Space Apps Challenge 2026** challenge *Junior Astronaut Mission Trainer*.
 
-- `dist/` = `index.html` + the `audio/` folder (narrator voices and recorded sound effects). Upload **both** together, keeping the folder layout.
-- The game also runs without the `audio/` folder: the browser's voice and the sounds generated in code take over.
-- **GitHub Pages:** create a repo → upload `dist/index.html` to the root as `index.html` → Settings → Pages → Deploy from branch `main` / root. Your link will be `https://<user>.github.io/<repo>/`.
-- **Netlify:** drag the `dist` folder onto https://app.netlify.com/drop.
-- Works on desktop (keyboard and mouse). On phones it uses a touch joystick and an **A** button; hold the phone in landscape.
+You play **Commander Damon Carter** on Sol 200 (day 200) of the first mission to grow food on Mars. A giant dust storm is coming, and the crew does not agree on what to do. You explore the base, play short hands-on mini-games built on real science, and make hard choices. Every choice has a price on three meters: **Safety**, **Mission** and **Team**.
 
-## Editing (no coding needed for most changes)
+> ### 🎧 Vibe coded from start to finish
+> **This whole project is vibe coding.** Our team did not write the code by hand. We described what we wanted in plain language (the story, the scenes, the mini-games, how things should look and feel), and AI tools wrote all of the code. We played every version, said what to change, and checked every result. The story, characters, game design and science choices are ours. See [AI use](#ai-use) below.
 
-| What | File |
+---
+
+## What is in the game
+
+- **A narrated intro film** (about 78 seconds, with a Skip button): the crew argues, the rocket launches, the crew lands on Mars.
+- **A Mars base to explore**: 5 rooms (Crew Quarters, Control Room, Workshop, Greenhouse, Airlock) and the Mars surface outside, with Among Us-style room lighting and a minimap.
+- **13 discovery cards**: objects with a small "?" bubble open a real science card with its source link. All cards are collected in the Discovery Journal.
+- **5 mini-games**, each based on real science:
+
+| Mini-game | What you do | The real science |
+|---|---|---|
+| Garden Check | Use water, a grow lamp and a heater to keep 3 plants healthy. Too much damages the leaves. | NASA's Veggie plant chamber on the ISS |
+| Clean the Panels | 3 jobs on 3 pairs of solar panels: brush the dust, flick off pebbles, tilt toward the Sun | Dust lowers solar power on Mars (InSight, Opportunity) |
+| Suit Up | A spacesuit briefing card and a card about a real Jordanian spacesuit engineer, then dress the astronaut in checklist order and do a leak check | Spacesuits are small pressurized spaceships |
+| Storm Night | Share 6 power units between oxygen, heat, garden, lights and radio until sunrise. Wind gusts cut power, overloading trips the breaker | Power is limited on Mars |
+| Restart Rosie | Reconnect the oxygen machine's wires and watch CO₂ become O₂ | NASA's MOXIE made oxygen from Mars air |
+
+- **Two big decisions**: go outside in the storm or stay safe inside; fix the oxygen machine alone or ask Marcus for help. Choosing to go alone makes the Rosie puzzle harder, and Marcus steps in if you fail.
+- **Characters with feelings**: faces change with what they say (calm, happy, worried, scared, sad, angry, hurt).
+- **An ending** chosen by the Team meter, a message from Earth, and a "what did you learn?" screen.
+
+## Real NASA data used while you play
+
+| Data | Where it appears in the game |
 |---|---|
-| All dialogue, character cards, intro narration, learning screen | `src/story.js` (`STORY` + the `Story` scenes) |
-| Character names (e.g. renaming "Elon") | `src/config.js` → `CONFIG.NAMES` / `FULL_NAMES` |
-| Meter points, timers, power units (game-balance assumptions) | `src/config.js` → `BALANCE` |
-| Real NASA facts + source links | `src/data.js` → `FACTS`, `SOURCES` |
-| Intro shot times, beats, on-screen texts | `src/config.js` → `INTRO_TIMING` (`shots`, `beats`, `texts`) |
-| How slow the intro plays | `INTRO_TIMING.PACE` (1.0 = the script's exact table at about 65 s; 1.2 = 20% slower at about 76 s, the current setting) |
-| Gaps between n4a / n4b / n4c | `INTRO_TIMING.N4_GAPS` = `[0.8, 0.8]` |
-| Narration files + measured silence | `CONFIG.NARRATION_FILES` (N1, N2, N3, N4A, N4B, N4C) and `CONFIG.NARRATION_META` (dur / lead / trail) |
-| Recorded sound effects + volumes | `CONFIG.SFX_FILES`, `CONFIG.SFX_VOLUME` |
-| "Sol 200 on Mars." wait / typing / dissolve | `INTRO_TIMING.finalWait`, `finalType`, `finalHold`, `dissolveLen` |
-| The intro's shots (drawing code) | `src/intro.js` (one function per shot: `shot_argument`, `shot_title`, `shot_ceremony`, `shot_launch`, `shot_space`, `shot_mars`, `shot_arrival`, `shot_control`) |
-| Character look (colors, hair, accessories) | `src/sprites.js` → `CHAR_SPECS` |
+| [NASA DONKI](https://ccmc.gsfc.nasa.gov/tools/DONKI/) solar flares, read live through [NASA Open APIs](https://api.nasa.gov/) | Space Weather console and the "Clean the Panels" brief: a Calm / Busy / Stormy Sun meter decides how much Safety going outside costs. If the API cannot be reached, a real archived DONKI record is shown and labelled. |
+| [NASA Mars Trek](https://trek.nasa.gov/mars/) map tiles (Viking MDIM 2.1 colour mosaic) | The 3D Mars globe on the Control Room hologram table, with 6 places to visit (Olympus Mons, Valles Marineris, Gale, Jezero, Hellas, North Polar Cap) |
+| [NASA Image and Video Library, PIA20843](https://images.nasa.gov/details/PIA20843) (Curiosity) | The view from the Crew Quarters window |
+| NASA, ESA and CSA science pages | The 13 discovery cards and the mini-game cards. Full list: [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md#sources) |
 
-After editing `src/`, run `python3 build.py` to rebuild `dist/index.html`.
+Game numbers (meter points, timers, power units) are **game balance**, not real measurements.
 
-## The intro (script-01-intro v2)
+## AI use
 
-- Click to start, then about 64.5 s that can't be skipped. It ends with a dither dissolve into the game.
-- Every time lives in `INTRO_TIMING`. The real lengths of the narration files set the timing: when N1–N4 exist, the intro reads how long each one is and shifts every shot after it to match. When a file is missing, the browser's voice reads that line and the estimated time is used. Subtitles always show.
-- Debug: add `?intro=4` to the URL to jump straight to shot 4 (`?intro=1.5` jumps to the title). Add `?debug=1` to show the timeline clock and where each shot starts and ends.
-- Shot 7's screen shows `SOLAR ACTIVITY TODAY: <level>` from the live DONKI call, with `(ARCHIVED)` when it falls back. The intro never waits for the network.
-- ElevenLabs files only load from a web server (GitHub Pages / Netlify). They don't load when you open `index.html` straight from your computer, so there you'll hear the browser voice.
+All code in this repository was produced through **vibe coding** with AI tools. We used only these four:
 
-## Where the NASA data comes from
+| Tool | What it did |
+|---|---|
+| **Claude Code** (Anthropic) | Wrote and fixed most of the game code (JavaScript, Canvas, Web Audio, CSS, the build script), drew the maps, furniture, effects, the intro film and two of the three character styles in code, and wrote this documentation |
+| **Codex** (OpenAI) | Wrote and fixed game code |
+| **ChatGPT** (OpenAI) | Polished the English text. Image generation made the default character sprite sheets and portraits, the 4 crew photos in the photo album (watermarked "AI-GENERATED") and the engineer portrait on the Suit Up card |
+| **ElevenLabs** | The intro narration voice, the intro music and the recorded sound effects |
 
-- **NASA DONKI (live):** the Space Weather console calls `https://api.nasa.gov/DONKI/FLR` to get solar flares from the last 30 days. Before the player goes outside (choice A), the real flare level adds an extra radiation cost to SAFETY.
-  - If the API can't be reached, the game uses an **archived** real record: the X8.7 flare of 2024‑05‑14. The screen labels it ARCHIVED; archived data is never shown as live.
-  - Put your own key from api.nasa.gov in `CONFIG.NASA_API_KEY`. `DEMO_KEY` is rate-limited.
-- **Curiosity RAD, May 20 2024 Mars solar storm:** 8,100 micrograys, equal to about 30 chest X-rays (NASA/JPL).
-- **MOXIE:** made 122 g of oxygen in total, and up to 12 g per hour (NASA).
-- **Veggie:** lettuce grown and eaten on the ISS in 2015. **Space Crops** program (NASA).
-- **Mars facts:** gravity about 38% of Earth's, a sol is about 24 h 37 min, the air is about 95% CO₂ and less than 1% as thick as Earth's (NASA Science).
-- **Dust storms:** Opportunity in 2018, and InSight's power levels (NASA).
-- **Partner agencies:** ESA (signal delay of about 4–24 min) and CSA (Interplanetary Farming, food production toolkit).
+The story, characters, game design and choice of science were written and decided by the team, and a person reviewed every AI output. No AI-generated content uses NASA logos, flags or mission insignia. The in-game credits screen (Settings → NASA data & credits) says the same.
 
-The full list with links is in the in-game **NASA Data & Credits** screen and in `src/data.js`.
+## Run it
 
-## AI disclosure (for the submission form)
+- **Online:** https://obr7.github.io/sol200/ (nothing to install, no account).
+- **Locally:** serve the folder with any web server, for example `python3 -m http.server`, then open `http://localhost:8000/`. Opening `index.html` straight from disk works too, but the recorded voices and music only load from a web server.
+- Works with keyboard (arrows / WASD, Space), mouse, or touch (joystick + A button, landscape).
 
-Game code, the pixel art (drawn in code), the music and the sound effects (generated live with the Web Audio API) were made with help from **Claude (Anthropic)**. The story, characters and dialogue are by the team. The intro narrator uses the browser's built-in text-to-speech voice. If you add ElevenLabs or Google Flow files, disclose them too. The game uses no NASA logos or mission insignia.
+## Build
 
-## Source layout
+The game is plain HTML, CSS and JavaScript with no engine and no dependencies.
 
-`config.js` · `data.js` (facts and DONKI) · `audio.js` (music and SFX) · `sprites.js` (characters) · `world.js` (map) · `render.js` (lighting, props) · `ui.js` (dialogue and cards) · `main.js` (loop, input) · `story.js` (Chapter 1) · `minigames.js` · `scenes.js` (title, intro, end) · `boot.js`
+```bash
+python3 build.py   # joins src/*.js + src/style.css into one index.html (root) and dist/index.html
+```
+
+Edit files in `src/`, then run the build. See **[docs/DOCUMENTATION.md](docs/DOCUMENTATION.md)** for the file map, how the story and mini-games work, settings, developer mode and testing.
+
+## NASA API key
+
+`src/config.js` → `CONFIG.NASA_API_KEY` is set to `DEMO_KEY`, which allows only 30 requests per hour and 50 per day per IP address. For heavier use, get a free key at https://api.nasa.gov and put it there.
+
+## Credits
+
+- Story, characters, game design: the team.
+- Font: [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) (Google Fonts, open license).
+- Real person featured: Salam Abu Alhayjaa, Jordanian mechanical engineer (used with her approval). Source: [Al Jazeera](https://www.ajnet.me/family/2025/6/15/%D8%A3%D9%88%D9%84-%D8%A3%D8%B1%D8%AF%D9%86%D9%8A%D8%A9-%D8%AA%D8%B1%D8%B4%D8%AD-%D9%84%D8%B1%D8%AD%D9%84%D8%A9-%D9%81%D8%B6%D8%A7%D8%A6%D9%8A%D8%A9-%D8%B3%D9%84%D8%A7%D9%85).
+- NASA, ESA and CSA for open data and science pages. This project is not endorsed by NASA.
