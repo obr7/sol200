@@ -163,9 +163,9 @@ const UI = {
   // short, kid-friendly version for mission briefs
   spaceWeatherMini() {
     const SW = SpaceWeather, risk = SW.risk(), lv = { quiet: 0, M: 1, X: 2 }[risk], f = SW.flares[0];
-    const word = ["calm 😌", "a bit busy 😐", "very busy 😬"][lv];
+    const word = ["calm 🙂", "busy 😐", "stormy 😠"][lv];
     return `<div style="margin:.3em 0">The Sun is <b>${word}</b> today${f ? ` (biggest recent flare: <span class="cls ${f.classType[0]}">${f.classType}</span>)` : ""}.</div>
-      <div class="sun-meter"><div style="${lv === 0 ? "background:#7dff9a" : ""}">LOW</div><div style="${lv === 1 ? "background:#ffb020" : ""}">MEDIUM</div><div style="${lv === 2 ? "background:#ff4a4a" : ""}">HIGH</div></div>
+      <div class="sunPick">${[["calm", "🙂", "Calm Sun", "safe to go out"], ["busy", "😐", "Busy Sun", "a little radiation"], ["angry", "😠", "Stormy Sun", "lots of radiation!"]].map(([k, face, name, sub], i) => `<div class="sp ${k} ${i === lv ? "on" : ""}"><div class="spSun"><i class="rays"></i>${Array.from({ length: 3 + i * 4 }, (_, j) => `<b class="zap" style="--a:${(j * 360) / (3 + i * 4)}deg;--d:${(j % 4) * 0.3}s"></b>`).join("")}<span>${face}</span></div><div class="spName">${name}</div><div class="spSub">${sub}</div></div>`).join("")}</div>
       <div style="font-size:.75em;opacity:.75">${SW.status === "live" ? "● Live from NASA DONKI" : "● From a saved NASA DONKI record"}</div>`;
   },
   spaceWeatherHtml() {

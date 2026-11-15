@@ -351,6 +351,29 @@ body.touch.playing #touch { display: block; }
 @keyframes lgFlipPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); box-shadow: 0 .25em 0 #8a5a14, 0 0 2em rgba(255,210,90,1); } }
 .lgFront.ready::after { content: "↻"; position: absolute; right: .5em; bottom: .3em; font-size: 2.2em; color: #c9952e; animation: lgSpin 2s linear infinite; opacity: .8; }
 @keyframes lgSpin { to { transform: rotate(360deg); } }
+
+/* kid-friendly Sun meter: three suns, today's one big and glowing */
+.sunPick { display: flex; justify-content: center; gap: 2.4em; margin: 1.1em 0 .5em; }
+.sp { text-align: center; opacity: .35; filter: grayscale(.7); transform: scale(.85); transition: .3s; }
+.sp.on { opacity: 1; filter: none; transform: scale(1.05); }
+.spSun { position: relative; width: 3.2em; height: 3.2em; margin: 0 auto .35em; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1em; }
+.spSun span { position: relative; z-index: 2; font-size: 1.7em; line-height: 1; width: 1.5em; height: 1.5em; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.sp.calm .spSun span { background: radial-gradient(#fff3a0, #ffd34a); box-shadow: 0 0 .6em #ffe680; }
+.sp.busy .spSun span { background: radial-gradient(#ffd27a, #ff9a2a); box-shadow: 0 0 .8em #ffb040; }
+.sp.angry .spSun span { background: radial-gradient(#ff9a6a, #ff3a2a); box-shadow: 0 0 1.2em #ff4a2a; }
+.spSun .rays { position: absolute; inset: -18%; border-radius: 50%; z-index: 1; animation: spSpin 8s linear infinite; }
+.sp.calm .rays { background: repeating-conic-gradient(#ffd34a 0 8deg, transparent 8deg 45deg); mask: radial-gradient(circle, transparent 46%, #000 47% 62%, transparent 63%); -webkit-mask: radial-gradient(circle, transparent 46%, #000 47% 62%, transparent 63%); }
+.sp.busy .rays { inset: -26%; background: repeating-conic-gradient(#ff9a2a 0 9deg, transparent 9deg 30deg); mask: radial-gradient(circle, transparent 40%, #000 41% 70%, transparent 71%); -webkit-mask: radial-gradient(circle, transparent 40%, #000 41% 70%, transparent 71%); animation-duration: 5s; }
+.sp.angry .rays { inset: -34%; background: repeating-conic-gradient(#ff3a2a 0 10deg, transparent 10deg 22deg); mask: radial-gradient(circle, transparent 36%, #000 37% 74%, transparent 75%); -webkit-mask: radial-gradient(circle, transparent 36%, #000 37% 74%, transparent 75%); animation-duration: 2.5s; }
+@keyframes spSpin { to { transform: rotate(360deg); } }
+/* radiation "zaps" flying out of the sun */
+.spSun .zap { position: absolute; left: 50%; top: 50%; width: .3em; height: .3em; margin: -.15em; border-radius: 50%; background: #ffe680; z-index: 1; opacity: 0; transform: rotate(var(--a)) translateX(0); }
+.sp.on .zap { animation: spZap 1.4s ease-out infinite; animation-delay: var(--d); }
+.sp.busy .zap { background: #ffb040; } .sp.angry .zap { background: #ff5a3a; width: .4em; height: .4em; }
+@keyframes spZap { 0% { opacity: 0; transform: rotate(var(--a)) translateX(.8em); } 20% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateX(2.4em); } }
+.spName { font-weight: 800; font-size: .8em; margin-top: 1.1em; }
+.sp.calm.on .spName { color: #1f8a3a; } .sp.busy.on .spName { color: #c06a00; } .sp.angry.on .spName { color: #d0261a; }
+.spSub { font-size: .65em; opacity: .8; }
 </style>
 </head>
 <body>
@@ -2431,9 +2454,9 @@ const UI = {
   // short, kid-friendly version for mission briefs
   spaceWeatherMini() {
     const SW = SpaceWeather, risk = SW.risk(), lv = { quiet: 0, M: 1, X: 2 }[risk], f = SW.flares[0];
-    const word = ["calm 😌", "a bit busy 😐", "very busy 😬"][lv];
+    const word = ["calm 🙂", "busy 😐", "stormy 😠"][lv];
     return `<div style="margin:.3em 0">The Sun is <b>${word}</b> today${f ? ` (biggest recent flare: <span class="cls ${f.classType[0]}">${f.classType}</span>)` : ""}.</div>
-      <div class="sun-meter"><div style="${lv === 0 ? "background:#7dff9a" : ""}">LOW</div><div style="${lv === 1 ? "background:#ffb020" : ""}">MEDIUM</div><div style="${lv === 2 ? "background:#ff4a4a" : ""}">HIGH</div></div>
+      <div class="sunPick">${[["calm", "🙂", "Calm Sun", "safe to go out"], ["busy", "😐", "Busy Sun", "a little radiation"], ["angry", "😠", "Stormy Sun", "lots of radiation!"]].map(([k, face, name, sub], i) => `<div class="sp ${k} ${i === lv ? "on" : ""}"><div class="spSun"><i class="rays"></i>${Array.from({ length: 3 + i * 4 }, (_, j) => `<b class="zap" style="--a:${(j * 360) / (3 + i * 4)}deg;--d:${(j % 4) * 0.3}s"></b>`).join("")}<span>${face}</span></div><div class="spName">${name}</div><div class="spSub">${sub}</div></div>`).join("")}</div>
       <div style="font-size:.75em;opacity:.75">${SW.status === "live" ? "● Live from NASA DONKI" : "● From a saved NASA DONKI record"}</div>`;
   },
   spaceWeatherHtml() {
@@ -3046,7 +3069,7 @@ const Story = {
     const risk = SpaceWeather.risk();
     const radCost = BALANCE.radiation[risk];
     await UI.card(`<h3>MISSION BRIEF</h3><h1>☀️ Clean the Panels</h1><p>Dust is covering our solar panels, so the base is losing power. Go out, clean them, and come back fast — the storm is coming!</p>
-      <div class="real"><span class="tag">REAL NASA DATA · TODAY'S SUN</span><br>Outside, there are no walls to block the Sun's radiation.${UI.spaceWeatherMini()}<b>${radCost ? `Busy Sun → going outside costs ${radCost} Safety.` : "Calm Sun → no extra danger today."}</b></div>${UI.srcHtml(["donki"])}`,
+      <div class="real"><span class="tag">REAL NASA DATA · TODAY'S SUN</span><br>Outside, there are no walls to block the Sun's radiation.${UI.spaceWeatherMini()}<b>${radCost ? `${risk === "X" ? "Stormy" : "Busy"} Sun → going outside costs ${radCost} Safety.` : "Calm Sun → no extra danger today."}</b></div>${UI.srcHtml(["donki"])}`,
       [{ id: "go", label: "Suit up! 🧑‍🚀", cls: "go" }], { cls: "wide" });
     if (radCost) meter({ safety: radCost }, "☢️ Real solar activity: extra radiation outside!");
     UI.objective("Go to the Airlock with {diego}");

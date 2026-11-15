@@ -197,7 +197,7 @@ const Story = {
     const risk = SpaceWeather.risk();
     const radCost = BALANCE.radiation[risk];
     await UI.card(`<h3>MISSION BRIEF</h3><h1>☀️ Clean the Panels</h1><p>Dust is covering our solar panels, so the base is losing power. Go out, clean them, and come back fast — the storm is coming!</p>
-      <div class="real"><span class="tag">REAL NASA DATA · TODAY'S SUN</span><br>Outside, there are no walls to block the Sun's radiation.${UI.spaceWeatherMini()}<b>${radCost ? `Busy Sun → going outside costs ${radCost} Safety.` : "Calm Sun → no extra danger today."}</b></div>${UI.srcHtml(["donki"])}`,
+      <div class="real"><span class="tag">REAL NASA DATA · TODAY'S SUN</span><br>Outside, there are no walls to block the Sun's radiation.${UI.spaceWeatherMini()}<b>${radCost ? `${risk === "X" ? "Stormy" : "Busy"} Sun → going outside costs ${radCost} Safety.` : "Calm Sun → no extra danger today."}</b></div>${UI.srcHtml(["donki"])}`,
       [{ id: "go", label: "Suit up! 🧑‍🚀", cls: "go" }], { cls: "wide" });
     if (radCost) meter({ safety: radCost }, "☢️ Real solar activity: extra radiation outside!");
     UI.objective("Go to the Airlock with {diego}");
