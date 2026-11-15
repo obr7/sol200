@@ -497,15 +497,17 @@ function drawSuitPart(g, k, t) {
 //  machine view above shows what that part does (based on NASA's MOXIE).
 // =====================================================================
 const ROSIE_PARTS = [
-  { k: "power", name: "Power", c: "#ff4a4a", line: "Power on! Rosie gets her energy from our solar panels." },
-  { k: "fan", name: "Air pump", c: "#4a8aff", line: "The pump pulls Mars air inside. It is mostly carbon dioxide — CO₂." },
-  { k: "filter", name: "Dust filter", c: "#ffd040", line: "The filter catches the dust, so it can't break Rosie again." },
-  { k: "heat", name: "Heater", c: "#5dd06a", line: "The heater makes the air super hot — about 800 °C — so CO₂ can split apart." },
+  { k: "power", name: "Power", ico: "⚡", c: "#ff4a4a", line: "Power on! Rosie gets her energy from our solar panels." },
+  { k: "fan", name: "Air pump", ico: "🌀", c: "#4a8aff", line: "The pump pulls Mars air inside. It is mostly carbon dioxide — CO₂." },
+  { k: "filter", name: "Dust filter", ico: "🧹", c: "#ffd040", line: "The filter catches the dust, so it can't break Rosie again." },
+  { k: "heat", name: "Heater", ico: "🔥", c: "#5dd06a", line: "The heater makes the air super hot — about 800 °C — so CO₂ can split apart." },
 ];
-Minigames.wires = function ({ time, hints }) {
+Minigames.wires = function ({ time, hints, hard }) {
   Sound.setMood("task");
   const who = hints ? "marcus" : "diego";
-  return canvasGame({ title: "Restart Rosie", sub: "Dust cut Rosie's wires! <b>Drag each wire to the plug with the same colour</b> — any order. Watch what each part does.", hint: hints ? "Match the colours. I'll tell you what each part does." : "Match each wire to its colour. Quick, Commander!", speaker: who }, (api) => {
+  const sub = hard ? "Dust burned the colour labels off the plugs! Read each wire's tag and plug it into the right part. <b>Rosie must start in the same order the air flows</b> — power first, then follow the arrow." : "Dust cut Rosie's wires! <b>Drag each wire to the plug with the same colour</b> — any order. Watch what each part does.";
+  return canvasGame({ title: hard ? "Restart Rosie — alone" : "Restart Rosie", sub, hint: hard ? "I don't know the order... you said you'd do it yourself, Commander." : hints ? "Match the colours. I'll tell you what each part does." : "Match each wire to its colour. Quick, Commander!", speaker: who }, (api) => {
+    const ORDER = ["power", "fan", "filter", "heat"]; let nextI = 0;
     const { g } = api; api.cv.style.cursor = "grab";
     const L = ROSIE_PARTS.map((p) => p).sort(() => Math.random() - 0.5), R = ROSIE_PARTS.map((p) => p).sort(() => Math.random() - 0.5);
     const rowY = (i) => 140 + i * 32;
@@ -518,7 +520,8 @@ Minigames.wires = function ({ time, hints }) {
     api.onUp = (pt) => {
       api.cv.style.cursor = "grab"; if (!drag) return; const e = drag; drag = null;
       const pl = plugs.find((q) => Math.hypot(pt.x - q.x, pt.y - q.y) < 26);
-      if (pl && pl.p === e.p) { e.done = true; e.tx = pl.x - 10; e.ty = pl.y; on[e.p.k] = 1; pl.on = 1; Sound.play("wire"); Sound.play("good"); for (let k = 0; k < 14; k++) parts.spawn({ x: pl.x - 10, y: pl.y, vx: (Math.random() - 0.5) * 120, vy: -40 - Math.random() * 80, life: 0.5, s: 2, c: "#fff6b0", g: 200 }); api.say(who, e.p.line); }
+      if (pl && pl.p === e.p && hard && e.p.k !== ORDER[nextI]) { Sound.play("zap"); sparkT = 0.3; wrong++; if (time) tLeft -= BALANCE.rosie.wrongPenalty; api.say(who, `Zap! Rosie can't start the ${e.p.name.toLowerCase()} yet. Follow the air: what has to happen first? (−${BALANCE.rosie.wrongPenalty}s)`); return; }
+      if (pl && pl.p === e.p) { nextI++; e.done = true; e.tx = pl.x - 10; e.ty = pl.y; on[e.p.k] = 1; pl.on = 1; Sound.play("wire"); Sound.play("good"); for (let k = 0; k < 14; k++) parts.spawn({ x: pl.x - 10, y: pl.y, vx: (Math.random() - 0.5) * 120, vy: -40 - Math.random() * 80, life: 0.5, s: 2, c: "#fff6b0", g: 200 }); api.say(who, e.p.line); }
       else if (pl) { Sound.play("zap"); sparkT = 0.3; wrong++; for (let k = 0; k < 10; k++) parts.spawn({ x: pl.x - 10, y: pl.y, vx: (Math.random() - 0.5) * 160, vy: (Math.random() - 0.5) * 160, life: 0.3, s: 2, c: "#7fd0ff", g: 0 }); if (time) { tLeft -= BALANCE.rosie.wrongPenalty; api.say(who, `Zap! Wrong colour. (−${BALANCE.rosie.wrongPenalty} seconds)`); } else api.say(who, "Zap! Match the same colour."); }
     };
     api.frame = (dt, t) => {
@@ -555,6 +558,7 @@ Minigames.wires = function ({ time, hints }) {
       PX(g, 350, 24, 70, 70, "#2a3048"); PX(g, 352, 26, 66, 66, "#141826");
       const lvl = Math.min(1, flowT / 2.6); PX(g, 352, 26 + 66 * (1 - lvl), 66, 66 * lvl, "rgba(120,200,255,0.55)");
       g.fillStyle = "#cfe8ff"; g.font = "10px monospace"; g.textAlign = "center"; g.fillText("O₂", 385, 64); g.font = "8px monospace"; g.fillText("OXYGEN", 385, 104); g.textAlign = "left";
+      if (hard) { g.fillStyle = "#ffd34a"; g.font = "8px monospace"; g.fillText("AIR FLOW ➜", 290, 15); }
       // power box
       const pl = on.power; PX(g, 130, 4, 110, 16, pl ? "#4a2a2a" : "#2a2230"); g.fillStyle = pl ? "#ffb0a0" : "#7a6878"; g.font = "8px monospace"; g.fillText(pl ? "⚡ POWER ON" : "⚡ NO POWER", 142, 15);
       if (pl) for (const x of [95, 185, 275]) PX(g, x - 1, 20, 2, 10, ((t * 8 + x) | 0) % 3 ? "#ff6a4a" : "#ffd040");
@@ -572,8 +576,9 @@ Minigames.wires = function ({ time, hints }) {
       // ---------------- wiring panel
       PX(g, 14, 128, 452, 136, "#20263a"); PX(g, 14, 128, 452, 2, "#3a4170");
       for (const q of plugs) {
-        PX(g, q.x - 6, q.y - 11, 26, 22, "#11141f"); PX(g, q.x - 4, q.y - 9, 22, 18, q.p.c); PX(g, q.x - 1, q.y - 4, 8, 8, q.on ? "#ffffff" : "#1b1d2b");
+        PX(g, q.x - 6, q.y - 11, 26, 22, "#11141f"); PX(g, q.x - 4, q.y - 9, 22, 18, hard && !q.on ? "#6a6458" : q.p.c); PX(g, q.x - 1, q.y - 4, 8, 8, q.on ? "#ffffff" : "#1b1d2b");
         g.fillStyle = "#e8eeff"; g.font = "8px monospace"; g.fillText(q.p.name, q.x + 24, q.y + 3);
+
         if (hints && drag && drag.p === q.p) { g.strokeStyle = `rgba(255,255,255,${0.5 + Math.sin(t * 10) * 0.4})`; g.lineWidth = 2; g.strokeRect(q.x - 8, q.y - 13, 30, 26); }
       }
       for (const e of ends) {
@@ -583,10 +588,114 @@ Minigames.wires = function ({ time, hints }) {
         g.strokeStyle = e.p.c; g.lineWidth = 6; g.stroke();
         g.strokeStyle = "rgba(255,255,255,0.35)"; g.lineWidth = 1; g.beginPath(); g.moveTo(sx, sy - 2); g.bezierCurveTo(sx + (ex - sx) * 0.35, sy + sag - 2, sx + (ex - sx) * 0.65, ey + sag - 2, ex, ey - 2); g.stroke();
         PX(g, 14, e.y - 8, 14, 16, "#3a4052");
+        if (hard && !e.done) { PX(g, ex + 8, ey - 8, 18, 16, "#f4ecd8"); PX(g, ex + 6, ey - 1, 2, 2, "#f4ecd8"); g.font = "11px sans-serif"; g.textAlign = "center"; g.fillText(e.p.ico, ex + 17, ey + 4); g.textAlign = "left"; }
         if (!e.done) { PX(g, ex - 5, ey - 5, 10, 10, "#c8ccd8"); PX(g, ex + 4, ey - 2, 4, 1, "#ffd34a"); PX(g, ex + 4, ey + 1, 4, 1, "#ffd34a"); if (!drag && ((t * 2) | 0) % 2) { g.strokeStyle = "rgba(255,255,255,0.5)"; g.lineWidth = 1; g.strokeRect(ex - 7, ey - 7, 14, 14); } }
       }
       if (sparkT) { g.fillStyle = `rgba(120,200,255,${sparkT})`; g.fillRect(0, 128, MW2, 136); }
       parts.draw(g, t); g.globalAlpha = 1;
     };
   }).then((r) => !!(r && r.ok));
+};
+
+// =====================================================================
+//  STORM NIGHT — share the power. Tap machines ON/OFF to keep every bar
+//  out of the red until the storm passes. Solar power is limited (6 ⚡),
+//  and wind gusts cut it to 4 ⚡. Use too much → the breaker trips and
+//  EVERYTHING turns off for a moment.
+// =====================================================================
+Minigames.power = function () {
+  Sound.setMood("task");
+  const DUR = BALANCE.power.time || 40;
+  const DEV = [
+    { k: "oxygen", n: "Oxygen", i: "🫧", need: 2, v: 75, drain: 5, eff: { safety: -20 }, fail: "Oxygen ran out! Safety −20", col: "#7fd0ff" },
+    { k: "crew", n: "Crew heat", i: "🔥", need: 2, v: 75, drain: 4, eff: { safety: -10 }, fail: "The crew froze! Safety −10", col: "#ff9a40" },
+    { k: "garden", n: "Garden heat", i: "🌡️", need: 2, v: 70, drain: 4.5, eff: { mission: -15 }, fail: "The garden froze! Mission −15", col: "#ff6a8a" },
+    { k: "lights", n: "Grow lights", i: "💡", need: 1, v: 65, drain: 3, eff: { mission: -5 }, fail: "Plants in the dark. Mission −5", col: "#ffe060" },
+    { k: "radio", n: "Radio", i: "📡", need: 1, v: 60, drain: 3.5, eff: { team: -5 }, fail: "Earth lost contact. Team −5", col: "#9ad0ff" },
+  ];
+  DEV.forEach((d) => { d.on = false; d.failed = false; d.warned = false; d.flash = 0; });
+  DEV[0].on = true; DEV[1].on = true; // start with the obvious two
+  return canvasGame({ title: "Storm Night: Share the Power", sub: "Keep every bar <b>out of the red</b> until the storm passes. Tap a machine to switch it ON/OFF (or keys 1–5). Use more ⚡ than you have and the breaker trips!", speaker: "marcus", hint: "We only have 6 bolts of power. Switch machines on and off to keep them all alive." }, (api) => {
+    const { g } = api; api.cv.style.cursor = "pointer";
+    const parts = new Pool(160);
+    let t0 = 0, cap = 6, gust = { next: 9, warn: 0, left: 0 }, trip = 0, trips = 0, ended = false, shake = 0;
+    const used = () => DEV.reduce((a, d) => a + (d.on ? d.need : 0), 0);
+    const cardX = (i) => 14 + i * 92;
+    const tripBreaker = () => { trip = 2.2; trips++; shake = 0.5; DEV.forEach((d) => (d.on = false)); Sound.play("zap"); Sound.play("error"); Sound.play("thud"); api.say("marcus", trips === 1 ? "Overload! The breaker tripped — everything is OFF! Never use more than we have." : "Overload again! Count the bolts before you switch on."); for (let k = 0; k < 30; k++) parts.spawn({ x: 240 + (Math.random() - 0.5) * 300, y: 40, vx: (Math.random() - 0.5) * 200, vy: Math.random() * 120, life: 0.6, s: 2, c: ["#ffd34a", "#fff", "#7fd0ff"][k % 3], g: 200 }); };
+    const toggle = (i) => {
+      if (ended) return; const d = DEV[i];
+      if (trip > 0) { Sound.play("error"); return; }
+      if (d.on) { d.on = false; Sound.play("click"); return; }
+      d.on = true; Sound.play("wire");
+      if (used() > cap) tripBreaker();
+    };
+    api.onDown = (pt) => { for (let i = 0; i < DEV.length; i++) if (pt.x > cardX(i) && pt.x < cardX(i) + 84 && pt.y > 64 && pt.y < 236) toggle(i); };
+    api.onKey = (k, down) => { if (down && /^[1-5]$/.test(k)) toggle(+k - 1); };
+    api.state = { DEV, toggle, get cap() { return cap; } };
+    api.frame = (dt, t) => {
+      if (!ended) t0 += dt;
+      const left = Math.max(0, DUR - t0);
+      api.timer(`⏱ ${Math.ceil(left)}`);
+      // gusts
+      if (!ended) {
+        gust.next -= dt;
+        if (gust.next <= 2 && gust.next + dt > 2) { gust.warn = 2; Sound.play("whoosh"); api.say("marcus", "Wind gust coming! Solar power drops to 4 ⚡ — switch something off!"); }
+        if (gust.next <= 0 && !gust.left) { gust.left = 5; cap = 4; Sound.play("rumble", 1); if (used() > cap) tripBreaker(); }
+        if (gust.left) { gust.left -= dt; if (gust.left <= 0) { gust.left = 0; cap = 6; gust.next = 7 + Math.random() * 3; api.say("marcus", "Gust is over — 6 ⚡ again."); } }
+        gust.warn = Math.max(0, gust.warn - dt);
+      }
+      trip = Math.max(0, trip - dt); shake = Math.max(0, shake - dt);
+      // levels
+      for (const d of DEV) {
+        if (ended) break;
+        d.v += d.on ? 9 * dt : -d.drain * dt; d.v = Math.max(0, Math.min(100, d.v)); d.flash = Math.max(0, d.flash - dt);
+        if (d.v < 25 && !d.warned && !d.failed) { d.warned = true; api.say("marcus", `${d.n} is getting low!`); Sound.play("error"); }
+        if (d.v > 40) d.warned = false;
+        if (d.v <= 0 && !d.failed) { d.failed = true; d.flash = 1; Sound.play("fail"); api.say("marcus", d.fail.split("!")[0] + "!"); shake = 0.3; }
+      }
+      if (!ended && t0 >= DUR) {
+        ended = true; Sound.play("power");
+        const total = { safety: 0, mission: 0, team: 0 }, lost = [];
+        DEV.forEach((d) => { if (d.failed) { for (const k in d.eff) total[k] += d.eff[k]; lost.push(d.fail); } });
+        api.say("marcus", lost.length ? `The storm passed. We lost: ${DEV.filter((d) => d.failed).map((d) => d.n).join(", ")}.` : "The storm passed and everything survived. Great power sharing, Commander!");
+        if (!lost.length) Sound.play("success");
+        api.finish({ total, lost, failed: Object.fromEntries(DEV.map((d) => [d.k, d.failed])), trips, delay: 2200 });
+      }
+      // ---------------- draw
+      const sx = shake ? (Math.random() - 0.5) * 6 : 0;
+      g.save(); g.translate(sx, 0);
+      const sky = g.createLinearGradient(0, 0, 0, MH2); sky.addColorStop(0, "#0e0f1e"); sky.addColorStop(1, "#1e2238"); g.fillStyle = sky; g.fillRect(-10, 0, MW2 + 20, MH2);
+      // storm progress
+      PX(g, 14, 10, 452, 12, "#0b0d18"); PX(g, 15, 11, Math.round(450 * Math.min(1, t0 / DUR)), 10, "#3a4a80");
+      g.font = "12px sans-serif"; g.fillText("🌪️", 14 + 440 * Math.min(1, t0 / DUR), 21); g.fillStyle = "#cfd8ff"; g.font = "8px monospace"; g.fillText("STORM", 18, 19); g.textAlign = "right"; g.fillText("SUNRISE ☀", 462, 19); g.textAlign = "left";
+      // power capacity
+      const u = used();
+      g.fillStyle = "#fff"; g.font = "9px monospace"; g.fillText("SOLAR POWER", 14, 42);
+      for (let k = 0; k < 6; k++) { const avail = k < cap, isUsed = k < u; const x = 90 + k * 22; PX(g, x, 30, 18, 18, avail ? "#2a3048" : "#1a1a22"); if (avail) { g.font = "13px sans-serif"; g.globalAlpha = isUsed ? 1 : 0.35; g.fillText("⚡", x + 2, 44); g.globalAlpha = 1; } else { g.strokeStyle = "#ff4a4a"; g.beginPath(); g.moveTo(x + 2, 32); g.lineTo(x + 16, 46); g.stroke(); } }
+      g.fillStyle = u > cap ? "#ff6a4a" : "#9affb0"; g.font = "9px monospace"; g.fillText(`${u} / ${cap} used`, 230, 42);
+      if (gust.warn > 0 && ((t * 6) | 0) % 2) { g.fillStyle = "#ffd34a"; g.fillText("⚠ GUST COMING", 330, 42); }
+      if (gust.left) { g.fillStyle = "#ff9a40"; g.fillText(`💨 GUST: 4 ⚡ for ${Math.ceil(gust.left)}s`, 330, 42); }
+      // cards
+      DEV.forEach((d, i) => {
+        const x = cardX(i), y = 64, on = d.on && !trip;
+        PX(g, x, y, 84, 172, d.failed ? "#3a1a22" : on ? "#26305a" : "#1c2034"); PX(g, x, y, 84, 2, on ? d.col : "#3a4170");
+        if (d.flash) { g.fillStyle = `rgba(255,60,60,${d.flash * 0.5})`; g.fillRect(x, y, 84, 172); }
+        g.font = "20px sans-serif"; g.textAlign = "center"; g.globalAlpha = on ? 1 : 0.55; g.fillText(d.i, x + 42, y + 28); g.globalAlpha = 1;
+        g.fillStyle = "#e8eeff"; g.font = "8px monospace"; g.fillText(d.n, x + 42, y + 42);
+        g.fillStyle = "#ffd34a"; g.fillText("⚡".repeat(d.need), x + 42, y + 54); g.textAlign = "left";
+        // level bar
+        const bx = x + 30, by = y + 62, bh = 70; PX(g, bx, by, 24, bh, "#0b0d18"); PX(g, bx, by + bh - bh * 0.2, 24, bh * 0.2, "rgba(255,60,60,0.25)");
+        const lh = Math.round(bh * d.v / 100), low = d.v < 25; PX(g, bx + 2, by + bh - lh, 20, lh, low ? (((t * 6) | 0) % 2 ? "#ff4a4a" : "#a02020") : d.col);
+        g.fillStyle = "#fff"; g.font = "8px monospace"; g.textAlign = "center"; g.fillText(d.failed ? "FAILED" : `${Math.round(d.v)}%`, x + 42, by + bh + 11);
+        // switch
+        const swy = y + 150; PX(g, x + 18, swy, 48, 14, "#0b0d18"); PX(g, on ? x + 42 : x + 20, swy + 2, 22, 10, on ? "#5dff8a" : "#6a7090");
+        g.fillStyle = on ? "#0b2a14" : "#e8eeff"; g.fillText(on ? "ON" : "OFF", on ? x + 53 : x + 31, swy + 10);
+        g.fillStyle = "#7a8098"; g.fillText(String(i + 1), x + 8, y + 12); g.textAlign = "left";
+        if (on && Math.random() < 0.3) parts.spawn({ x: x + 42 + (Math.random() - 0.5) * 20, y: y + 20, vx: 0, vy: -20, life: 0.5, s: 1, c: d.col, g: 0 });
+      });
+      if (trip > 0) { g.fillStyle = `rgba(0,0,0,${0.35 + Math.sin(t * 20) * 0.1})`; g.fillRect(0, 60, MW2, 180); g.fillStyle = "#ff6a4a"; g.font = "14px monospace"; g.textAlign = "center"; g.fillText("⚡ BREAKER TRIPPED ⚡", 240, 140); g.font = "9px monospace"; g.fillStyle = "#fff"; g.fillText(`resetting… ${trip.toFixed(1)}s`, 240, 156); g.textAlign = "left"; }
+      parts.update(dt); parts.draw(g, t); g.globalAlpha = 1;
+      g.restore();
+    };
+  });
 };

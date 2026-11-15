@@ -23,7 +23,8 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes pulseDown { 30% { transform: scale(1.1) rotate(-2deg); box-shadow: 0 0 1em #ff4a4a; } }
 .delta { position: absolute; right: .3em; top: 100%; font-weight: 700; font-size: .9em; animation: floatUp 1.6s forwards; text-shadow: 0 .1em 0 #000; }
 @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(1.5em); } }
-#objective { position: absolute; left: 1em; top: 4.6em; background: rgba(14,16,30,.8); border-left: .3em solid var(--gold); padding: .3em .7em; font-size: .78em; border-radius: 0 .4em .4em 0; max-width: 22em; pointer-events: none; }
+#hudLeft { position: absolute; left: 1em; top: 4.6em; display: flex; flex-direction: column; align-items: flex-start; gap: .45em; pointer-events: none; max-width: 24em; }
+#objective { position: relative; background: rgba(14,16,30,.8); border-left: .3em solid var(--gold); padding: .3em .7em; font-size: .78em; border-radius: 0 .4em .4em 0; max-width: 22em; pointer-events: none; }
 #objective b { color: var(--gold); font-size: .8em; letter-spacing: .1em; display: block; }
 #topright { position: absolute; right: .8em; top: .8em; display: flex; gap: .4em; }
 .iconbtn { width: 2.3em; height: 2.3em; border-radius: .5em; border: .15em solid #3a4170; background: rgba(14,16,30,.85); color: #fff; font-size: 1em; display: grid; place-items: center; box-shadow: 0 .2em 0 rgba(0,0,0,.4); position: relative; }
@@ -36,8 +37,9 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes shake { 25% { transform: translateX(-52%); } 75% { transform: translateX(-48%); } }
 #prompt { position: absolute; transform: translate(-50%, -100%); background: var(--cream); color: var(--brown); border: .15em solid var(--brown); border-radius: .4em; padding: .2em .5em; font-size: .7em; font-weight: 700; white-space: nowrap; pointer-events: none; box-shadow: 0 .2em 0 rgba(0,0,0,.4); }
 #prompt kbd { background: var(--brown); color: var(--cream); border-radius: .25em; padding: 0 .3em; font-family: inherit; margin-right: .3em; }
-#toast { position: absolute; left: 1.2em; bottom: 9em; transform: none; background: rgba(14,16,30,.92); border: .15em solid var(--gold); padding: .4em .9em; border-radius: .5em; font-size: .8em; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; text-align: left; max-width: 40%; z-index: 5; }
-#toast.show { opacity: 1; transform: translateY(-.4em); }
+#toast { position: relative; background: rgba(14,16,30,.92); border: .15em solid var(--gold); padding: .4em .8em; border-radius: .5em; font-size: .75em; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; text-align: left; max-width: 24em; transform: translateY(-.3em); }
+#toast.show { opacity: 1; transform: none; }
+#toast:empty { display: none; }
 
 /* ---------- dialogue (Stardew-like) ---------- */
 #dialog { position: absolute; left: 3%; right: 3%; bottom: 3%; height: 30%; display: flex; gap: .6em; pointer-events: auto; animation: popIn .25s; }
@@ -217,3 +219,29 @@ body.touch.playing #touch { display: block; }
 
 #iskip { position: absolute; right: 1em; bottom: 1em; z-index: 30; font: inherit; font-size: .85em; padding: .45em 1em; border-radius: .5em; border: .12em solid rgba(255,255,255,.35); background: rgba(0,0,0,.45); color: #fff; cursor: pointer; opacity: .75; transition: opacity .2s, background .2s; }
 #iskip:hover { opacity: 1; background: rgba(0,0,0,.7); border-color: #ffd34a; }
+
+/* keyboard keycap controls hint */
+#keysHint { background: rgba(14,16,30,.85); border: .12em solid #3a4170; border-radius: .5em; padding: .45em .6em; font-size: .72em; display: flex; flex-direction: column; gap: .35em; transition: opacity .3s; }
+#keysHint.hidden { display: flex !important; opacity: 0; }
+#keysHint .krow { display: flex; align-items: center; gap: .5em; }
+#keysHint .kgrid { display: grid; grid-template-columns: repeat(3, 1.9em); grid-template-rows: repeat(2, 1.9em); gap: .15em; }
+#keysHint .or { opacity: .6; font-size: .9em; }
+.kc { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9em; height: 1.9em; padding: 0 .35em; box-sizing: border-box; background: linear-gradient(#f4ecd8, #d6c8a8); color: #2a1a10; border-radius: .3em; border: .1em solid #6a5030; box-shadow: 0 .18em 0 #6a5030; font-weight: 700; font-size: .95em; }
+.kc.wide { min-width: 5.2em; }
+#keysHint .lbl { color: #ffd34a; font-weight: 700; }
+
+/* crew photo album (3D stack) */
+.albumCard { width: min(92vw, 720px) !important; }
+.albumStage { position: relative; height: min(44vh, 300px); perspective: 900px; margin: .3em 0; }
+.album { position: absolute; inset: 0; transform-style: preserve-3d; touch-action: none; }
+.album .photo { position: absolute; left: 50%; top: 52%; width: min(52vh, 360px, 70vw); background: #fbf6ea; padding: .55em .55em 0; border-radius: .25em; box-shadow: 0 .6em 1.4em rgba(0,0,0,.55); cursor: grab; user-select: none; }
+.album .photo:active { cursor: grabbing; }
+.album .pimg { width: 100%; display: block; image-rendering: pixelated; border: .1em solid #2a2418; }
+.album .pcap { font-family: "Pixelify Sans", monospace; color: #3a2a1a; font-size: .85em; padding: .35em .1em .45em; display: flex; justify-content: space-between; }
+.album .pcap span { opacity: .6; }
+.albNav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 300; font: inherit; font-size: 1.1em; width: 2.2em; height: 2.2em; border-radius: 50%; border: .12em solid #ffd34a; background: rgba(14,16,30,.8); color: #ffd34a; cursor: pointer; }
+.albNav.prev { left: .3em; } .albNav.next { right: .3em; }
+.albDots { display: flex; justify-content: center; gap: .35em; margin: .2em 0; }
+.albDots span { width: .5em; height: .5em; border-radius: 50%; background: #3a4170; } .albDots span.on { background: #ffd34a; }
+.albCap { font-size: .82em; line-height: 1.4; min-height: 3.2em; text-align: center; }
+.albHint { font-size: .7em; opacity: .65; text-align: center; margin: .2em 0 0; }

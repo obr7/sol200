@@ -73,7 +73,7 @@ const Story = {
     await UI.charCard("lead", "That's YOU! Every choice you make changes the story.");
     await UI.say("lead", "Sol 200. Earth is waiting for good news. I won't let them down.", { think: true });
     UI.toast("☀️ A <b>sol</b> is one day on Mars — a little longer than an Earth day.", 5000);
-    setTimeout(() => UI.toast(document.body.classList.contains("touch") ? "Use the joystick to move. Press A to talk." : "Use the <b>arrows</b> (or WASD) to move. Press <b>Space</b> to talk.", 5000), 5200);
+    UI.keysHint(true); Game.keysHintT = 0;
     UI.objective("Talk to {marcus} at the weather screen");
     Game.setTarget({ x: N.marcus.x, y: N.marcus.y });
     await Game.waitTalk("talk_marcus", N.marcus);
@@ -239,11 +239,15 @@ const Story = {
     await Game.walkNpc(N.marcus, pp.x - 6, pp.y + pp.ph + 10);
     await new Promise((res) => Game.addInteract({ id: "use_power", x: pp.x + pp.pw / 2, y: pp.y + pp.ph + 8, label: "Use", name: "Power Panel", marker: () => "!", use: async () => { Game.removeInteract("use_power"); res(); } }));
     Game.setTarget(null);
-    await UI.card(`<h3>MISSION BRIEF</h3><div class="big">⚡</div><h1>Share the Power</h1><p>There isn't enough power for every machine. Oxygen and crew heaters keep us alive, so they come first. If we cut power to part of the garden, we stay safe, but some plants may die.</p>${UI.srcHtml(["marsFacts", "insightDust"])}`, [{ id: "go", label: "Let's do it!", cls: "go" }]);
+    await UI.card(`<h3>MISSION BRIEF</h3><div class="big">⚡</div><h1>Storm Night</h1><p>The storm hides the Sun, so our solar panels give only <b>6 bolts ⚡</b> of power — and wind gusts can drop it to 4. The machines need more than that. Switch them ON and OFF to keep every bar out of the red until sunrise. Oxygen and heat keep us alive... but the garden needs us too.</p>${UI.srcHtml(["marsFacts", "insightDust"])}`, [{ id: "go", label: "Let's do it!", cls: "go" }]);
     const res = await Minigames.power();
-    G.trays[3].dead = true; G.trays[4].dead = true;
+    if (res && res.total && (res.total.safety || res.total.mission || res.total.team)) meter(res.total, "⚡ " + res.lost.join(" · "));
+    else UI.toast("⚡ Everything survived the storm night!");
+    const gardenLost = !res || !res.failed || res.failed.garden || res.failed.lights;
+    G.trays[3].dead = true; if (gardenLost) G.trays[4].dead = true;
+    G.flags.traysLost = gardenLost ? 2 : 1;
     await UI.talk([
-      ["layla", "We lost two trays... months of work. But Hope is still alive."],
+      gardenLost ? ["layla", "We lost two trays... months of work. But Hope is still alive."] : ["layla", "We lost one tray in the cold... but the others made it. And Hope is still alive."],
       ["diego", "And we're all alive too. That's what matters."],
       ["lead", "It was the right choice... so why do I feel like I lost?", { think: true }],
     ]);
@@ -283,13 +287,21 @@ const Story = {
     await UI.card(`<h3>MISSION BRIEF</h3><div class="big">🫧</div><h1>Restart Rosie</h1><p>Mars air is mostly carbon dioxide, and we can't breathe it. The oxygen machine turns this air into oxygen we can breathe.</p><div class="real"><span class="tag">REAL NASA SCIENCE</span><br>This is real: NASA sent a small machine called <b>MOXIE</b> to Mars, and it really made oxygen from Mars air — 122 grams in total, about what a small dog breathes in 10 hours.</div>${UI.srcHtml(["moxie"])}`, [{ id: "go", label: "Fix Rosie!", cls: "go" }]);
     let time = G.d2 === "A" ? BALANCE.d2A.time : BALANCE.d2B.time;
     if (G.flags.diegoHurt) time -= BALANCE.d1APenaltyOnRosie;
-    let ok = await Minigames.wires({ time, hints: G.d2 === "B" });
+    let ok = await Minigames.wires({ time, hints: G.d2 === "B", hard: G.d2 === "A" });
+    let marcusStepped = false;
     if (!ok) {
       Sound.play("fail"); G.alarm = true;
       await UI.say("layla", "Oxygen is running out! Emergency helmets on!");
       P.helmet = true; for (const n of Object.values(N)) n.helmet = true;
       meter(BALANCE.rosie.fail, "🫧 Oxygen ran low — helmets on.");
-      await UI.say("marcus", "Breathe slowly. We try again, together this time.");
+      if (G.d2 === "A") {
+        marcusStepped = true;
+        await UI.talk([
+          ["marcus", "Move over, {lead}. I know this machine. Let me help!", { mood: "worried" }],
+          ["lead", "I should have asked him from the start...", { think: true }],
+          ["marcus", "Match the colours, one by one. I'll tell you what each part does.", { mood: "calm" }],
+        ]);
+      } else await UI.say("marcus", "Breathe slowly. We try again, together this time.");
       G.alarm = false;
       ok = await Minigames.wires({ time: 0, hints: true });
     }
@@ -297,7 +309,16 @@ const Story = {
     await UI.say("diego", "I can hear Rosie! She's working!");
     meter(BALANCE.rosie.success, "🫧 Rosie is making oxygen again!");
     P.helmet = false; for (const n of Object.values(N)) n.helmet = false;
-    if (G.d2 === "A") await UI.talk([["marcus", "Rosie is working. I'll be in my room if you need me."], () => { Game.walkNpc(N.marcus, 9 * T, 17 * T); }, ["diego", "{lead}... I think he was waiting for you to ask."]]);
+    if (marcusStepped) {
+      await UI.talk([
+        ["marcus", "You should have let me help from the start, {lead}. We lost air for nothing.", { mood: "angry" }],
+        ["lead", "You're right. I'm sorry. Next time I'll ask.", { mood: "sad" }],
+        ["layla", "That's the first time I've heard you say that.", { mood: "calm" }],
+        ["diego", "See? Two heads, one oxygen machine. Much better.", { mood: "happy" }],
+      ]);
+      meter({ team: 5 }, "🤝 Marcus stepped in — and you listened.");
+      G.flags.marcusStepped = true;
+    } else if (G.d2 === "A") await UI.talk([["lead", "I did it... alone.", { think: true, mood: "calm" }], ["marcus", "Rosie is working. I'll be in my room if you need me."], () => { Game.walkNpc(N.marcus, 9 * T, 17 * T); }, ["diego", "{lead}... I think he was waiting for you to ask."]]);
     else await UI.talk([["marcus", "You never asked me for anything before, {lead}."], ["lead", "I should have. In training too."]]);
     await this.ending();
   },
@@ -323,9 +344,9 @@ const Story = {
 
   async results() {
     const rec = {
-      safety: G.d1 === "A" ? `${CONFIG.NAMES.diego} got hurt outside, but the garden stayed warm.` : "No one got hurt, but you lost two garden trays.",
+      safety: G.d1 === "A" ? `${CONFIG.NAMES.diego} got hurt outside, but the garden stayed warm.` : `No one got hurt, but you lost ${G.flags.traysLost === 1 ? "one garden tray" : "two garden trays"}.`,
       mission: G.d1 === "A" ? "Clean panels kept the garden heaters running." : "Sharing power kept everyone safe, but cost some plants.",
-      team: G.d2 === "A" ? `You fixed it alone, and ${CONFIG.NAMES.marcus} moved further away.` : "You asked for help, and the team worked together.",
+      team: G.flags.marcusStepped ? `You tried alone, and ${CONFIG.NAMES.marcus} had to step in. In the end, you listened.` : G.d2 === "A" ? `You fixed it alone, and ${CONFIG.NAMES.marcus} moved further away.` : "You asked for help, and the team worked together.",
     };
     const row = (k) => { const d = STORY.meters[k]; return `<div class="row"><div class="meter" style="font-size:1.1em"><div class="lbl"><span>${d.icon} ${d.label}</span><span>${G.meters[k]}</span></div><div class="bar"><div class="fill" style="width:${G.meters[k]}%;background-color:${d.color}"></div></div></div><p>${rec[k]}</p></div>`; };
     await UI.card(`<h3>MISSION REPORT · SOL 200</h3><h1>${G.meters.team >= BALANCE.happyEndingTeam ? "🌱 The team holds together" : "🌪️ You survived... apart"}</h1><div class="results">${row("safety")}${row("mission")}${row("team")}</div><p style="font-size:.75em;opacity:.8">Every choice had a cost. Try again and choose differently — see what changes!</p>`, [{ id: "ok", label: "What did I learn?", cls: "go" }], { cls: "wide" });

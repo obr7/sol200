@@ -150,6 +150,20 @@ function drawPropV2(g, p, t) {
       drawProp1(g, p, t);
       break;
     }
+    // ---------------------------------------------------------- LOW SPACE TABLE + PHOTO ALBUM
+    case "phototable": {
+      // short legs + rounded metal top with a soft light strip
+      R(5, 9, 3, 6, "#3a4052"); R(W - 8, 9, 3, 6, "#3a4052"); R(4, 14, 5, 2, "#262b3c"); R(W - 9, 14, 5, 2, "#262b3c");
+      R(1, 0, W - 2, 10, "#9aa3b8"); R(0, 1, W, 8, "#9aa3b8"); R(2, 1, W - 4, 6, "#c8cfdc"); R(1, 8, W - 2, 2, "#6a7390");
+      R(3, 9, W - 6, 1, `rgba(120,220,255,${0.5 + Math.sin(t * 2) * 0.3})`);
+      // open album: two pages with tiny photos
+      R(6, -4, 20, 9, "#5a3a2a"); R(7, -3, 9, 7, "#fbf3e0"); R(16, -3, 9, 7, "#f4ead2"); R(15, -3, 2, 7, "#d8c8a0");
+      R(8, -2, 6, 3, "#8ec8f0"); R(8, 1, 6, 2, "#d8b070"); R(17, -2, 6, 3, "#c86a3a"); R(17, 1, 3, 2, "#e8e8e8"); R(21, 1, 2, 2, "#5ad06a");
+      // a little photo standing in a frame
+      R(W - 9, -8, 7, 9, "#d9b24a"); R(W - 8, -7, 5, 6, "#6a90c0"); R(W - 7, -4, 1, 2, "#f2c9a0"); R(W - 5, -4, 1, 2, "#8a5634");
+      glow(p.x + W / 2, p.y + 2, 14, "#ffe6b0", 0.15);
+      break;
+    }
     // ---------------------------------------------------------- HOLO-TABLE (Mars hologram)
     case "holotable": {
       // front face + feet

@@ -68,7 +68,7 @@ const PROPS = [
   { id: "bunk_marcus", type: "bunk", tx: 6, ty: 4, w: 2, h: 2, color: "#3b7dd8" },
   { id: "bunk_diego", type: "bunk", tx: 9, ty: 4, w: 2, h: 2, color: "#f08a2a" },
   { id: "bunk_layla", type: "bunk", tx: 12, ty: 4, w: 2, h: 2, color: "#4fb35e" },
-  { id: "photo_table", type: "table", tx: 7, ty: 8, w: 2, h: 1, label: "Crew Photo" },
+  { id: "photo_table", type: "phototable", tx: 7, ty: 8, w: 2, h: 1, label: "Crew Photo" },
   { id: "scale", type: "scale", tx: 13, ty: 10, w: 1, h: 1, fact: "gravity", label: "Weighing Scale" },
   { id: "clock", type: "clock", tx: 3, ty: 10, w: 1, h: 1, fact: "sol", label: "Mars Clock" },
   { id: "window_q", type: "viewport", tx: 14, ty: 6, w: 1, h: 2, fact: "air", label: "Window" },

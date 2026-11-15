@@ -107,6 +107,15 @@ const UI = {
   },
 
   // ------------------------------------------------------------ toast + banner
+  keysHint(on) {
+    const k = $("#keysHint"); if (!k) return;
+    if (on && !k.innerHTML) {
+      const touch = document.body.classList.contains("touch");
+      k.innerHTML = touch ? `<div class="krow"><span class="kc">🕹️</span><span class="lbl">Move</span></div><div class="krow"><span class="kc">A</span><span class="lbl">Talk / Use</span></div>`
+        : `<div class="krow"><div class="kgrid"><span></span><span class="kc">W</span><span></span><span class="kc">A</span><span class="kc">S</span><span class="kc">D</span></div><span class="or">or</span><div class="kgrid"><span></span><span class="kc">↑</span><span></span><span class="kc">←</span><span class="kc">↓</span><span class="kc">→</span></div><span class="lbl">Move</span></div><div class="krow"><span class="kc wide">Space</span><span class="lbl">Talk / Use</span></div>`;
+    }
+    this._keysOn = on;
+  },
   toast(msg, ms = 2200) { const t = $("#toast"); t.innerHTML = msg; t.classList.add("show"); clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove("show"), ms); },
   banner(txt) { const b = $("#roomBanner"); b.textContent = txt; b.classList.add("show"); clearTimeout(this._bt); this._bt = setTimeout(() => b.classList.remove("show"), 1800); },
   objective(txt) { const o = $("#objective"); if (!txt) { o.classList.add("hidden"); return; } o.classList.remove("hidden"); o.querySelector("span").textContent = fill(txt); o.animate([{ transform: "scale(1.15)" }, { transform: "scale(1)" }], { duration: 400 }); },

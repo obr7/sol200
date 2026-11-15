@@ -105,8 +105,8 @@ const BALANCE = {
   panels: { time: 65, tripAt: 10, good: 4, goodMission: +15, poorMission: +5 },
   // Extra outdoor radiation cost from REAL space weather (DONKI): quiet / M-class / X-class
   radiation: { quiet: 0, M: -3, X: -6 },
-  power: { time: 30, units: 6 },
-  d2A: { team: -10, time: 40 },
+  power: { time: 40, units: 6 },
+  d2A: { team: -10, time: 32 },
   d2B: { team: +20, time: 60 },
   d1APenaltyOnRosie: 10,                      // seconds lost if Diego is hurt
   rosie: { wrongPenalty: 5, success: { safety: +15 }, fail: { safety: -15 } },

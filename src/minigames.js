@@ -106,58 +106,7 @@ const Minigames = {
   },
 
   // ------------------------------------------------------------ share the power
-  power() {
-    Sound.setMood("task");
-    const B = BALANCE.power;
-    const DEV = [
-      { k: "oxygen", n: "Oxygen Machine", i: "🫧", need: 2, eff: { safety: -20 }, msg: "No oxygen! Safety −20" },
-      { k: "crew", n: "Crew Heaters", i: "🔥", need: 2, eff: { safety: -10 }, msg: "Crew is freezing! Safety −10" },
-      { k: "gheat", n: "Garden Heaters", i: "🌡️", need: 2, eff: { mission: -15 }, msg: "Plants freeze! Mission −15" },
-      { k: "glight", n: "Garden Lights", i: "💡", need: 1, eff: { mission: -5 }, msg: "Plants in the dark. Mission −5" },
-      { k: "radio", n: "Radio to Earth", i: "📡", need: 2, eff: {}, msg: "Earth can't hear us (no effect now)" },
-    ];
-    return new Promise((resolve) => {
-      const alloc = DEV.map(() => 0);
-      let time = B.time, ended = false, iv;
-      const html = `<div class="head"><div><h3>MINI-TASK</h3><h1>Share the Power</h1></div><div class="tmr">⏱ <span class="t">${B.time}</span></div></div>
-        <div class="pool">Power units left: <span class="slots"></span></div>
-        <div class="power"></div><div class="say"></div><div class="btnrow"><button class="btn go lock">Lock in power ⚡</button></div>`;
-      UI.card(html, [], {
-        cls: "mg wide", onMount: (c, done) => {
-          const pw = c.querySelector(".power"), pool = c.querySelector(".pool .slots"), say = c.querySelector(".say"), tEl = c.querySelector(".t");
-          mgSay(say, "marcus", "We only have 6 units, and the machines need 9. We can't run everything. Think: what matters most?");
-          const left = () => B.units - alloc.reduce((a, b) => a + b, 0);
-          const draw = () => {
-            pool.innerHTML = Array.from({ length: B.units }, (_, i) => `<div class="slot ${i < left() ? "on" : ""}" style="display:inline-block"></div>`).join("");
-            pw.innerHTML = "";
-            DEV.forEach((d, i) => {
-              const full = alloc[i] >= d.need;
-              const e = el("div", "dev" + (full ? " full" : ""), `<div class="di">${d.i}</div><div class="dn">${d.n}</div><div class="slots">${Array.from({ length: d.need }, (_, j) => `<div class="slot ${j < alloc[i] ? "on" : ""}"></div>`).join("")}</div><div class="eff">${full ? "✅ ON" : "needs " + d.need}</div>`);
-              e.onclick = () => {
-                if (ended) return;
-                if (alloc[i] < d.need && left() > 0) { alloc[i]++; Sound.play("wire"); }
-                else if (alloc[i] > 0) { alloc[i]--; Sound.play("click"); }
-                else { Sound.play("error"); mgSay(say, "marcus", "No power left. Take some from another machine first."); }
-                draw();
-              };
-              pw.appendChild(e);
-            });
-          };
-          draw();
-          const finish = (auto) => {
-            if (ended) return; ended = true; clearInterval(iv);
-            if (auto) { alloc.fill(0); alloc[0] = 2; alloc[1] = 2; alloc[2] = 2; draw(); mgSay(say, "marcus", "No time! I'll do it myself."); Sound.play("error"); }
-            const total = { safety: 0, mission: 0, team: 0 }; const lost = [];
-            DEV.forEach((d, i) => { if (alloc[i] < d.need) { for (const k in d.eff) total[k] += d.eff[k]; lost.push(d.msg); } });
-            Sound.play("power"); G.power = 0.5;
-            setTimeout(() => { done("ok"); Sound.setMood("tension"); if (total.safety || total.mission) meter(total, "⚡ " + lost.join(" · ")); else UI.toast("⚡ Power shared!"); resolve({ alloc, total, auto }); }, auto ? 2200 : 900);
-          };
-          c.querySelector(".lock").onclick = () => { if (left() > 0) { mgSay(say, "marcus", "We still have power left. Use every unit!"); Sound.play("error"); return; } finish(false); };
-          iv = setInterval(() => { time -= 0.1; tEl.textContent = Math.ceil(time); if (time <= 0) finish(true); }, 100);
-        },
-      });
-    });
-  },
+
 
   // ------------------------------------------------------------ restart rosie (wires)
 
