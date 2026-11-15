@@ -140,7 +140,7 @@ const Game = {
   // ------------------------------------------------------------ interactables
   buildFactInteractables() {
     for (const p of PROPS) {
-      if (p.fact) this.addInteract({ id: "fact_" + p.id, top: markerTop(p), x: p.x + p.pw / 2, y: p.y + p.ph + 8, label: "Inspect", name: p.label, fact: p.fact, use: () => UI.fact(p.fact), marker: () => !G.discovered.has(p.fact) ? "?" : null });
+      if (p.fact) this.addInteract({ id: "fact_" + p.id, top: markerTop(p), x: p.x + p.pw / 2, y: p.y + p.ph + 8, label: "Inspect", name: p.label, fact: p.fact, use: () => { G.flags["seen_" + p.fact] = true; return UI.fact(p.fact); }, marker: () => (G.flags && G.flags["seen_" + p.fact]) ? null : "?" }); // per playthrough, so every new game shows them again
     }
     const mw = propById.mars_window; this.addInteract({ id: "mwin", top: markerTop(mw), x: mw.x + mw.pw / 2, y: mw.y + mw.ph + 8, r: 30, label: "Look", name: "Mars window", use: () => MarsWindow.open(), marker: () => G.flags && G.flags.window ? null : "?" });
     const pt = propById.photo_table; this.addInteract({ id: "photo", top: markerTop(pt), x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo album", use: () => PhotoAlbum.open(), marker: () => G.flags && G.flags.photo ? null : "?" });

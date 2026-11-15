@@ -75,7 +75,7 @@ const Story = {
     UI.toast("☀️ A <b>sol</b> is one day on Mars — a little longer than an Earth day.", 5000);
     UI.keysHint(true); Game.keysHintT = 0;
     // objective 1 (optional): explore the quarters · objective 2: the Mars hologram table
-    const qItems = [["window", () => G.flags.window, "window"], ["photo", () => G.flags.photo, "photos"], ["sol", () => G.discovered.has("sol"), "clock"], ["gravity", () => G.discovered.has("gravity"), "scale"], ["air", () => G.discovered.has("air"), "air monitor"]];
+    const qItems = [["window", () => G.flags.window, "window"], ["photo", () => G.flags.photo, "photos"], ["sol", () => G.flags.seen_sol, "clock"], ["gravity", () => G.flags.seen_gravity, "scale"], ["air", () => G.flags.seen_air, "air monitor"]];
     const qSub = () => { const n = qItems.filter((q) => q[1]()).length; return n >= qItems.length ? `<span class="done">✓ Quarters explored (${n}/${qItems.length})</span>` : `★ Optional: explore the quarters (${n}/${qItems.length})`; };
     UI.objective("Go to the Mars hologram in the Control Room", qSub());
     const qIv = setInterval(() => UI.objectiveSub(qSub()), 500);
