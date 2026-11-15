@@ -40,7 +40,7 @@ You play **Commander Damon Carter** on Sol 200 (day 200) of the first mission to
 - **Endings:** with Team trust at 50 or more, the crew opens up and sends one honest report; below 50, accusations fly and they part ways, never speaking again.
 - **Foreshadowing:** radiation from a solar flare is Chapter 6's climax, and Chapter 1 already reads live NASA DONKI data to show today's real Sun.
 
-Full outline with every chapter: **[docs/STORY.md](docs/STORY.md)** · Full Chapter 1 script: **[full-game-script-en.md](full-game-script-en.md)**
+Full outline with every chapter: **[docs/STORY.md](docs/STORY.md)** · Full game script (all 6 chapters): **[full-game-script-en.md](full-game-script-en.md)**
 
 ## What's in Chapter 1
 
