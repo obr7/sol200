@@ -2333,7 +2333,8 @@ const Game = {
     return path;
   },
   walkPlayerTo(x, y, then) { const p = this.findPath(this.player.x, this.player.y, x, y); if (!p) return; this.player.path = p; this.player.onArrive = then; },
-  walkNpc(c, x, y) { return new Promise((res) => { const p = this.findPath(c.x, c.y, x, y); if (!p || !p.length) { if (!p) { c.x = x; c.y = y; } res(); return; } c.path = p; c.onArrive = res; setTimeout(() => { if (c.onArrive === res) { c.path = null; c.onArrive = null; res(); } }, 6000); }); },
+  walkNpc(c, x, y, opt = {}) { return new Promise((res) => { const p = this.findPath(c.x, c.y, x, y); if (!p || !p.length) { if (!p) { c.x = x; c.y = y; } res(); return; } const sp0 = c.speed; if (opt.speed) c.speed = opt.speed; const fin = () => { c.speed = sp0; res(); }; c.path = p; c.onArrive = fin; setTimeout(() => { if (c.onArrive === fin) { c.path = null; c.onArrive = null; if (opt.snap) { c.x = x; c.y = y; } fin(); } }, opt.timeout || 6000); }); },
+  runTo(c, tx, ty, dir) { return this.walkNpc(c, tx * T + 8, ty * T + 12, { speed: 96, timeout: 25000, snap: true }).then(() => { c.dir = dir; }); },
   place(c, tx, ty, dir = 0) { c.x = tx * T + 8; c.y = ty * T + 12; c.dir = dir; c.path = null; },
 
   // ------------------------------------------------------------ interactables
@@ -2809,11 +2810,14 @@ const Story = {
     await sleep(1800);
 
     UI.objective("Get to the Workshop — Rosie stopped!");
-    Game.place(N.diego, 10, 25, 3); Game.place(N.marcus, 14, 25, 2); Game.place(N.layla, 12, 28, 1);
+    // everyone runs to the workshop together (no teleporting)
+    for (const c of [N.diego, N.marcus, N.layla]) c.follow = null;
+    const crewRun = Promise.all([Game.runTo(N.diego, 10, 25, 3), Game.runTo(N.marcus, 14, 25, 2), Game.runTo(N.layla, 12, 28, 1)]);
     Game.setTarget({ x: 12 * T + 8, y: 26 * T });
     await Game.waitRoom("workshop");
     Game.setTarget(null); G.alarm = false;
-    Game.freeze = true; await Game.walkNpc(P, 12 * T + 8, 26 * T + 4); P.dir = 1; Game.freeze = false;
+    Game.freeze = true; await Game.walkNpc(P, 12 * T + 8, 26 * T + 4); P.dir = 1;
+    await Promise.race([crewRun, sleep(4000)]); Game.freeze = false;
     N.diego.dir = 3; N.marcus.dir = 2; N.layla.dir = 1;
     UI.toast("🫧 OXYGEN IS DROPPING", 2500);
     const lines = [
@@ -3201,7 +3205,7 @@ Minigames.garden = function () {
     title: "Garden Check", sub: "Pick a tool, then <b>hold it over the plant</b> that needs it. Watch the meters — the green band is just right!",
     hint: "Look at the little signs above each plant. Which one needs what?",
   }, (api) => {
-    api.state = { plants }; const { g } = api;
+    api.state = { plants }; const { g } = api; api.cv.style.cursor = "pointer";
     const plantAt = (x, y) => plants.find((p) => Math.abs(x - p.x) < 52 && y > 40 && y < 210);
     api.onDown = (pt) => {
       const tl = tools.find((tl) => Math.abs(pt.x - tl.x) < 30 && pt.y > 212);
@@ -3292,8 +3296,9 @@ Minigames.garden = function () {
       }
       PX(g, 20, 230, 110, 26, "rgba(0,0,0,0.25)"); g.fillStyle = "#cfd8ff"; g.font = "8px monospace"; g.fillText(sel ? "Hold on a plant" : "1. Pick a tool", 26, 241); g.fillText(sel ? "to use it" : "2. Hold it on a plant", 26, 251);
       PX(g, 360, 230, 104, 26, "rgba(0,0,0,0.25)"); g.fillStyle = damage ? "#ff9a8a" : "#9affb0"; g.fillText(`Leaves lost: ${damage}`, 368, 246);
-      // held tool follows the pointer
-      if (sel && pt.inside && pt.y < 212) drawTool(g, sel, pt.x, pt.y, t, !!tgt);
+      // held tool follows the pointer (the real cursor hides only while a tool is in hand)
+      const toolOn = sel && pt.inside && pt.y < 212; api.cv.style.cursor = toolOn ? "none" : "pointer";
+      if (toolOn) drawTool(g, sel, pt.x, pt.y, t, !!tgt);
     };
   });
 };
@@ -3401,7 +3406,7 @@ Minigames.panel_tilt = function (n, getTime) {
     const sunA = -0.35; // the Sun's direction (radians from straight up)
     api.onDown = (pt) => { drag = { x: pt.x, a: ang }; };
     api.onUp = () => { drag = null; };
-    api.state = { get ang() { return ang; }, sunA };
+    api.state = { get ang() { return ang; }, sunA }; api.cv.style.cursor = "grab";
     api.frame = (dt, t) => {
       gustT -= dt; if (gustT <= 0) { gustT = 1 + Math.random() * 1.2; gustF = (Math.random() < 0.5 ? -1 : 1) * (0.9 + Math.random() * 0.6); Sound.play("whoosh"); }
       gustF *= Math.pow(0.2, dt);

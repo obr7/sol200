@@ -259,11 +259,14 @@ const Story = {
     await sleep(1800);
 
     UI.objective("Get to the Workshop — Rosie stopped!");
-    Game.place(N.diego, 10, 25, 3); Game.place(N.marcus, 14, 25, 2); Game.place(N.layla, 12, 28, 1);
+    // everyone runs to the workshop together (no teleporting)
+    for (const c of [N.diego, N.marcus, N.layla]) c.follow = null;
+    const crewRun = Promise.all([Game.runTo(N.diego, 10, 25, 3), Game.runTo(N.marcus, 14, 25, 2), Game.runTo(N.layla, 12, 28, 1)]);
     Game.setTarget({ x: 12 * T + 8, y: 26 * T });
     await Game.waitRoom("workshop");
     Game.setTarget(null); G.alarm = false;
-    Game.freeze = true; await Game.walkNpc(P, 12 * T + 8, 26 * T + 4); P.dir = 1; Game.freeze = false;
+    Game.freeze = true; await Game.walkNpc(P, 12 * T + 8, 26 * T + 4); P.dir = 1;
+    await Promise.race([crewRun, sleep(4000)]); Game.freeze = false;
     N.diego.dir = 3; N.marcus.dir = 2; N.layla.dir = 1;
     UI.toast("🫧 OXYGEN IS DROPPING", 2500);
     const lines = [

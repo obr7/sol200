@@ -130,7 +130,8 @@ const Game = {
     return path;
   },
   walkPlayerTo(x, y, then) { const p = this.findPath(this.player.x, this.player.y, x, y); if (!p) return; this.player.path = p; this.player.onArrive = then; },
-  walkNpc(c, x, y) { return new Promise((res) => { const p = this.findPath(c.x, c.y, x, y); if (!p || !p.length) { if (!p) { c.x = x; c.y = y; } res(); return; } c.path = p; c.onArrive = res; setTimeout(() => { if (c.onArrive === res) { c.path = null; c.onArrive = null; res(); } }, 6000); }); },
+  walkNpc(c, x, y, opt = {}) { return new Promise((res) => { const p = this.findPath(c.x, c.y, x, y); if (!p || !p.length) { if (!p) { c.x = x; c.y = y; } res(); return; } const sp0 = c.speed; if (opt.speed) c.speed = opt.speed; const fin = () => { c.speed = sp0; res(); }; c.path = p; c.onArrive = fin; setTimeout(() => { if (c.onArrive === fin) { c.path = null; c.onArrive = null; if (opt.snap) { c.x = x; c.y = y; } fin(); } }, opt.timeout || 6000); }); },
+  runTo(c, tx, ty, dir) { return this.walkNpc(c, tx * T + 8, ty * T + 12, { speed: 96, timeout: 25000, snap: true }).then(() => { c.dir = dir; }); },
   place(c, tx, ty, dir = 0) { c.x = tx * T + 8; c.y = ty * T + 12; c.dir = dir; c.path = null; },
 
   // ------------------------------------------------------------ interactables

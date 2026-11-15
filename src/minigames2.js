@@ -80,7 +80,7 @@ Minigames.garden = function () {
     title: "Garden Check", sub: "Pick a tool, then <b>hold it over the plant</b> that needs it. Watch the meters — the green band is just right!",
     hint: "Look at the little signs above each plant. Which one needs what?",
   }, (api) => {
-    api.state = { plants }; const { g } = api;
+    api.state = { plants }; const { g } = api; api.cv.style.cursor = "pointer";
     const plantAt = (x, y) => plants.find((p) => Math.abs(x - p.x) < 52 && y > 40 && y < 210);
     api.onDown = (pt) => {
       const tl = tools.find((tl) => Math.abs(pt.x - tl.x) < 30 && pt.y > 212);
@@ -171,8 +171,9 @@ Minigames.garden = function () {
       }
       PX(g, 20, 230, 110, 26, "rgba(0,0,0,0.25)"); g.fillStyle = "#cfd8ff"; g.font = "8px monospace"; g.fillText(sel ? "Hold on a plant" : "1. Pick a tool", 26, 241); g.fillText(sel ? "to use it" : "2. Hold it on a plant", 26, 251);
       PX(g, 360, 230, 104, 26, "rgba(0,0,0,0.25)"); g.fillStyle = damage ? "#ff9a8a" : "#9affb0"; g.fillText(`Leaves lost: ${damage}`, 368, 246);
-      // held tool follows the pointer
-      if (sel && pt.inside && pt.y < 212) drawTool(g, sel, pt.x, pt.y, t, !!tgt);
+      // held tool follows the pointer (the real cursor hides only while a tool is in hand)
+      const toolOn = sel && pt.inside && pt.y < 212; api.cv.style.cursor = toolOn ? "none" : "pointer";
+      if (toolOn) drawTool(g, sel, pt.x, pt.y, t, !!tgt);
     };
   });
 };
@@ -280,7 +281,7 @@ Minigames.panel_tilt = function (n, getTime) {
     const sunA = -0.35; // the Sun's direction (radians from straight up)
     api.onDown = (pt) => { drag = { x: pt.x, a: ang }; };
     api.onUp = () => { drag = null; };
-    api.state = { get ang() { return ang; }, sunA };
+    api.state = { get ang() { return ang; }, sunA }; api.cv.style.cursor = "grab";
     api.frame = (dt, t) => {
       gustT -= dt; if (gustT <= 0) { gustT = 1 + Math.random() * 1.2; gustF = (Math.random() < 0.5 ? -1 : 1) * (0.9 + Math.random() * 0.6); Sound.play("whoosh"); }
       gustF *= Math.pow(0.2, dt);
