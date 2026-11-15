@@ -315,3 +315,170 @@ Minigames.panel_tilt = function (n, getTime) {
     };
   });
 };
+
+// =====================================================================
+//  SUIT UP — follow the checklist, dress the astronaut layer by layer,
+//  then pump the suit to the right pressure (leak check).
+// =====================================================================
+const SUIT_PARTS = [
+  { k: "cool", name: "Cooling suit", line: "This underwear has thin water tubes inside. They keep your body cool while you work." },
+  { k: "suit", name: "Pressure suit", line: "The suit is like a tiny spaceship shaped like you. It holds air in and keeps dust out." },
+  { k: "boots", name: "Boots", line: "Strong boots for sharp Mars rocks!" },
+  { k: "pack", name: "Oxygen pack", line: "The backpack gives you oxygen and cleans the air you breathe out." },
+  { k: "gloves", name: "Gloves", line: "Gloves are the trickiest part — your fingers still need to work!" },
+  { k: "helmet", name: "Helmet", line: "The gold visor blocks the Sun's glare. Click — locked!" },
+];
+Minigames.suitUp = function () {
+  Sound.setMood("task");
+  return canvasGame({ title: "Suit Up!", tag: "AIRLOCK", speaker: "diego", sub: "Real astronauts suit up with a <b>checklist</b>. Drag each part onto the astronaut <b>in the right order</b> (or tap it).", hint: "Follow the checklist, step by step. Safety first, Commander!" }, (api) => {
+    const { g } = api, CX = 190, parts = new Pool(160);
+    const order = SUIT_PARTS.map((p) => p.k);
+    const slots = order.slice().sort(() => Math.random() - 0.5).map((k, i) => ({ k, hx: 34 + i * 54, hy: 244, x: 34 + i * 54, y: 244, rot: 0, used: false, shake: 0, fly: null }));
+    let step = 0, mistakes = 0, held = null, phase = "dress", snapFlash = 0, wobble = 0;
+    // phase 2
+    let psi = 0, holdOk = 0, pumping = false, vent = 0, done = false;
+    const face = portraitFor("lead");
+    const has = (k) => order.indexOf(k) < step;
+    const slotAt = (x, y) => slots.find((s) => !s.used && !s.fly && Math.abs(x - s.x) < 24 && Math.abs(y - s.y) < 22);
+    const onBody = (x, y) => Math.abs(x - CX) < 54 && y > 20 && y < 212;
+    const equip = (s) => {
+      s.used = true; step++; snapFlash = 0.35; wobble = 0.5; Sound.play("good"); Sound.play("click");
+      for (let k = 0; k < 18; k++) parts.spawn({ x: CX + (Math.random() - 0.5) * 60, y: 60 + Math.random() * 130, vx: (Math.random() - 0.5) * 50, vy: -30 - Math.random() * 40, life: 0.8, s: 2, c: ["#fff", "#ffd34a", "#9ad8ff"][k % 3], g: 40 });
+      const P = SUIT_PARTS.find((p) => p.k === s.k); api.say("diego", P.line);
+      if (step === order.length) setTimeout(() => { phase = "pump"; api.say("diego", "Last step: the leak check! Hold PUMP to fill the suit with air. Stop in the green zone."); }, 900);
+    };
+    const reject = (s) => { mistakes++; s.shake = 0.5; Sound.play("error"); api.say("diego", `Not yet! The checklist says: ${SUIT_PARTS[step].name} first.`); };
+    const tryUse = (s, fromX, fromY) => {
+      if (s.k === order[step]) { s.fly = { x0: fromX, y0: fromY, t: 0 }; }
+      else { reject(s); s.x = s.hx; s.y = s.hy; }
+    };
+    const pumpBtn = { x: 352, y: 196, w: 108, h: 34 };
+    const inPump = (pt) => pt.x > pumpBtn.x && pt.x < pumpBtn.x + pumpBtn.w && pt.y > pumpBtn.y && pt.y < pumpBtn.y + pumpBtn.h;
+    api.onDown = (pt) => {
+      if (phase === "dress") { const s = slotAt(pt.x, pt.y); if (s) { held = { s, ox: pt.x - s.x, oy: pt.y - s.y, sx: pt.x, sy: pt.y, lx: pt.x, moved: 0 }; Sound.play("hover"); } }
+      else if (phase === "pump" && inPump(pt)) pumping = true;
+    };
+    api.onMove = (pt) => { if (held) { held.moved += Math.abs(pt.x - held.lx); held.s.rot = Math.max(-0.5, Math.min(0.5, held.s.rot + (pt.x - held.lx) * 0.03)); held.lx = pt.x; held.s.x = pt.x - held.ox; held.s.y = pt.y - held.oy; } };
+    api.onUp = (pt) => {
+      pumping = false;
+      if (!held) return; const h = held; held = null;
+      if (h.moved < 6 && Math.hypot(pt.x - h.sx, pt.y - h.sy) < 8) tryUse(h.s, h.s.x, h.s.y); // a tap
+      else if (onBody(pt.x, pt.y)) tryUse(h.s, h.s.x, h.s.y);
+      else { h.s.fly = null; h.s.back = 1; }
+    };
+    api.onKey = (k, down) => { if (k === " " && phase === "pump") pumping = down; };
+    window.addEventListener("keyup", function ku(e) { if (e.key === " ") pumping = false; if (api.finished) window.removeEventListener("keyup", ku); });
+
+    api.frame = (dt, t) => {
+      // ---- update
+      for (const s of slots) {
+        s.shake = Math.max(0, s.shake - dt); s.rot *= Math.pow(0.02, dt);
+        if (s.back) { s.x += (s.hx - s.x) * Math.min(1, dt * 10); s.y += (s.hy - s.y) * Math.min(1, dt * 10); if (Math.hypot(s.x - s.hx, s.y - s.hy) < 1) { s.back = 0; s.x = s.hx; s.y = s.hy; } }
+        if (s.fly) { s.fly.t += dt * 3.2; const e = Math.min(1, s.fly.t), q = e * e * (3 - 2 * e); s.x = s.fly.x0 + (CX - s.fly.x0) * q; s.y = s.fly.y0 + (110 - s.fly.y0) * q - Math.sin(q * Math.PI) * 40; if (e >= 1) { s.fly = null; equip(s); } }
+      }
+      snapFlash = Math.max(0, snapFlash - dt); wobble = Math.max(0, wobble - dt); parts.update(dt);
+      if (phase === "pump" && !done) {
+        if (pumping) { psi += dt * 1.6; if (((t * 10) | 0) % 2 === 0 && Math.random() < 0.3) Sound.play("hover"); }
+        else psi = Math.max(0, psi - dt * 0.05); // tiny leak
+        if (psi > 5.4) { psi = 3.2; vent = 0.8; Sound.play("whoosh"); Sound.play("error"); mistakes++; api.say("diego", "Too much! The safety valve let air out. Try again — gently."); }
+        vent = Math.max(0, vent - dt);
+        const ok = psi >= 4.0 && psi <= 4.6;
+        holdOk = ok && !pumping ? holdOk + dt : 0;
+        if (holdOk > 1.2) { done = true; phase = "done"; Sound.play("success"); Sound.play("door"); api.say("diego", "Pressure holds at 4.3 psi — about a third of Earth's air pressure. Suit check complete!"); for (let k = 0; k < 30; k++) parts.spawn({ x: CX, y: 60, vx: (Math.random() - 0.5) * 160, vy: -40 - Math.random() * 90, life: 1.2, s: 2, c: ["#ffd34a", "#5dff8a", "#fff"][k % 3], g: 90 }); api.finish({ mistakes, delay: 2200 }); }
+      }
+
+      // ---- draw: airlock interior
+      g.fillStyle = "#2a2e3c"; g.fillRect(0, 0, MW2, MH2);
+      for (let x = 0; x < MW2; x += 32) { PX(g, x, 0, 31, 200, "#323748"); PX(g, x, 0, 1, 200, "#3e4458"); }
+      for (let x = 0; x < MW2; x += 16) PX(g, x, 200, 8, 6, ((x / 16) | 0) % 2 ? "#e8c040" : "#1b1d2b");
+      PX(g, 0, 206, MW2, 64, "#20242f");
+      // lockers with spare suits on the left
+      for (let i = 0; i < 2; i++) { PX(g, 8 + i * 34, 30, 30, 160, "#3a4052"); PX(g, 10 + i * 34, 32, 26, 156, "#2a2e3c"); PX(g, 15 + i * 34, 50, 16, 40, "#c8ccd8"); PX(g, 17 + i * 34, 40, 12, 10, "#9aa6c0"); PX(g, 15 + i * 34, 92, 7, 40, "#c8ccd8"); PX(g, 24 + i * 34, 92, 7, 40, "#c8ccd8"); }
+      // hatch window on the right (dusty Mars outside)
+      g.fillStyle = "#1b1d2b"; g.beginPath(); g.arc(300, 70, 30, 0, 7); g.fill(); g.fillStyle = "#c86a3a"; g.beginPath(); g.arc(300, 70, 25, 0, 7); g.fill();
+      g.fillStyle = "rgba(230,150,90,0.6)"; for (let k = 0; k < 8; k++) g.fillRect(278 + ((k * 13 + t * 60) % 44), 52 + k * 5, 6, 1);
+      g.fillStyle = "rgba(255,255,255,0.25)"; g.fillRect(286, 56, 6, 2);
+      // rotating warning light
+      const wl = (Math.sin(t * 5) + 1) / 2; PX(g, 296, 8, 10, 6, "#5a2020"); PX(g, 297, 9, 8, 4, `rgba(255,${80 + wl * 60},40,${0.5 + wl * 0.5})`);
+      // pedestal
+      PX(g, CX - 46, 196, 92, 8, "#4a5068"); PX(g, CX - 46, 196, 92, 2, "#6a7090");
+      // ---- the astronaut, layer by layer
+      const by = Math.round(Math.sin(t * 2) * 1 + (wobble ? Math.sin(wobble * 30) * 1.5 : 0));
+      const B = (x, y, w, h, c) => PX(g, CX + x, y + by, w, h, c);
+      if (has("pack")) { B(-30, 66, 60, 54, "#b8bdca"); B(-28, 68, 56, 50, "#d8dce6"); B(-26, 114, 52, 4, "#9aa0b0"); }
+      // base body: thermal underwear
+      const body = has("cool") ? ["#9ad8ff", "#5fa8e0"] : ["#555b74", "#3e4358"];
+      B(-20, 72, 40, 54, body[0]); B(-32, 74, 12, 46, body[0]); B(20, 74, 12, 46, body[0]); B(-18, 126, 16, 60, body[0]); B(2, 126, 16, 60, body[0]);
+      if (has("cool")) for (let y = 78; y < 182; y += 7) { B(-18, y, 36, 1, body[1]); }
+      if (!has("gloves")) { B(-32, 120, 12, 8, "#e0a37a"); B(20, 120, 12, 8, "#e0a37a"); }
+      if (!has("boots")) { B(-20, 186, 18, 8, "#3a3e4a"); B(2, 186, 18, 8, "#3a3e4a"); }
+      if (has("suit")) {
+        B(-25, 70, 50, 60, "#eef0f4"); B(-25, 124, 50, 6, "#c8ccd8");
+        B(-37, 72, 15, 50, "#eef0f4"); B(22, 72, 15, 50, "#eef0f4"); B(-37, 94, 15, 3, "#c8ccd8"); B(22, 94, 15, 3, "#c8ccd8");
+        B(-21, 128, 20, 60, "#eef0f4"); B(1, 128, 20, 60, "#eef0f4"); B(-21, 154, 20, 3, "#c8ccd8"); B(1, 154, 20, 3, "#c8ccd8");
+        B(-25, 108, 50, 3, "#d24a3a"); B(-37, 82, 15, 2, "#4a7ad0"); B(22, 82, 15, 2, "#4a7ad0");
+      }
+      if (has("pack")) { B(-12, 82, 24, 16, "#5a6070"); B(-10, 84, 20, 12, "#3a3e4a"); B(-8, 86, 3, 2, "#5dff8a"); B(-3, 86, 3, 2, ((t * 3) | 0) % 2 ? "#ffd34a" : "#6a5a20"); B(2, 86, 6, 2, "#40d0ff"); B(-28, 76, 3, 20, "#9aa0b0"); B(25, 76, 3, 20, "#9aa0b0"); }
+      if (has("boots")) { B(-23, 180, 23, 16, "#8b93a6"); B(0, 180, 23, 16, "#8b93a6"); B(-23, 192, 23, 4, "#3a3e4a"); B(0, 192, 23, 4, "#3a3e4a"); B(-23, 180, 23, 2, "#aab2c4"); B(0, 180, 23, 2, "#aab2c4"); }
+      if (has("gloves")) { B(-38, 118, 17, 13, "#dfe3ea"); B(21, 118, 17, 13, "#dfe3ea"); B(-38, 118, 17, 2, "#4a7ad0"); B(21, 118, 17, 2, "#4a7ad0"); }
+      // head
+      if (face) g.drawImage(face, CX - 18, 34 + by, 36, 36); else B(-14, 38, 28, 30, "#e0a37a");
+      if (has("helmet")) {
+        B(-22, 68, 44, 6, "#9aa0b0");
+        g.fillStyle = "rgba(170,215,255,0.28)"; g.beginPath(); g.arc(CX, 50 + by, 27, 0, 7); g.fill();
+        g.strokeStyle = "#dfe3ea"; g.lineWidth = 3; g.beginPath(); g.arc(CX, 50 + by, 27, 0, 7); g.stroke();
+        g.fillStyle = "rgba(255,190,70,0.42)"; g.beginPath(); g.arc(CX, 50 + by, 25, Math.PI * 1.05, Math.PI * 1.95); g.lineTo(CX, 46 + by); g.fill();
+        g.fillStyle = "rgba(255,255,255,0.7)"; g.fillRect(CX - 16, 34 + by, 6, 2); g.fillRect(CX - 18, 37 + by, 3, 4);
+      }
+      if (snapFlash) { g.fillStyle = `rgba(255,255,255,${snapFlash * 1.6})`; g.fillRect(CX - 40, 24, 80, 176); }
+      // drop hint glow
+      if (held && onBody(api.ptr.x, api.ptr.y)) { g.strokeStyle = "rgba(255,211,74,0.7)"; g.lineWidth = 2; g.setLineDash([4, 3]); g.strokeRect(CX - 48, 24, 96, 176); g.setLineDash([]); }
+      // ---- right side: checklist or pressure gauge
+      PX(g, 344, 14, 126, 170, "rgba(10,12,22,0.75)"); PX(g, 344, 14, 126, 2, "#ffd34a");
+      g.font = "8px monospace";
+      if (phase === "dress") {
+        g.fillStyle = "#ffd34a"; g.fillText("SUIT-UP CHECKLIST", 352, 30);
+        SUIT_PARTS.forEach((p, i) => { const y = 48 + i * 21, cur = i === step; if (cur) PX(g, 348, y - 10, 118, 16, `rgba(255,211,74,${0.18 + Math.sin(t * 5) * 0.08})`); PX(g, 352, y - 7, 9, 9, i < step ? "#5dff8a" : "#3a4060"); if (i < step) { g.fillStyle = "#0b2a14"; g.fillText("✓", 353, y); } g.fillStyle = i < step ? "#8a9ab0" : cur ? "#ffffff" : "#b8c0d8"; g.fillText(`${i + 1}. ${p.name}`, 366, y); if (i < step) PX(g, 366, y - 3, g.measureText(`${i + 1}. ${p.name}`).width, 1, "#8a9ab0"); });
+      } else {
+        g.fillStyle = "#ffd34a"; g.fillText("LEAK CHECK", 352, 30);
+        const gx = 407, gy = 108, R = 46, a0 = Math.PI * 0.8, a1 = Math.PI * 2.2, toA = (v) => a0 + (a1 - a0) * Math.min(1, v / 6);
+        g.lineWidth = 7; g.strokeStyle = "#1b1d2b"; g.beginPath(); g.arc(gx, gy, R, a0, a1); g.stroke();
+        g.strokeStyle = "#5dff8a"; g.beginPath(); g.arc(gx, gy, R, toA(4.0), toA(4.6)); g.stroke();
+        g.strokeStyle = "#ff5a40"; g.beginPath(); g.arc(gx, gy, R, toA(5.2), a1); g.stroke();
+        const na = toA(psi) + (vent ? Math.sin(t * 60) * 0.05 : 0); g.strokeStyle = "#fff"; g.lineWidth = 2; g.beginPath(); g.moveTo(gx, gy); g.lineTo(gx + Math.cos(na) * (R - 6), gy + Math.sin(na) * (R - 6)); g.stroke();
+        PX(g, gx - 3, gy - 3, 6, 6, "#ffd34a");
+        g.fillStyle = "#fff"; g.font = "10px monospace"; g.textAlign = "center"; g.fillText(`${psi.toFixed(1)} psi`, gx, gy + 26); g.font = "8px monospace"; g.fillStyle = "#9affb0"; g.fillText(holdOk > 0 ? "HOLDING…" : "target 4.0–4.6", gx, gy + 38); g.textAlign = "left";
+        if (vent) for (let k = 0; k < 3; k++) parts.spawn({ x: CX + 22, y: 90, vx: 60 + Math.random() * 40, vy: -20 + Math.random() * 40, life: 0.5, s: 2, c: "rgba(220,240,255,0.8)", g: 0 });
+      }
+      // pump button
+      if (phase !== "dress") {
+        const pr = pumping ? 2 : 0; PX(g, pumpBtn.x, pumpBtn.y + pr, pumpBtn.w, pumpBtn.h - pr, pumping ? "#2f8a50" : "#3fb070"); PX(g, pumpBtn.x, pumpBtn.y + pumpBtn.h - 4, pumpBtn.w, 4, "#1f5a34");
+        g.fillStyle = "#fff"; g.font = "10px monospace"; g.textAlign = "center"; g.fillText(phase === "done" ? "SEALED ✓" : "HOLD: PUMP", pumpBtn.x + pumpBtn.w / 2, pumpBtn.y + 21 + pr); g.textAlign = "left";
+      }
+      // ---- tray with the parts
+      PX(g, 0, 214, 340, 56, "#161a28"); PX(g, 0, 214, 340, 2, "#3a4170");
+      for (const s of slots) {
+        if (s.used) continue;
+        if (s !== (held && held.s) && !s.fly) { PX(g, s.hx - 24, s.hy - 22, 48, 44, "#232842"); }
+        const sx = s.x + (s.shake ? Math.sin(s.shake * 50) * 4 : 0);
+        g.save(); g.translate(Math.round(sx), Math.round(s.y)); g.rotate(s.rot); drawSuitPart(g, s.k, t); g.restore();
+      }
+      if (phase === "dress" && !held) { const nx = slots.find((s) => s.k === order[step] && !s.used); if (nx && mistakes > 1) { g.strokeStyle = `rgba(255,211,74,${0.5 + Math.sin(t * 6) * 0.4})`; g.lineWidth = 1; g.strokeRect(nx.hx - 25, nx.hy - 23, 50, 46); } }
+      parts.draw(g, t); g.globalAlpha = 1;
+      // hand cursor
+      if (api.ptr.inside && !held) { const x = Math.round(api.ptr.x), y = Math.round(api.ptr.y); PX(g, x - 1, y - 1, 3, 3, "#fff"); PX(g, x, y, 1, 1, "#000"); }
+    };
+  });
+};
+function drawSuitPart(g, k, t) {
+  const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  switch (k) {
+    case "cool": P(-12, -14, 24, 22, "#9ad8ff"); P(-18, -13, 6, 16, "#9ad8ff"); P(12, -13, 6, 16, "#9ad8ff"); for (let y = -11; y < 8; y += 4) P(-11, y, 22, 1, "#5fa8e0"); P(-5, -14, 10, 3, "#5fa8e0"); break;
+    case "suit": P(-13, -18, 26, 22, "#eef0f4"); P(-19, -17, 7, 18, "#eef0f4"); P(12, -17, 7, 18, "#eef0f4"); P(-11, 4, 10, 14, "#eef0f4"); P(1, 4, 10, 14, "#eef0f4"); P(-13, 0, 26, 2, "#d24a3a"); P(-19, -11, 7, 1, "#4a7ad0"); P(12, -11, 7, 1, "#4a7ad0"); break;
+    case "boots": P(-17, -4, 14, 14, "#8b93a6"); P(3, -4, 14, 14, "#8b93a6"); P(-17, 7, 14, 4, "#3a3e4a"); P(3, 7, 14, 4, "#3a3e4a"); P(-17, -4, 14, 2, "#aab2c4"); P(3, -4, 14, 2, "#aab2c4"); break;
+    case "pack": P(-14, -16, 28, 30, "#d8dce6"); P(-12, -14, 24, 26, "#b8bdca"); P(-8, -10, 16, 8, "#5a6070"); P(-6, -8, 3, 2, "#5dff8a"); P(-1, -8, 3, 2, "#ffd34a"); P(4, -8, 2, 2, "#40d0ff"); P(-10, 4, 20, 2, "#9aa0b0"); break;
+    case "gloves": P(-17, -8, 12, 14, "#dfe3ea"); P(5, -8, 12, 14, "#dfe3ea"); P(-17, 4, 12, 3, "#4a7ad0"); P(5, 4, 12, 3, "#4a7ad0"); P(-19, -6, 3, 6, "#dfe3ea"); P(16, -6, 3, 6, "#dfe3ea"); break;
+    case "helmet": g.fillStyle = "rgba(170,215,255,0.35)"; g.beginPath(); g.arc(0, -2, 15, 0, 7); g.fill(); g.strokeStyle = "#dfe3ea"; g.lineWidth = 2; g.beginPath(); g.arc(0, -2, 15, 0, 7); g.stroke(); g.fillStyle = "rgba(255,190,70,0.6)"; g.beginPath(); g.arc(0, -2, 13, Math.PI * 1.05, Math.PI * 1.95); g.fill(); P(-12, 12, 24, 4, "#9aa0b0"); P(-8, -12, 4, 2, "#fff"); break;
+  }
+  g.fillStyle = "#cfd8ff"; g.font = "7px monospace"; g.textAlign = "center"; g.fillText(SUIT_PARTS.find((p) => p.k === k).name, 0, 21); g.textAlign = "left";
+}

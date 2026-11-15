@@ -4,6 +4,7 @@
 //  Numbers marked "assumption" in BALANCE (config.js) are game-only.
 // =====================================================================
 const SOURCES = {
+  marsTrek: { name: "NASA Mars Trek — Viking MDIM 2.1 colour mosaic (live map tiles)", url: "https://trek.nasa.gov/mars/", agency: "NASA / JPL" },
   donki: { name: "NASA DONKI — Space Weather Database Of Notifications, Knowledge, Information", url: "https://ccmc.gsfc.nasa.gov/tools/DONKI/", agency: "NASA" },
   donkiApi: { name: "NASA Open APIs — DONKI Solar Flare (FLR) endpoint", url: "https://api.nasa.gov/", agency: "NASA" },
   marsStorm2024: { name: "NASA — NASA Watches Mars Light Up During Epic Solar Storm (June 2024)", url: "https://www.nasa.gov/solar-system/planets/mars/nasa-watches-mars-light-up-during-epic-solar-storm/", agency: "NASA" },

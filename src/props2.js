@@ -150,6 +150,25 @@ function drawPropV2(g, p, t) {
       drawProp1(g, p, t);
       break;
     }
+    // ---------------------------------------------------------- HOLO-TABLE (Mars hologram)
+    case "holotable": {
+      // front face + feet
+      R(4, H - 4, 6, 4, "#1c2030"); R(W - 10, H - 4, 6, 4, "#1c2030");
+      R(1, 16, W - 2, H - 19, "#3a4466"); R(1, 16, W - 2, 2, "#56628e"); R(1, H - 5, W - 2, 2, "#262d46");
+      for (let i = 0; i < 6; i++) R(8 + i * 9, 21, 6, 3, "#262d46");
+      for (let i = 0; i < 5; i++) { const on = ((t * 4 + i) | 0) % 5 === i % 5; R(10 + i * 10, H - 9, 3, 2, on ? "#5dff8a" : "#2a6a4a"); }
+      // rim + glass top with a glowing grid
+      R(0, 0, W, 17, "#6a77a0"); R(1, 1, W - 2, 15, "#8b97c0");
+      R(3, 2, W - 6, 12, "#0a1a2e");
+      g.fillStyle = "rgba(64,208,255,0.18)"; for (let x = 6; x < W - 4; x += 6) g.fillRect(Math.round(p.x + x), Math.round(p.y + 2), 1, 12); for (let y = 5; y < 14; y += 4) g.fillRect(Math.round(p.x + 3), Math.round(p.y + y), W - 6, 1);
+      // emitter ring
+      const cx = W / 2, pul = (Math.sin(t * 4) + 1) / 2;
+      R(cx - 9, 6, 18, 6, "#14263c"); R(cx - 7, 7, 14, 4, `rgba(80,220,255,${0.45 + pul * 0.4})`); R(cx - 4, 8, 8, 2, "#e0fbff");
+      // corner lights
+      R(2, 1, 2, 1, "#ffd34a"); R(W - 4, 1, 2, 1, "#ffd34a");
+      glow(p.x + cx, p.y + 9, 22, "#40d0ff", 0.35);
+      break;
+    }
     default: drawProp1(g, p, t);
   }
 }

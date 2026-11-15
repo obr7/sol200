@@ -207,7 +207,8 @@ function renderWorld(g, t, dt) {
   glows = [];
   const curRoom = roomAt(P.x, P.y - 4);
   const visR = curRoom === "outside" ? 150 - (G.storm || 0) * 85 : 78;
-  const visible = (x, y) => { const r = roomAt(x, y); if (r && r === curRoom && !(r === "outside" && (G.storm || 0) > 0.2)) return true; return curRoom === "outside" && r === "outside" && Math.hypot(x - P.x, y - P.y) < visR; };
+  const grp = (r) => (r === "airlock" ? "corridor" : r);
+  const visible = (x, y) => { const r = roomAt(x, y); if (r && grp(r) === grp(curRoom) && !(r === "outside" && (G.storm || 0) > 0.2)) return true; return curRoom === "outside" && r === "outside" && Math.hypot(x - P.x, y - P.y) < visR; };
   // drawables
   const list = [];
   for (const p of PROPS) {
@@ -236,12 +237,12 @@ function renderWorld(g, t, dt) {
   darkG.globalCompositeOperation = "destination-out";
   darkG.fillStyle = "#000";
   const stormOut = curRoom === "outside" && (G.storm || 0) > 0.2;
-  if (curRoom && ROOMS[curRoom] && !stormOut) {
-    const r = ROOMS[curRoom];
-    darkG.fillRect(r.x * T - cx - 16, (r.y - 2) * T - cy, (r.w + 2) * T, (r.h + 3) * T);
-  } else if (curRoom === "corridor") {
-    // the whole corridor network lights up
+  if (curRoom === "corridor" || curRoom === "airlock") {
+    // the whole corridor network (airlock included) lights up
     darkG.drawImage(corridorMask(), cx, cy, VW, VH, 0, 0, VW, VH);
+  } else if (curRoom && ROOMS[curRoom] && !stormOut) {
+    const r = ROOMS[curRoom];
+    darkG.fillRect(r.x * T - cx - 16, (r.y - 3) * T - cy, (r.w + 2) * T, (r.h + 4) * T); // +1 tile up so the wall signs stay lit
   }
   if (curRoom === "outside" || !curRoom) {
     const px = P.x - cx, py = P.y - 10 - cy;
@@ -268,13 +269,14 @@ let _cMask = null;
 function corridorMask() {
   if (_cMask) return _cMask;
   _cMask = mkCanvas(MW * T, MH * T); const g = _cMask.getContext("2d"); g.fillStyle = "#000";
-  const isCor = (x, y) => isFloor(x, y) && !roomMap[idx(x, y)] && x < 54;
+  const isCor = (x, y) => isFloor(x, y) && (!roomMap[idx(x, y)] || roomMap[idx(x, y)] === "airlock") && x < 54;
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
-    if (roomMap[idx(x, y)]) continue;
+    if (roomMap[idx(x, y)] && roomMap[idx(x, y)] !== "airlock") continue;
     let lit = isCor(x, y);
     if (!lit && !isFloor(x, y)) for (let dy = -1; dy <= 2 && !lit; dy++) for (let dx = -1; dx <= 1; dx++) if (isCor(x + dx, y + dy)) { lit = true; break; }
     if (lit) g.fillRect(x * T, y * T, T, T);
   }
+  const a = ROOMS.airlock; g.fillRect((a.x - 1) * T, (a.y - 3) * T, (a.w + 2) * T, (a.h + 4) * T); // airlock walls + signs
   return _cMask;
 }
 // draw a prop with a dark 1-px outline (matches the team's sprite style)
@@ -290,5 +292,6 @@ function drawPropOutlined(g, p, t) {
   _sg.globalCompositeOperation = "source-in"; _sg.fillStyle = "#120f18"; _sg.fillRect(0, 0, bw, bh); _sg.globalCompositeOperation = "source-over";
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) g.drawImage(_scv, 0, 0, bw, bh, bx + dx, by + dy, bw, bh);
   g.drawImage(_pcv, 0, 0, bw, bh, bx, by, bw, bh);
+  if (p.type === "holotable") drawHoloMars(g, p, t);
 }
 function hexA(hex, a) { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }

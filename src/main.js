@@ -139,7 +139,7 @@ const Game = {
       if (p.fact) this.addInteract({ id: "fact_" + p.id, x: p.x + p.pw / 2, y: p.y + p.ph + 8, label: "Inspect", name: p.label, fact: p.fact, use: () => UI.fact(p.fact), marker: () => !G.discovered.has(p.fact) ? "?" : null });
     }
     const pt = propById.photo_table; this.addInteract({ id: "photo", x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo", use: () => Story.photo(), marker: () => G.flags && G.flags.photo ? null : "?" });
-    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Use", name: "Base map", use: () => UI.map() });
+    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", use: () => MarsGlobe.open() });
     const hp = propById.hope; this.addInteract({ id: "hope", x: hp.x + 8, y: hp.y + hp.ph + 8, label: "Look", name: "Hope", use: () => Story.hope() });
   },
   addInteract(o) { o.r = o.r || 24; o.enabled = o.enabled || (() => true); this.interactables = this.interactables.filter((i) => i.id !== o.id); this.interactables.push(o); return o; },

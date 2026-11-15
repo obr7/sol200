@@ -195,6 +195,9 @@ const Story = {
     Game.setTarget({ x: 48 * T, y: 8 * T + 8 });
     await Game.waitRoom("airlock");
     Game.setTarget(null);
+    const suit = await Minigames.suitUp();
+    if (suit && !suit.mistakes) meter({ safety: 3 }, "🧑‍🚀 Perfect suit check — careful work!");
+    Sound.setMood("tension");
     Sound.play("door"); P.helmet = true; N.diego.helmet = true; Particles.sparkle(P.x, P.y - 10);
     G.hatchOpen = true; dynSolid.delete(idx(53, 8)); dynSolid.delete(idx(53, 9));
     UI.toast("🧑‍🚀 Helmets on! The outer hatch is open.");

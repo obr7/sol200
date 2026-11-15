@@ -148,7 +148,7 @@ button { font-family: inherit; cursor: pointer; }
 #title h1 { font-size: 4em; margin: 0; color: #ffd8a8; letter-spacing: .08em; text-shadow: 0 .08em 0 #8a3a1a, 0 .16em 0 #3a1a0a, 0 0 .6em rgba(255,120,60,.6); animation: titleFloat 4s ease-in-out infinite; }
 @keyframes titleFloat { 50% { transform: translateY(-.15em); } }
 #title h2 { margin: .2em 0 1.2em; font-size: 1em; letter-spacing: .3em; color: #cfd8ff; }
-#title .btn { font-size: 1.2em; margin: .3em; min-width: 9em; }
+#title .btn { font-size: 1.2em; margin: .3em; min-width: 9em; align-self: flex-start; height: auto; }
 #title small { position: absolute; bottom: .8em; font-size: .6em; opacity: .7; max-width: 90%; }
 #subs { position: absolute; left: 10%; right: 10%; bottom: 7%; text-align: center; font-size: 1.15em; text-shadow: 0 .1em 0 #000, 0 0 .4em #000; line-height: 1.35; pointer-events: none; }
 #subs .nm { color: var(--gold); font-size: .7em; letter-spacing: .2em; display: block; }
@@ -207,6 +207,21 @@ body.touch.playing #touch { display: block; }
 .cgwrap { background: #000; border-radius: .5em; overflow: hidden; border: .2em solid #3a4170; width: min(88vw, calc((100vh - 15em) * 1.7778)); margin: 0 auto; }
 .cg { width: 100%; display: block; image-rendering: pixelated; cursor: none; touch-action: none; }
 .cgcard p, .cgcard .say { max-width: min(88vw, calc((100vh - 15em) * 1.7778)); }
+/* Mars hologram globe */
+.globeCard { width: min(94vw, 780px) !important; max-height: 96vh; overflow-y: auto; }
+.globeWrap { display: flex; gap: .8em; align-items: stretch; justify-content: center; }
+@media (max-aspect-ratio: 1/1) { .globeWrap { flex-wrap: wrap; } }
+.globeView { position: relative; flex: 0 0 auto; width: min(calc(100vh - 17em), 46vw, 360px); min-width: 9em; align-self: flex-start; height: auto; aspect-ratio: 1; background: radial-gradient(circle, #10203a 0%, #05060c 70%); border-radius: .6em; border: .15em solid #2a4a7a; overflow: hidden; }
+.globeCv { width: 100%; height: 100%; display: block; image-rendering: pixelated; cursor: grab; touch-action: none; }
+.globeCv:active { cursor: grabbing; }
+.globeHint { position: absolute; left: 0; right: 0; bottom: .3em; text-align: center; font-size: .7em; opacity: .75; pointer-events: none; }
+.globeSrc { position: absolute; left: .5em; top: .4em; font-size: .65em; color: #ffd34a; pointer-events: none; }
+.globeSide { flex: 1 1 0; display: flex; flex-direction: column; gap: .5em; min-width: 12em; }
+.siteList { display: grid; grid-template-columns: 1fr 1fr; gap: .3em; }
+.siteBtn { font: inherit; font-size: .78em; padding: .45em .4em; border-radius: .4em; border: .12em solid #2a4a7a; background: #13223c; color: #e8f6ff; cursor: pointer; text-align: left; }
+.siteBtn.on, .siteBtn:hover { background: #2a4a7a; border-color: #ffd34a; }
+.siteInfo { font-size: .82em; line-height: 1.4; background: rgba(0,0,0,.3); padding: .6em; border-radius: .4em; flex: 1; }
+.siteInfo .coord { font-size: .85em; opacity: .7; }
 </style>
 </head>
 <body>
@@ -355,6 +370,7 @@ const BALANCE = {
 //  Numbers marked "assumption" in BALANCE (config.js) are game-only.
 // =====================================================================
 const SOURCES = {
+  marsTrek: { name: "NASA Mars Trek — Viking MDIM 2.1 colour mosaic (live map tiles)", url: "https://trek.nasa.gov/mars/", agency: "NASA / JPL" },
   donki: { name: "NASA DONKI — Space Weather Database Of Notifications, Knowledge, Information", url: "https://ccmc.gsfc.nasa.gov/tools/DONKI/", agency: "NASA" },
   donkiApi: { name: "NASA Open APIs — DONKI Solar Flare (FLR) endpoint", url: "https://api.nasa.gov/", agency: "NASA" },
   marsStorm2024: { name: "NASA — NASA Watches Mars Light Up During Epic Solar Storm (June 2024)", url: "https://www.nasa.gov/solar-system/planets/mars/nasa-watches-mars-light-up-during-epic-solar-storm/", agency: "NASA" },
@@ -1705,7 +1721,8 @@ function renderWorld(g, t, dt) {
   glows = [];
   const curRoom = roomAt(P.x, P.y - 4);
   const visR = curRoom === "outside" ? 150 - (G.storm || 0) * 85 : 78;
-  const visible = (x, y) => { const r = roomAt(x, y); if (r && r === curRoom && !(r === "outside" && (G.storm || 0) > 0.2)) return true; return curRoom === "outside" && r === "outside" && Math.hypot(x - P.x, y - P.y) < visR; };
+  const grp = (r) => (r === "airlock" ? "corridor" : r);
+  const visible = (x, y) => { const r = roomAt(x, y); if (r && grp(r) === grp(curRoom) && !(r === "outside" && (G.storm || 0) > 0.2)) return true; return curRoom === "outside" && r === "outside" && Math.hypot(x - P.x, y - P.y) < visR; };
   // drawables
   const list = [];
   for (const p of PROPS) {
@@ -1734,12 +1751,12 @@ function renderWorld(g, t, dt) {
   darkG.globalCompositeOperation = "destination-out";
   darkG.fillStyle = "#000";
   const stormOut = curRoom === "outside" && (G.storm || 0) > 0.2;
-  if (curRoom && ROOMS[curRoom] && !stormOut) {
-    const r = ROOMS[curRoom];
-    darkG.fillRect(r.x * T - cx - 16, (r.y - 2) * T - cy, (r.w + 2) * T, (r.h + 3) * T);
-  } else if (curRoom === "corridor") {
-    // the whole corridor network lights up
+  if (curRoom === "corridor" || curRoom === "airlock") {
+    // the whole corridor network (airlock included) lights up
     darkG.drawImage(corridorMask(), cx, cy, VW, VH, 0, 0, VW, VH);
+  } else if (curRoom && ROOMS[curRoom] && !stormOut) {
+    const r = ROOMS[curRoom];
+    darkG.fillRect(r.x * T - cx - 16, (r.y - 3) * T - cy, (r.w + 2) * T, (r.h + 4) * T); // +1 tile up so the wall signs stay lit
   }
   if (curRoom === "outside" || !curRoom) {
     const px = P.x - cx, py = P.y - 10 - cy;
@@ -1766,13 +1783,14 @@ let _cMask = null;
 function corridorMask() {
   if (_cMask) return _cMask;
   _cMask = mkCanvas(MW * T, MH * T); const g = _cMask.getContext("2d"); g.fillStyle = "#000";
-  const isCor = (x, y) => isFloor(x, y) && !roomMap[idx(x, y)] && x < 54;
+  const isCor = (x, y) => isFloor(x, y) && (!roomMap[idx(x, y)] || roomMap[idx(x, y)] === "airlock") && x < 54;
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
-    if (roomMap[idx(x, y)]) continue;
+    if (roomMap[idx(x, y)] && roomMap[idx(x, y)] !== "airlock") continue;
     let lit = isCor(x, y);
     if (!lit && !isFloor(x, y)) for (let dy = -1; dy <= 2 && !lit; dy++) for (let dx = -1; dx <= 1; dx++) if (isCor(x + dx, y + dy)) { lit = true; break; }
     if (lit) g.fillRect(x * T, y * T, T, T);
   }
+  const a = ROOMS.airlock; g.fillRect((a.x - 1) * T, (a.y - 3) * T, (a.w + 2) * T, (a.h + 4) * T); // airlock walls + signs
   return _cMask;
 }
 // draw a prop with a dark 1-px outline (matches the team's sprite style)
@@ -1788,6 +1806,7 @@ function drawPropOutlined(g, p, t) {
   _sg.globalCompositeOperation = "source-in"; _sg.fillStyle = "#120f18"; _sg.fillRect(0, 0, bw, bh); _sg.globalCompositeOperation = "source-over";
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) g.drawImage(_scv, 0, 0, bw, bh, bx + dx, by + dy, bw, bh);
   g.drawImage(_pcv, 0, 0, bw, bh, bx, by, bw, bh);
+  if (p.type === "holotable") drawHoloMars(g, p, t);
 }
 function hexA(hex, a) { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }
 
@@ -1942,6 +1961,25 @@ function drawPropV2(g, p, t) {
     }
     case "tray": {
       drawProp1(g, p, t);
+      break;
+    }
+    // ---------------------------------------------------------- HOLO-TABLE (Mars hologram)
+    case "holotable": {
+      // front face + feet
+      R(4, H - 4, 6, 4, "#1c2030"); R(W - 10, H - 4, 6, 4, "#1c2030");
+      R(1, 16, W - 2, H - 19, "#3a4466"); R(1, 16, W - 2, 2, "#56628e"); R(1, H - 5, W - 2, 2, "#262d46");
+      for (let i = 0; i < 6; i++) R(8 + i * 9, 21, 6, 3, "#262d46");
+      for (let i = 0; i < 5; i++) { const on = ((t * 4 + i) | 0) % 5 === i % 5; R(10 + i * 10, H - 9, 3, 2, on ? "#5dff8a" : "#2a6a4a"); }
+      // rim + glass top with a glowing grid
+      R(0, 0, W, 17, "#6a77a0"); R(1, 1, W - 2, 15, "#8b97c0");
+      R(3, 2, W - 6, 12, "#0a1a2e");
+      g.fillStyle = "rgba(64,208,255,0.18)"; for (let x = 6; x < W - 4; x += 6) g.fillRect(Math.round(p.x + x), Math.round(p.y + 2), 1, 12); for (let y = 5; y < 14; y += 4) g.fillRect(Math.round(p.x + 3), Math.round(p.y + y), W - 6, 1);
+      // emitter ring
+      const cx = W / 2, pul = (Math.sin(t * 4) + 1) / 2;
+      R(cx - 9, 6, 18, 6, "#14263c"); R(cx - 7, 7, 14, 4, `rgba(80,220,255,${0.45 + pul * 0.4})`); R(cx - 4, 8, 8, 2, "#e0fbff");
+      // corner lights
+      R(2, 1, 2, 1, "#ffd34a"); R(W - 4, 1, 2, 1, "#ffd34a");
+      glow(p.x + cx, p.y + 9, 22, "#40d0ff", 0.35);
       break;
     }
     default: drawProp1(g, p, t);
@@ -2301,7 +2339,7 @@ const Game = {
       if (p.fact) this.addInteract({ id: "fact_" + p.id, x: p.x + p.pw / 2, y: p.y + p.ph + 8, label: "Inspect", name: p.label, fact: p.fact, use: () => UI.fact(p.fact), marker: () => !G.discovered.has(p.fact) ? "?" : null });
     }
     const pt = propById.photo_table; this.addInteract({ id: "photo", x: pt.x + pt.pw / 2, y: pt.y + pt.ph + 8, label: "Look", name: "Crew photo", use: () => Story.photo(), marker: () => G.flags && G.flags.photo ? null : "?" });
-    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Use", name: "Base map", use: () => UI.map() });
+    const ht = propById.holo_table; this.addInteract({ id: "holo", x: ht.x + ht.pw / 2, y: ht.y + ht.ph + 8, label: "Explore", name: "Mars hologram", use: () => MarsGlobe.open() });
     const hp = propById.hope; this.addInteract({ id: "hope", x: hp.x + 8, y: hp.y + hp.ph + 8, label: "Look", name: "Hope", use: () => Story.hope() });
   },
   addInteract(o) { o.r = o.r || 24; o.enabled = o.enabled || (() => true); this.interactables = this.interactables.filter((i) => i.id !== o.id); this.interactables.push(o); return o; },
@@ -2704,6 +2742,9 @@ const Story = {
     Game.setTarget({ x: 48 * T, y: 8 * T + 8 });
     await Game.waitRoom("airlock");
     Game.setTarget(null);
+    const suit = await Minigames.suitUp();
+    if (suit && !suit.mistakes) meter({ safety: 3 }, "🧑‍🚀 Perfect suit check — careful work!");
+    Sound.setMood("tension");
     Sound.play("door"); P.helmet = true; N.diego.helmet = true; Particles.sparkle(P.x, P.y - 10);
     G.hatchOpen = true; dynSolid.delete(idx(53, 8)); dynSolid.delete(idx(53, 9));
     UI.toast("🧑‍🚀 Helmets on! The outer hatch is open.");
@@ -3391,6 +3432,363 @@ Minigames.panel_tilt = function (n, getTime) {
       api.timer(getTime ? `⏱ ${Math.ceil(getTime())}` : "");
     };
   });
+};
+
+// =====================================================================
+//  SUIT UP — follow the checklist, dress the astronaut layer by layer,
+//  then pump the suit to the right pressure (leak check).
+// =====================================================================
+const SUIT_PARTS = [
+  { k: "cool", name: "Cooling suit", line: "This underwear has thin water tubes inside. They keep your body cool while you work." },
+  { k: "suit", name: "Pressure suit", line: "The suit is like a tiny spaceship shaped like you. It holds air in and keeps dust out." },
+  { k: "boots", name: "Boots", line: "Strong boots for sharp Mars rocks!" },
+  { k: "pack", name: "Oxygen pack", line: "The backpack gives you oxygen and cleans the air you breathe out." },
+  { k: "gloves", name: "Gloves", line: "Gloves are the trickiest part — your fingers still need to work!" },
+  { k: "helmet", name: "Helmet", line: "The gold visor blocks the Sun's glare. Click — locked!" },
+];
+Minigames.suitUp = function () {
+  Sound.setMood("task");
+  return canvasGame({ title: "Suit Up!", tag: "AIRLOCK", speaker: "diego", sub: "Real astronauts suit up with a <b>checklist</b>. Drag each part onto the astronaut <b>in the right order</b> (or tap it).", hint: "Follow the checklist, step by step. Safety first, Commander!" }, (api) => {
+    const { g } = api, CX = 190, parts = new Pool(160);
+    const order = SUIT_PARTS.map((p) => p.k);
+    const slots = order.slice().sort(() => Math.random() - 0.5).map((k, i) => ({ k, hx: 34 + i * 54, hy: 244, x: 34 + i * 54, y: 244, rot: 0, used: false, shake: 0, fly: null }));
+    let step = 0, mistakes = 0, held = null, phase = "dress", snapFlash = 0, wobble = 0;
+    // phase 2
+    let psi = 0, holdOk = 0, pumping = false, vent = 0, done = false;
+    const face = portraitFor("lead");
+    const has = (k) => order.indexOf(k) < step;
+    const slotAt = (x, y) => slots.find((s) => !s.used && !s.fly && Math.abs(x - s.x) < 24 && Math.abs(y - s.y) < 22);
+    const onBody = (x, y) => Math.abs(x - CX) < 54 && y > 20 && y < 212;
+    const equip = (s) => {
+      s.used = true; step++; snapFlash = 0.35; wobble = 0.5; Sound.play("good"); Sound.play("click");
+      for (let k = 0; k < 18; k++) parts.spawn({ x: CX + (Math.random() - 0.5) * 60, y: 60 + Math.random() * 130, vx: (Math.random() - 0.5) * 50, vy: -30 - Math.random() * 40, life: 0.8, s: 2, c: ["#fff", "#ffd34a", "#9ad8ff"][k % 3], g: 40 });
+      const P = SUIT_PARTS.find((p) => p.k === s.k); api.say("diego", P.line);
+      if (step === order.length) setTimeout(() => { phase = "pump"; api.say("diego", "Last step: the leak check! Hold PUMP to fill the suit with air. Stop in the green zone."); }, 900);
+    };
+    const reject = (s) => { mistakes++; s.shake = 0.5; Sound.play("error"); api.say("diego", `Not yet! The checklist says: ${SUIT_PARTS[step].name} first.`); };
+    const tryUse = (s, fromX, fromY) => {
+      if (s.k === order[step]) { s.fly = { x0: fromX, y0: fromY, t: 0 }; }
+      else { reject(s); s.x = s.hx; s.y = s.hy; }
+    };
+    const pumpBtn = { x: 352, y: 196, w: 108, h: 34 };
+    const inPump = (pt) => pt.x > pumpBtn.x && pt.x < pumpBtn.x + pumpBtn.w && pt.y > pumpBtn.y && pt.y < pumpBtn.y + pumpBtn.h;
+    api.onDown = (pt) => {
+      if (phase === "dress") { const s = slotAt(pt.x, pt.y); if (s) { held = { s, ox: pt.x - s.x, oy: pt.y - s.y, sx: pt.x, sy: pt.y, lx: pt.x, moved: 0 }; Sound.play("hover"); } }
+      else if (phase === "pump" && inPump(pt)) pumping = true;
+    };
+    api.onMove = (pt) => { if (held) { held.moved += Math.abs(pt.x - held.lx); held.s.rot = Math.max(-0.5, Math.min(0.5, held.s.rot + (pt.x - held.lx) * 0.03)); held.lx = pt.x; held.s.x = pt.x - held.ox; held.s.y = pt.y - held.oy; } };
+    api.onUp = (pt) => {
+      pumping = false;
+      if (!held) return; const h = held; held = null;
+      if (h.moved < 6 && Math.hypot(pt.x - h.sx, pt.y - h.sy) < 8) tryUse(h.s, h.s.x, h.s.y); // a tap
+      else if (onBody(pt.x, pt.y)) tryUse(h.s, h.s.x, h.s.y);
+      else { h.s.fly = null; h.s.back = 1; }
+    };
+    api.onKey = (k, down) => { if (k === " " && phase === "pump") pumping = down; };
+    window.addEventListener("keyup", function ku(e) { if (e.key === " ") pumping = false; if (api.finished) window.removeEventListener("keyup", ku); });
+
+    api.frame = (dt, t) => {
+      // ---- update
+      for (const s of slots) {
+        s.shake = Math.max(0, s.shake - dt); s.rot *= Math.pow(0.02, dt);
+        if (s.back) { s.x += (s.hx - s.x) * Math.min(1, dt * 10); s.y += (s.hy - s.y) * Math.min(1, dt * 10); if (Math.hypot(s.x - s.hx, s.y - s.hy) < 1) { s.back = 0; s.x = s.hx; s.y = s.hy; } }
+        if (s.fly) { s.fly.t += dt * 3.2; const e = Math.min(1, s.fly.t), q = e * e * (3 - 2 * e); s.x = s.fly.x0 + (CX - s.fly.x0) * q; s.y = s.fly.y0 + (110 - s.fly.y0) * q - Math.sin(q * Math.PI) * 40; if (e >= 1) { s.fly = null; equip(s); } }
+      }
+      snapFlash = Math.max(0, snapFlash - dt); wobble = Math.max(0, wobble - dt); parts.update(dt);
+      if (phase === "pump" && !done) {
+        if (pumping) { psi += dt * 1.6; if (((t * 10) | 0) % 2 === 0 && Math.random() < 0.3) Sound.play("hover"); }
+        else psi = Math.max(0, psi - dt * 0.05); // tiny leak
+        if (psi > 5.4) { psi = 3.2; vent = 0.8; Sound.play("whoosh"); Sound.play("error"); mistakes++; api.say("diego", "Too much! The safety valve let air out. Try again — gently."); }
+        vent = Math.max(0, vent - dt);
+        const ok = psi >= 4.0 && psi <= 4.6;
+        holdOk = ok && !pumping ? holdOk + dt : 0;
+        if (holdOk > 1.2) { done = true; phase = "done"; Sound.play("success"); Sound.play("door"); api.say("diego", "Pressure holds at 4.3 psi — about a third of Earth's air pressure. Suit check complete!"); for (let k = 0; k < 30; k++) parts.spawn({ x: CX, y: 60, vx: (Math.random() - 0.5) * 160, vy: -40 - Math.random() * 90, life: 1.2, s: 2, c: ["#ffd34a", "#5dff8a", "#fff"][k % 3], g: 90 }); api.finish({ mistakes, delay: 2200 }); }
+      }
+
+      // ---- draw: airlock interior
+      g.fillStyle = "#2a2e3c"; g.fillRect(0, 0, MW2, MH2);
+      for (let x = 0; x < MW2; x += 32) { PX(g, x, 0, 31, 200, "#323748"); PX(g, x, 0, 1, 200, "#3e4458"); }
+      for (let x = 0; x < MW2; x += 16) PX(g, x, 200, 8, 6, ((x / 16) | 0) % 2 ? "#e8c040" : "#1b1d2b");
+      PX(g, 0, 206, MW2, 64, "#20242f");
+      // lockers with spare suits on the left
+      for (let i = 0; i < 2; i++) { PX(g, 8 + i * 34, 30, 30, 160, "#3a4052"); PX(g, 10 + i * 34, 32, 26, 156, "#2a2e3c"); PX(g, 15 + i * 34, 50, 16, 40, "#c8ccd8"); PX(g, 17 + i * 34, 40, 12, 10, "#9aa6c0"); PX(g, 15 + i * 34, 92, 7, 40, "#c8ccd8"); PX(g, 24 + i * 34, 92, 7, 40, "#c8ccd8"); }
+      // hatch window on the right (dusty Mars outside)
+      g.fillStyle = "#1b1d2b"; g.beginPath(); g.arc(300, 70, 30, 0, 7); g.fill(); g.fillStyle = "#c86a3a"; g.beginPath(); g.arc(300, 70, 25, 0, 7); g.fill();
+      g.fillStyle = "rgba(230,150,90,0.6)"; for (let k = 0; k < 8; k++) g.fillRect(278 + ((k * 13 + t * 60) % 44), 52 + k * 5, 6, 1);
+      g.fillStyle = "rgba(255,255,255,0.25)"; g.fillRect(286, 56, 6, 2);
+      // rotating warning light
+      const wl = (Math.sin(t * 5) + 1) / 2; PX(g, 296, 8, 10, 6, "#5a2020"); PX(g, 297, 9, 8, 4, `rgba(255,${80 + wl * 60},40,${0.5 + wl * 0.5})`);
+      // pedestal
+      PX(g, CX - 46, 196, 92, 8, "#4a5068"); PX(g, CX - 46, 196, 92, 2, "#6a7090");
+      // ---- the astronaut, layer by layer
+      const by = Math.round(Math.sin(t * 2) * 1 + (wobble ? Math.sin(wobble * 30) * 1.5 : 0));
+      const B = (x, y, w, h, c) => PX(g, CX + x, y + by, w, h, c);
+      if (has("pack")) { B(-30, 66, 60, 54, "#b8bdca"); B(-28, 68, 56, 50, "#d8dce6"); B(-26, 114, 52, 4, "#9aa0b0"); }
+      // base body: thermal underwear
+      const body = has("cool") ? ["#9ad8ff", "#5fa8e0"] : ["#555b74", "#3e4358"];
+      B(-20, 72, 40, 54, body[0]); B(-32, 74, 12, 46, body[0]); B(20, 74, 12, 46, body[0]); B(-18, 126, 16, 60, body[0]); B(2, 126, 16, 60, body[0]);
+      if (has("cool")) for (let y = 78; y < 182; y += 7) { B(-18, y, 36, 1, body[1]); }
+      if (!has("gloves")) { B(-32, 120, 12, 8, "#e0a37a"); B(20, 120, 12, 8, "#e0a37a"); }
+      if (!has("boots")) { B(-20, 186, 18, 8, "#3a3e4a"); B(2, 186, 18, 8, "#3a3e4a"); }
+      if (has("suit")) {
+        B(-25, 70, 50, 60, "#eef0f4"); B(-25, 124, 50, 6, "#c8ccd8");
+        B(-37, 72, 15, 50, "#eef0f4"); B(22, 72, 15, 50, "#eef0f4"); B(-37, 94, 15, 3, "#c8ccd8"); B(22, 94, 15, 3, "#c8ccd8");
+        B(-21, 128, 20, 60, "#eef0f4"); B(1, 128, 20, 60, "#eef0f4"); B(-21, 154, 20, 3, "#c8ccd8"); B(1, 154, 20, 3, "#c8ccd8");
+        B(-25, 108, 50, 3, "#d24a3a"); B(-37, 82, 15, 2, "#4a7ad0"); B(22, 82, 15, 2, "#4a7ad0");
+      }
+      if (has("pack")) { B(-12, 82, 24, 16, "#5a6070"); B(-10, 84, 20, 12, "#3a3e4a"); B(-8, 86, 3, 2, "#5dff8a"); B(-3, 86, 3, 2, ((t * 3) | 0) % 2 ? "#ffd34a" : "#6a5a20"); B(2, 86, 6, 2, "#40d0ff"); B(-28, 76, 3, 20, "#9aa0b0"); B(25, 76, 3, 20, "#9aa0b0"); }
+      if (has("boots")) { B(-23, 180, 23, 16, "#8b93a6"); B(0, 180, 23, 16, "#8b93a6"); B(-23, 192, 23, 4, "#3a3e4a"); B(0, 192, 23, 4, "#3a3e4a"); B(-23, 180, 23, 2, "#aab2c4"); B(0, 180, 23, 2, "#aab2c4"); }
+      if (has("gloves")) { B(-38, 118, 17, 13, "#dfe3ea"); B(21, 118, 17, 13, "#dfe3ea"); B(-38, 118, 17, 2, "#4a7ad0"); B(21, 118, 17, 2, "#4a7ad0"); }
+      // head
+      if (face) g.drawImage(face, CX - 18, 34 + by, 36, 36); else B(-14, 38, 28, 30, "#e0a37a");
+      if (has("helmet")) {
+        B(-22, 68, 44, 6, "#9aa0b0");
+        g.fillStyle = "rgba(170,215,255,0.28)"; g.beginPath(); g.arc(CX, 50 + by, 27, 0, 7); g.fill();
+        g.strokeStyle = "#dfe3ea"; g.lineWidth = 3; g.beginPath(); g.arc(CX, 50 + by, 27, 0, 7); g.stroke();
+        g.fillStyle = "rgba(255,190,70,0.42)"; g.beginPath(); g.arc(CX, 50 + by, 25, Math.PI * 1.05, Math.PI * 1.95); g.lineTo(CX, 46 + by); g.fill();
+        g.fillStyle = "rgba(255,255,255,0.7)"; g.fillRect(CX - 16, 34 + by, 6, 2); g.fillRect(CX - 18, 37 + by, 3, 4);
+      }
+      if (snapFlash) { g.fillStyle = `rgba(255,255,255,${snapFlash * 1.6})`; g.fillRect(CX - 40, 24, 80, 176); }
+      // drop hint glow
+      if (held && onBody(api.ptr.x, api.ptr.y)) { g.strokeStyle = "rgba(255,211,74,0.7)"; g.lineWidth = 2; g.setLineDash([4, 3]); g.strokeRect(CX - 48, 24, 96, 176); g.setLineDash([]); }
+      // ---- right side: checklist or pressure gauge
+      PX(g, 344, 14, 126, 170, "rgba(10,12,22,0.75)"); PX(g, 344, 14, 126, 2, "#ffd34a");
+      g.font = "8px monospace";
+      if (phase === "dress") {
+        g.fillStyle = "#ffd34a"; g.fillText("SUIT-UP CHECKLIST", 352, 30);
+        SUIT_PARTS.forEach((p, i) => { const y = 48 + i * 21, cur = i === step; if (cur) PX(g, 348, y - 10, 118, 16, `rgba(255,211,74,${0.18 + Math.sin(t * 5) * 0.08})`); PX(g, 352, y - 7, 9, 9, i < step ? "#5dff8a" : "#3a4060"); if (i < step) { g.fillStyle = "#0b2a14"; g.fillText("✓", 353, y); } g.fillStyle = i < step ? "#8a9ab0" : cur ? "#ffffff" : "#b8c0d8"; g.fillText(`${i + 1}. ${p.name}`, 366, y); if (i < step) PX(g, 366, y - 3, g.measureText(`${i + 1}. ${p.name}`).width, 1, "#8a9ab0"); });
+      } else {
+        g.fillStyle = "#ffd34a"; g.fillText("LEAK CHECK", 352, 30);
+        const gx = 407, gy = 108, R = 46, a0 = Math.PI * 0.8, a1 = Math.PI * 2.2, toA = (v) => a0 + (a1 - a0) * Math.min(1, v / 6);
+        g.lineWidth = 7; g.strokeStyle = "#1b1d2b"; g.beginPath(); g.arc(gx, gy, R, a0, a1); g.stroke();
+        g.strokeStyle = "#5dff8a"; g.beginPath(); g.arc(gx, gy, R, toA(4.0), toA(4.6)); g.stroke();
+        g.strokeStyle = "#ff5a40"; g.beginPath(); g.arc(gx, gy, R, toA(5.2), a1); g.stroke();
+        const na = toA(psi) + (vent ? Math.sin(t * 60) * 0.05 : 0); g.strokeStyle = "#fff"; g.lineWidth = 2; g.beginPath(); g.moveTo(gx, gy); g.lineTo(gx + Math.cos(na) * (R - 6), gy + Math.sin(na) * (R - 6)); g.stroke();
+        PX(g, gx - 3, gy - 3, 6, 6, "#ffd34a");
+        g.fillStyle = "#fff"; g.font = "10px monospace"; g.textAlign = "center"; g.fillText(`${psi.toFixed(1)} psi`, gx, gy + 26); g.font = "8px monospace"; g.fillStyle = "#9affb0"; g.fillText(holdOk > 0 ? "HOLDING…" : "target 4.0–4.6", gx, gy + 38); g.textAlign = "left";
+        if (vent) for (let k = 0; k < 3; k++) parts.spawn({ x: CX + 22, y: 90, vx: 60 + Math.random() * 40, vy: -20 + Math.random() * 40, life: 0.5, s: 2, c: "rgba(220,240,255,0.8)", g: 0 });
+      }
+      // pump button
+      if (phase !== "dress") {
+        const pr = pumping ? 2 : 0; PX(g, pumpBtn.x, pumpBtn.y + pr, pumpBtn.w, pumpBtn.h - pr, pumping ? "#2f8a50" : "#3fb070"); PX(g, pumpBtn.x, pumpBtn.y + pumpBtn.h - 4, pumpBtn.w, 4, "#1f5a34");
+        g.fillStyle = "#fff"; g.font = "10px monospace"; g.textAlign = "center"; g.fillText(phase === "done" ? "SEALED ✓" : "HOLD: PUMP", pumpBtn.x + pumpBtn.w / 2, pumpBtn.y + 21 + pr); g.textAlign = "left";
+      }
+      // ---- tray with the parts
+      PX(g, 0, 214, 340, 56, "#161a28"); PX(g, 0, 214, 340, 2, "#3a4170");
+      for (const s of slots) {
+        if (s.used) continue;
+        if (s !== (held && held.s) && !s.fly) { PX(g, s.hx - 24, s.hy - 22, 48, 44, "#232842"); }
+        const sx = s.x + (s.shake ? Math.sin(s.shake * 50) * 4 : 0);
+        g.save(); g.translate(Math.round(sx), Math.round(s.y)); g.rotate(s.rot); drawSuitPart(g, s.k, t); g.restore();
+      }
+      if (phase === "dress" && !held) { const nx = slots.find((s) => s.k === order[step] && !s.used); if (nx && mistakes > 1) { g.strokeStyle = `rgba(255,211,74,${0.5 + Math.sin(t * 6) * 0.4})`; g.lineWidth = 1; g.strokeRect(nx.hx - 25, nx.hy - 23, 50, 46); } }
+      parts.draw(g, t); g.globalAlpha = 1;
+      // hand cursor
+      if (api.ptr.inside && !held) { const x = Math.round(api.ptr.x), y = Math.round(api.ptr.y); PX(g, x - 1, y - 1, 3, 3, "#fff"); PX(g, x, y, 1, 1, "#000"); }
+    };
+  });
+};
+function drawSuitPart(g, k, t) {
+  const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  switch (k) {
+    case "cool": P(-12, -14, 24, 22, "#9ad8ff"); P(-18, -13, 6, 16, "#9ad8ff"); P(12, -13, 6, 16, "#9ad8ff"); for (let y = -11; y < 8; y += 4) P(-11, y, 22, 1, "#5fa8e0"); P(-5, -14, 10, 3, "#5fa8e0"); break;
+    case "suit": P(-13, -18, 26, 22, "#eef0f4"); P(-19, -17, 7, 18, "#eef0f4"); P(12, -17, 7, 18, "#eef0f4"); P(-11, 4, 10, 14, "#eef0f4"); P(1, 4, 10, 14, "#eef0f4"); P(-13, 0, 26, 2, "#d24a3a"); P(-19, -11, 7, 1, "#4a7ad0"); P(12, -11, 7, 1, "#4a7ad0"); break;
+    case "boots": P(-17, -4, 14, 14, "#8b93a6"); P(3, -4, 14, 14, "#8b93a6"); P(-17, 7, 14, 4, "#3a3e4a"); P(3, 7, 14, 4, "#3a3e4a"); P(-17, -4, 14, 2, "#aab2c4"); P(3, -4, 14, 2, "#aab2c4"); break;
+    case "pack": P(-14, -16, 28, 30, "#d8dce6"); P(-12, -14, 24, 26, "#b8bdca"); P(-8, -10, 16, 8, "#5a6070"); P(-6, -8, 3, 2, "#5dff8a"); P(-1, -8, 3, 2, "#ffd34a"); P(4, -8, 2, 2, "#40d0ff"); P(-10, 4, 20, 2, "#9aa0b0"); break;
+    case "gloves": P(-17, -8, 12, 14, "#dfe3ea"); P(5, -8, 12, 14, "#dfe3ea"); P(-17, 4, 12, 3, "#4a7ad0"); P(5, 4, 12, 3, "#4a7ad0"); P(-19, -6, 3, 6, "#dfe3ea"); P(16, -6, 3, 6, "#dfe3ea"); break;
+    case "helmet": g.fillStyle = "rgba(170,215,255,0.35)"; g.beginPath(); g.arc(0, -2, 15, 0, 7); g.fill(); g.strokeStyle = "#dfe3ea"; g.lineWidth = 2; g.beginPath(); g.arc(0, -2, 15, 0, 7); g.stroke(); g.fillStyle = "rgba(255,190,70,0.6)"; g.beginPath(); g.arc(0, -2, 13, Math.PI * 1.05, Math.PI * 1.95); g.fill(); P(-12, 12, 24, 4, "#9aa0b0"); P(-8, -12, 4, 2, "#fff"); break;
+  }
+  g.fillStyle = "#cfd8ff"; g.font = "7px monospace"; g.textAlign = "center"; g.fillText(SUIT_PARTS.find((p) => p.k === k).name, 0, 21); g.textAlign = "left";
+}
+
+// ---- mars3d.js ----
+// =====================================================================
+//  MARS 3D — a real 3D globe of Mars textured with NASA Mars Trek imagery
+//  (Viking MDIM 2.1 colour mosaic, streamed live from trek.nasa.gov tiles).
+//  • A small hologram spins on the Control Room table.
+//  • Using the table opens a big globe you can spin and explore.
+//  If Trek can't be reached (offline), a painted Mars texture is used.
+// =====================================================================
+const TREK_TILES = "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0//default/default028mm/";
+const MARS_SITES = [
+  { id: "olympus", name: "Olympus Mons", lat: 18.65, lon: -133.8, icon: "🌋", text: "The biggest volcano in the whole Solar System! It is about 22 km tall — around two and a half times taller than Mount Everest." },
+  { id: "valles", name: "Valles Marineris", lat: -13.9, lon: -59.2, icon: "🏜️", text: "A giant canyon system more than 4,000 km long and up to 7 km deep. On Earth it would stretch across the whole United States." },
+  { id: "gale", name: "Gale Crater", lat: -5.4, lon: 137.8, icon: "🤖", text: "NASA's Curiosity rover landed here in 2012. It has been climbing Mount Sharp, reading the layers of rock like pages of a history book." },
+  { id: "jezero", name: "Jezero Crater", lat: 18.4, lon: 77.5, icon: "🚙", text: "Long ago this crater held a lake fed by a river. NASA's Perseverance rover landed here in 2021 and collects rock samples that may show signs of ancient life." },
+  { id: "hellas", name: "Hellas Basin", lat: -42.4, lon: 70.5, icon: "☄️", text: "A huge hole made by an ancient impact, about 2,300 km wide. It is the lowest place on Mars, so the air pressure is highest here." },
+  { id: "pole", name: "North Polar Cap", lat: 84, lon: 0, icon: "🧊", text: "A thick cap of water ice. In winter, carbon-dioxide frost (dry ice) adds an extra layer on top. Water ice is a key resource for future explorers." },
+];
+
+const MarsTex = {
+  levels: {}, // level -> {w,h,data:Uint8ClampedArray, real:bool}
+  loading: {},
+  fallback: null,
+  get(level) { return this.levels[level] || this.levels[0] || this.fallbackTex(); },
+  isReal() { return !!(this.levels[1] || this.levels[0]); },
+  load(level) {
+    if (this.levels[level] || this.loading[level]) return this.loading[level];
+    const rows = 1 << level, cols = rows * 2, S = 256;
+    const cv = mkCanvas(cols * S, rows * S), g = cv.getContext("2d");
+    const jobs = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) jobs.push(new Promise((res, rej) => {
+      const im = new Image(); im.crossOrigin = "anonymous";
+      im.onload = () => { g.drawImage(im, c * S, r * S, S, S); res(); }; im.onerror = rej;
+      im.src = `${TREK_TILES}${level}/${r}/${c}.jpg`;
+    }));
+    this.loading[level] = Promise.all(jobs).then(() => {
+      const d = g.getImageData(0, 0, cv.width, cv.height).data;
+      this.levels[level] = { w: cv.width, h: cv.height, data: d, real: true };
+      return true;
+    }).catch(() => false);
+    return this.loading[level];
+  },
+  fallbackTex() {
+    if (this.fallback) return this.fallback;
+    const w = 256, h = 128, d = new Uint8ClampedArray(w * h * 4);
+    const rnd = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+    const noise = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi; const a = rnd(xi % 64, yi), b = rnd((xi + 1) % 64, yi), c = rnd(xi % 64, yi + 1), e = rnd((xi + 1) % 64, yi + 1); const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf); return a + (b - a) * u + (c - a) * v + (a - b - c + e) * u * v; };
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let n = 0, f = 1 / 16, amp = 0.5; for (let o = 0; o < 4; o++) { n += noise(x * f * 4 / 4, y * f * 4 / 4) * amp; f *= 2; amp *= 0.5; }
+      const lat = 90 - (y / h) * 180, dark = n > 0.55 ? (n - 0.55) * 2.2 : 0;
+      let R = 196 - dark * 90 + n * 30, G = 110 - dark * 50 + n * 18, B = 70 - dark * 25 + n * 10;
+      if (Math.abs(lat) > 78 - n * 6) { R = 235; G = 225; B = 220; }
+      const i = (y * w + x) * 4; d[i] = R; d[i + 1] = G; d[i + 2] = B; d[i + 3] = 255;
+    }
+    this.fallback = { w, h, data: d, real: false };
+    return this.fallback;
+  },
+};
+
+// precomputed sphere tables per (size, tilt)
+const _sphereCache = {};
+function sphereTable(S, tilt) {
+  const key = S + ":" + tilt.toFixed(3);
+  if (_sphereCache[key]) return _sphereCache[key];
+  const n = S * S, lat = new Float32Array(n), lon = new Float32Array(n), shade = new Float32Array(n), inside = new Uint8Array(n), rim = new Float32Array(n);
+  const cT = Math.cos(tilt), sT = Math.sin(tilt), L = [-0.55, 0.5, 0.67];
+  for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
+    const u = (px + 0.5) / S * 2 - 1, v = (py + 0.5) / S * 2 - 1, r2 = u * u + v * v, i = py * S + px;
+    if (r2 > 1) continue;
+    inside[i] = 1;
+    const z = Math.sqrt(1 - r2), y = -v;
+    const yw = y * cT + z * sT, zw = -y * sT + z * cT;
+    lat[i] = Math.asin(Math.max(-1, Math.min(1, yw))); lon[i] = Math.atan2(u, zw);
+    const dot = u * L[0] + y * L[1] + z * L[2];
+    shade[i] = 0.32 + 0.85 * Math.max(0, dot);
+    rim[i] = Math.pow(1 - z, 3);
+  }
+  return (_sphereCache[key] = { lat, lon, shade, inside, rim });
+}
+// draw the globe into an ImageData. holo: tint hologram cyan + scanlines
+function renderMars(img, S, centerLon, tilt, tex, holo, t) {
+  const T = sphereTable(S, tilt), d = img.data, td = tex.data, tw = tex.w, th = tex.h;
+  const TAU = Math.PI * 2;
+  for (let i = 0, n = S * S; i < n; i++) {
+    const o = i * 4;
+    if (!T.inside[i]) { d[o + 3] = 0; continue; }
+    let lo = T.lon[i] + centerLon; lo = ((lo + Math.PI) % TAU + TAU) % TAU;
+    const tx = Math.min(tw - 1, (lo / TAU * tw) | 0), ty = Math.min(th - 1, ((0.5 - T.lat[i] / Math.PI) * th) | 0);
+    const ti = (ty * tw + tx) * 4, sh = T.shade[i];
+    let r = td[ti] * sh, g = td[ti + 1] * sh, b = td[ti + 2] * sh;
+    const rm = T.rim[i]; r += rm * 255 * 0.55; g += rm * 150 * 0.55; b += rm * 110 * 0.55; // thin dusty atmosphere
+    if (holo) {
+      const row = (i / S) | 0, scan = (row + ((t * 20) | 0)) % 3 === 0 ? 0.7 : 1;
+      r = (r * 0.75 + 30) * scan; g = (g * 0.75 + 70) * scan; b = (b * 0.75 + 90) * scan;
+      d[o + 3] = 225;
+    } else d[o + 3] = 255;
+    d[o] = r; d[o + 1] = g; d[o + 2] = b;
+  }
+}
+function projectSite(s, centerLon, tilt) {
+  const la = s.lat * Math.PI / 180, dl = s.lon * Math.PI / 180 - centerLon;
+  const x = Math.cos(la) * Math.sin(dl), y = Math.sin(la), z = Math.cos(la) * Math.cos(dl);
+  const yv = y * Math.cos(tilt) - z * Math.sin(tilt), zv = y * Math.sin(tilt) + z * Math.cos(tilt);
+  return { u: x, v: -yv, vis: zv > 0.05, z: zv };
+}
+
+// ---------------------------------------------------------------- hologram on the table
+let _holoCv, _holoImg, _holoG;
+function drawHoloMars(g, p, t) {
+  const S = 28;
+  if (!_holoCv) { _holoCv = mkCanvas(S, S); _holoG = _holoCv.getContext("2d"); _holoImg = _holoG.createImageData(S, S); MarsTex.load(0); }
+  renderMars(_holoImg, S, t * 0.5, 0.35, MarsTex.get(0), true, t);
+  _holoG.putImageData(_holoImg, 0, 0);
+  const cx = Math.round(p.x + p.pw / 2), base = Math.round(p.y + 6), bob = Math.round(Math.sin(t * 1.8) * 1.5);
+  const top = base - 40 + bob;
+  // light cone from the emitter
+  g.save(); g.globalCompositeOperation = "lighter";
+  const gr = g.createLinearGradient(0, base, 0, top);
+  gr.addColorStop(0, "rgba(90,220,255,0.45)"); gr.addColorStop(1, "rgba(90,220,255,0.04)");
+  g.fillStyle = gr; g.beginPath(); g.moveTo(cx - 6, base); g.lineTo(cx + 6, base); g.lineTo(cx + 17, top + 18); g.lineTo(cx - 17, top + 18); g.fill();
+  // orbit ring (back half)
+  g.strokeStyle = "rgba(120,230,255,0.35)"; g.lineWidth = 1; g.beginPath(); g.ellipse(cx, top + 14, 19, 5, 0, Math.PI, Math.PI * 2); g.stroke();
+  g.restore();
+  g.drawImage(_holoCv, cx - S / 2, top);
+  g.save(); g.globalCompositeOperation = "lighter";
+  g.strokeStyle = "rgba(120,230,255,0.6)"; g.beginPath(); g.ellipse(cx, top + 14, 19, 5, 0, 0, Math.PI); g.stroke();
+  const a = t * 1.3; g.fillStyle = "#c8f6ff"; g.fillRect(Math.round(cx + Math.cos(a) * 19), Math.round(top + 14 + Math.sin(a) * 5), 2, 1); // little moon (Phobos)
+  if (((t * 3) | 0) % 7 === 0) { g.fillStyle = "rgba(160,240,255,0.25)"; g.fillRect(cx - 14, top + ((t * 60) % S), S, 1); } // glitch line
+  g.restore();
+  glow(cx, top + 14, 34, "#40d0ff", 0.28);
+}
+
+// ---------------------------------------------------------------- the big interactive globe
+const MarsGlobe = {
+  open() {
+    Sound.play("power");
+    const html = `<div class="head"><div><h3>HOLO-TABLE · NASA MARS TREK DATA</h3><h1>🔴 Explore Mars in 3D</h1></div></div>
+      <div class="globeWrap"><div class="globeView"><canvas class="globeCv" width="240" height="240"></canvas><div class="globeHint">🖐️ Drag to spin · tap a pin</div><div class="globeSrc"></div></div>
+      <div class="globeSide"><div class="siteList">${MARS_SITES.map((s) => `<button class="siteBtn" data-id="${s.id}">${s.icon} ${s.name}</button>`).join("")}</div>
+      <div class="siteInfo"><b>Pick a place on Mars!</b><br>This globe uses real pictures of Mars taken by NASA's Viking orbiters, from NASA Mars Trek.</div></div></div>
+      ${UI.srcHtml(["marsTrek"])}`;
+    return UI.card(html, [{ id: "trek", label: "Open NASA Mars Trek ↗", cls: "alt" }, { id: "map", label: "🗺️ Base map", cls: "alt" }, { id: "ok", label: "Close", cls: "go" }], {
+      cls: "dark wide globeCard", closable: true, onMount: (card, done) => {
+        const cv = card.querySelector(".globeCv"), g = cv.getContext("2d"), S = 240, img = g.createImageData(S, S);
+        const info = card.querySelector(".siteInfo"), src = card.querySelector(".globeSrc");
+        const st = { lon: 0.6, tilt: 0.25, vlon: 0.18, drag: null, goal: null, sel: null, t: 0, alive: true };
+        let tex = MarsTex.get(1);
+        src.textContent = MarsTex.isReal() ? "" : "Loading NASA imagery…";
+        MarsTex.load(1).then((ok) => { if (ok) tex = MarsTex.get(1); src.textContent = ok ? "" : "Offline — showing a painted Mars"; });
+        const select = (id) => {
+          const s = MARS_SITES.find((x) => x.id === id); if (!s) return;
+          st.sel = s; st.goal = { lon: s.lon * Math.PI / 180, tilt: Math.max(-0.9, Math.min(0.9, s.lat * Math.PI / 180 * 0.8)) };
+          card.querySelectorAll(".siteBtn").forEach((b) => b.classList.toggle("on", b.dataset.id === id));
+          info.innerHTML = `<b>${s.icon} ${s.name}</b><br>${s.text}<br><span class="coord">${Math.abs(s.lat).toFixed(1)}°${s.lat >= 0 ? "N" : "S"}, ${Math.abs(s.lon).toFixed(1)}°${s.lon >= 0 ? "E" : "W"}</span>`;
+          Sound.play("click");
+          if (!G.flags) G.flags = {}; G.flags["site_" + id] = true;
+        };
+        card.querySelectorAll(".siteBtn").forEach((b) => b.addEventListener("click", () => select(b.dataset.id)));
+        const pos = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * S, y: (e.clientY - r.top) / r.height * S }; };
+        cv.addEventListener("pointerdown", (e) => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (er) {} const p = pos(e); st.drag = { x: p.x, y: p.y, lon: st.lon, tilt: st.tilt, moved: 0, lx: p.x, t: performance.now() }; st.goal = null; });
+        cv.addEventListener("pointermove", (e) => { if (!st.drag) return; const p = pos(e), D = st.drag; D.moved += Math.abs(p.x - D.lx); const now = performance.now(); st.vlon = -(p.x - D.lx) / (S / 2) / Math.max(0.016, (now - D.t) / 1000) * 0.6; D.lx = p.x; D.t = now; st.lon = D.lon - (p.x - D.x) / (S / 2) * 1.4; st.tilt = Math.max(-1.1, Math.min(1.1, D.tilt + (p.y - D.y) / (S / 2) * 1.2)); });
+        cv.addEventListener("pointerup", (e) => {
+          const D = st.drag; st.drag = null; if (!D) return;
+          if (D.moved < 4) { const p = pos(e); let best = null, bd = 14; for (const s of MARS_SITES) { const q = projectSite(s, st.lon, st.tilt); if (!q.vis) continue; const dx = (q.u + 1) * S / 2 - p.x, dy = (q.v + 1) * S / 2 - p.y, dd = Math.hypot(dx, dy); if (dd < bd) { bd = dd; best = s; } } if (best) select(best.id); }
+          st.vlon = Math.max(-3, Math.min(3, st.vlon));
+        });
+        let last = performance.now();
+        const loop = (now) => {
+          if (!st.alive || !document.body.contains(cv)) return;
+          const dt = Math.min(0.05, (now - last) / 1000); last = now; st.t += dt;
+          if (st.goal) { let dl = st.goal.lon - st.lon; dl = Math.atan2(Math.sin(dl), Math.cos(dl)); st.lon += dl * Math.min(1, dt * 4); st.tilt += (st.goal.tilt - st.tilt) * Math.min(1, dt * 4); st.vlon = 0; }
+          else if (!st.drag) { st.lon += st.vlon * dt; st.vlon += (0.18 - st.vlon) * Math.min(1, dt * 1.2); }
+          renderMars(img, S, st.lon, st.tilt, tex, false, st.t);
+          g.clearRect(0, 0, S, S); g.putImageData(img, 0, 0);
+          // pins
+          for (const s of MARS_SITES) {
+            const q = projectSite(s, st.lon, st.tilt); if (!q.vis) continue;
+            const x = Math.round((q.u + 1) * S / 2), y = Math.round((q.v + 1) * S / 2), on = st.sel === s, pul = on ? 2 + Math.sin(st.t * 6) * 1.5 : 0;
+            g.fillStyle = "rgba(0,0,0,0.5)"; g.fillRect(x - 3, y - 2, 7, 6);
+            g.fillStyle = on ? "#ffd34a" : "#ffffff"; g.fillRect(x - 2, y - 2, 5, 5); g.fillStyle = on ? "#ff7a2a" : "#40d0ff"; g.fillRect(x - 1, y - 1, 3, 3);
+            if (on) { g.strokeStyle = "rgba(255,211,74,0.8)"; g.lineWidth = 1; g.strokeRect(x - 4 - pul, y - 4 - pul, 9 + pul * 2, 9 + pul * 2); }
+            if (q.z > 0.35) { g.font = "8px monospace"; g.fillStyle = "rgba(0,0,0,0.6)"; const w = g.measureText(s.name).width; g.fillRect(x + 5, y - 4, w + 4, 9); g.fillStyle = on ? "#ffd34a" : "#e8f6ff"; g.fillText(s.name, x + 7, y + 3); }
+          }
+          requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+      },
+    }).then(async (r) => { if (r === "trek") window.open("https://trek.nasa.gov/mars/", "_blank", "noopener"); if (r === "map") await UI.map(); return r; });
+  },
 };
 
 // ---- scenes.js ----
@@ -4846,7 +5244,7 @@ window.addEventListener("DOMContentLoaded", () => {
   Intro.init();
   Intro.showStart();
   // Test hooks (used by the automated play-test; harmless for players)
-  window.__sol = { Intro, G, Game, Story, UI, Minigames, Scenes, Sound, SpaceWeather, PROPS, propById };
+  window.__sol = { Intro, G, Game, Story, UI, Minigames, Scenes, Sound, SpaceWeather, PROPS, propById, MarsGlobe, MarsTex };
   if (/[?&]debug/.test(location.search)) Game.debugKeys = true;
 });
 </script>
