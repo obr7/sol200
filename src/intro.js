@@ -62,11 +62,17 @@ const Intro = {
   showStart() {
     UI.clear(); Game.mode = "title"; Scenes.setShot("title"); $("#hud").classList.add("off");
     const d = el("div"); d.id = "title";
-    d.innerHTML = `<div class="clickstart"><div class="cs-ico">🎧</div><button class="btn go" id="tStart">▶ Click to start</button><p>Best with sound on · about 1 minute intro</p>
-      <div><button class="btn alt" id="tSet">⚙️ Settings</button><button class="btn alt" id="tSrc">🛰️ NASA Data</button></div></div>
+    d.innerHTML = `<div class="clickstart">
+      <div class="gtitle">${CONFIG.GAME_TITLE}</div>
+      <div class="gsub">${CONFIG.SUBTITLE.toUpperCase()}</div>
+      <p class="solnote"><b>What is a sol?</b> A day on Mars is called a <b>sol</b>. Mars spins a little slower than Earth, so one sol is about <b>24 hours and 40 minutes</b> — about 40 minutes longer than a day on Earth. Astronauts say “sol” so they never mix up Mars days and Earth days. Our story starts on the crew’s <b>200th sol</b> on Mars!</p>
+      <button class="btn go" id="tStart">▶ Start</button>
+      <p class="cs-hint">🎧 Best with sound on</p>
+      <div><button class="btn alt" id="tFull">⛶ Full screen</button><button class="btn alt" id="tSet">⚙️ Settings</button><button class="btn alt" id="tSrc">🛰️ NASA Data</button></div></div>
       <small>A game about the real trade-offs of living on Mars · NASA Space Apps Challenge 2026 · Uses live space-weather data from NASA DONKI</small>`;
     UI.root.appendChild(d);
-    d.querySelector("#tStart").onclick = async () => { Sound.init(); d.querySelector("#tStart").textContent = "Loading sounds…"; await this.start(); };
+    d.querySelector("#tStart").onclick = async () => { Sound.init(); if (document.body.classList.contains("touch")) Game.fullscreen(true); d.querySelector("#tStart").textContent = "Loading…"; await this.start(); };
+    d.querySelector("#tFull").onclick = () => Game.fullscreen();
     d.querySelector("#tSet").onclick = () => { Sound.init(); UI.settings(); };
     d.querySelector("#tSrc").onclick = () => { Sound.init(); UI.credits(); };
   },
@@ -83,7 +89,7 @@ const Intro = {
         this.narr[k] = { buf: await ctx.decodeAudioData(await r.arrayBuffer()) };
       } catch (e) { this.narr[k] = {}; }
     }));
-    await Promise.all([narr, Sound.loadFiles(CONFIG.SFX_FILES, 5000)]);
+    await Promise.all([narr, Sound.loadFiles(CONFIG.SFX_FILES, 5000), Sound.loadFiles(CONFIG.INTRO_MUSIC_FILES, 6000)]);
   },
 
   async start(fromShot) {
@@ -104,7 +110,7 @@ const Intro = {
     this.buildCues(s0);
     for (const p of Object.values(this.pools)) p.clear();
     this.footprints = []; this.handedOff = false; this.shot = null;
-    Sound.stopLoop("hum"); Sound.setMood(null);
+    Sound.stopLoop("hum"); Sound.setMood(null); if (this.music) { this.music.h.stop(0.1); this.music = null; }
     Game.mode = "intro"; this.running = true;
     this.log = []; this.playing = null;
   },
@@ -114,45 +120,52 @@ const Intro = {
     const B = this.Bt, C = [], rec = (k) => Sound.hasFile(k);
     const at = (s, fn) => C.push({ s, fn });
     // shot 1
-    at(0, () => { Sound.setMood("tension"); Sound.startLoop("alarm"); Sound.startLoop("hum"); if (rec("argument")) Sound.play("argument"); });
-    at(B.argFreeze, () => { Sound.play("thud"); Sound.setMood(null); });
+    at(0, () => { Sound.startLoop("alarm"); Sound.startLoop("hum"); if (rec("argument")) Sound.play("argument"); });
+    at(B.argFreeze, () => { Sound.play("thud"); });
     at(B.argBlack + B.alarmTail, () => { Sound.stopLoop("alarm"); Sound.stopLoop("hum"); });
     // title
     at(B.titleIn, () => { Sound.play("whoosh"); Sound.play("glint"); });
     // ceremony
-    at(8.0, () => { Sound.setMood("hope"); if (rec("applause")) Sound.playFile("applause", { fade: 0.4 }); else Sound.play("applause", 2.2); });
+    at(8.0, () => { if (rec("applause")) Sound.playFile("applause", { fade: 0.4 }); else Sound.play("applause", 2.2); });
     if (!rec("applause")) at(9.2, () => Sound.play("applause", 1.2));
     at(B.cerPin, () => { Sound.play("pin"); Sound.play("glint"); Sound.play("flash"); if (!rec("applause")) Sound.play("applause", 1.6); });
     at(B.cerPin + 0.25, () => Sound.play("flash"));
-    at(B.cerLook, () => Sound.setMood("single"));
-    at(B.cerBreak, () => { Sound.setMood("hope"); if (!rec("applause")) Sound.play("applause", 1.2); });
+    at(B.cerBreak, () => { if (!rec("applause")) Sound.play("applause", 1.2); });
     at(B.cerFlash, () => Sound.play("flash"));
     // launch
-    at(17.0, () => { Sound.setMood(null); Sound.startLoop("steam"); });
+    at(17.0, () => { Sound.startLoop("steam"); });
     at(B.ignition - 0.3, () => { if (rec("launch")) { Sound.stopLoop("steam"); Sound.play("launch"); } });
     at(B.ignition, () => { Sound.stopLoop("steam"); Sound.play("birds"); if (!rec("launch")) { Sound.play("ignition"); Sound.play("rumble", 6); Sound.startLoop("crackle"); } });
-    at(B.ignition + 0.6, () => Sound.setMood("majestic"));
-    at(B.separation, () => { Sound.play("separation"); Sound.stopLoop("crackle", true); Sound.setMood(null); });
+    at(B.separation, () => { Sound.play("separation"); Sound.stopLoop("crackle", true); });
     // space
-    at(27.0, () => { Sound.setMood("spacepad"); Sound.startLoop("engine"); });
+    at(27.0, () => { Sound.startLoop("engine"); });
     at(B.windowCut[0], () => Sound.play("whoosh"));
     at(B.matchCut, () => Sound.play("whoosh"));
     // mars
-    at(33.0, () => { Sound.stopLoop("engine"); Sound.setMood("mystery"); });
+    at(33.0, () => { Sound.stopLoop("engine"); });
     at(B.retro, () => Sound.play("retro"));
     at(B.entry, () => Sound.play("entry"));
     at(B.touchdown, () => { Sound.play("thud"); Sound.play("rumble", 1.5); });
     at(B.dustWipe, () => Sound.play("whoosh"));
     // arrival
-    at(41.0, () => { Sound.setMood("arrival"); Sound.startLoop("wind"); });
+    at(41.0, () => { Sound.startLoop("wind"); });
     at(B.camSlide, () => { if (rec("storm")) Sound.startLoop("storm"); else Sound.play("rumble", 3); });
     at(B.doorOpen, () => Sound.play("airlock"));
     // control room
     at(52.0, () => { Sound.stopLoop("wind"); Sound.stopLoop("storm"); });
-    at(B.insideCut, () => { Sound.setMood("calm"); Sound.startLoop("hum"); });
+    at(B.insideCut, () => { Sound.startLoop("hum"); });
     at(B.dissolve, () => Sound.play("whoosh"));
+    // per-shot music tracks (second audio channel)
+    for (const [k, m] of Object.entries(CONFIG.INTRO_MUSIC_META || {})) { const sh = this.shots.find((x) => x.id === m.shot); if (sh) at(sh.start, () => this.playMusic(k)); }
     this.cues = C.filter((c) => c.s >= s0).sort((a, b) => a.s - b.s);
     this.narrCues = Object.values(this.plan).filter((p) => p.start >= s0 * this.pace - 0.01).map((p) => ({ p, started: false, ended: false }));
+  },
+  playMusic(k) {
+    if (this.music) { this.music.h.stop(0.25); this.music = null; }
+    const m = (CONFIG.INTRO_MUSIC_META || {})[k] || {};
+    const h = Sound.playFile(k, { bus: Sound.musicBus, vol: (m.gain || 1) * 1.6 });
+    this.log.push(`${k} ${h ? "start" : "MISSING (silence)"} @ ${this.s.toFixed(2)}`);
+    if (h) { this.music = { k, h }; h.src.onended = () => { if (this.music && this.music.h === h) this.music = null; }; }
   },
   runCues() {
     for (const c of this.cues) if (!c.done && this.s >= c.s) { c.done = true; try { c.fn(); } catch (e) {} }
@@ -203,6 +216,7 @@ const Intro = {
   finish() {
     if (!this.running) return;
     this.running = false; if (this.subEl) this.subEl.remove(); if (this.dbgEl) this.dbgEl.remove();
+    if (this.music) { this.music.h.stop(0.6); this.music = null; } // gameplay music takes over (crossfade)
     Sound.duck(false);
     if (!this.handedOff) Story.setup();
     Game.introSeen = true; Game.saveProgress();
@@ -214,7 +228,7 @@ const Intro = {
     for (const sh of this.shots) { const x = (sh.start / tot) * (IW - 8) + 4; g.fillStyle = sh === this.shot ? "#ffd34a" : "#5a6390"; g.fillRect(Math.round(x), 14, Math.max(1, Math.round(((sh.end - sh.start) / tot) * (IW - 8)) - 1), 5); }
     for (const p of Object.values(this.plan)) { const x = (p.start / this.pace / tot) * (IW - 8) + 4, w = (p.voiceLen / this.pace / tot) * (IW - 8); g.fillStyle = p.k === this.playing ? "#5dff8a" : "#2f7a46"; g.fillRect(Math.round(x), 22, Math.max(1, Math.round(w)), 3); }
     g.fillStyle = "#fff"; g.fillRect(Math.round((this.s / tot) * (IW - 8) + 4), 12, 1, 15);
-    pxText(g, `T ${this.s.toFixed(2)} REAL ${(this.s * this.pace).toFixed(2)}  ${this.shot ? this.shot.id.toUpperCase() : ""}  VOICE ${this.playing || "-"}`, 4, 3, 1, "#ffd34a");
+    pxText(g, `T ${this.s.toFixed(2)} REAL ${(this.s * this.pace).toFixed(2)}  ${this.shot ? this.shot.id.toUpperCase() : ""}  VOICE ${this.playing || "-"}  MUSIC ${this.music ? this.music.k.toUpperCase() : "-"}`, 4, 3, 1, "#ffd34a");
   },
 
   // blit a region of the world buffer B with a camera (sub-pixel position, zoom)

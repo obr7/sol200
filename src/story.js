@@ -201,11 +201,11 @@ const Story = {
     Game.setTarget({ x: 60 * T, y: 9 * T });
     await Game.waitRoom("outside");
     Game.setTarget(null);
-    Sound.setMood("outside"); Sound.startLoop("wind");
+    Sound.setMood("outside"); Sound.startLoop("wind"); Sound.startLoop("storm");
     const res = await Minigames.panels();
     // back inside
     await UI.fade(true);
-    Sound.stopLoop("wind");
+    Sound.stopLoop("wind"); Sound.stopLoop("storm");
     P.helmet = false; N.diego.helmet = false; N.diego.follow = null; N.diego.hurt = true;
     G.hatchOpen = false; dynSolid.add(idx(53, 8)); dynSolid.add(idx(53, 9));
     Game.place(P, 47, 8, 2); Game.place(N.diego, 49, 9, 2); Game.place(N.layla, 46, 9, 3); Game.place(N.marcus, 48, 7, 0);
@@ -249,7 +249,7 @@ const Story = {
   async scene5() {
     const N = Game.npc, P = Game.player;
     // the storm hits
-    G.storm = 0.8; G.alarm = true; Sound.startLoop("alarm"); Sound.startLoop("wind"); Cam.shake = 1.2; Sound.play("rumble", 3);
+    G.storm = 0.8; G.alarm = true; Sound.startLoop("alarm"); Sound.startLoop("wind"); Sound.startLoop("storm"); Cam.shake = 1.2; Sound.play("rumble", 3);
     G.rosieBroken = true;
     UI.toast("🚨 ALARM: the oxygen machine stopped!", 3500);
     await sleep(1800);
@@ -298,7 +298,7 @@ const Story = {
   // ------------------------------------------------------------ ENDING
   async ending() {
     const N = Game.npc;
-    Sound.stopLoop("wind"); Sound.stopLoop("alarm"); G.alarm = false;
+    Sound.stopLoop("wind"); Sound.stopLoop("storm"); Sound.stopLoop("alarm"); G.alarm = false;
     for (let s = G.storm; s >= 0; s -= 0.05) { G.storm = Math.max(0, s); await sleep(60); }
     G.storm = 0; G.power = Math.max(G.power, 0.6);
     await UI.say("marcus", "The storm is moving away. The danger is over... for today.");

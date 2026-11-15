@@ -165,7 +165,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- touch controls ---------- */
 #touch { display: none; }
-body.touch #touch { display: block; }
+body.touch.playing #touch { display: block; }
 #stick { position: absolute; left: 3%; bottom: 6%; width: 7em; height: 7em; border-radius: 50%; background: rgba(255,255,255,.08); border: .2em solid rgba(255,255,255,.25); }
 #knob { position: absolute; left: 50%; top: 50%; width: 3em; height: 3em; margin: -1.5em; border-radius: 50%; background: rgba(255,255,255,.35); border: .2em solid rgba(255,255,255,.6); }
 #abtn { position: absolute; right: 4%; bottom: 9%; width: 4.6em; height: 4.6em; border-radius: 50%; background: rgba(245,195,90,.8); border: .25em solid #6b3d1f; font-weight: 700; font-size: 1em; color: #3a2414; }
@@ -185,3 +185,11 @@ body.touch #touch { display: block; }
 .clickstart p { margin: 0; font-size: .85em; opacity: .8; }
 #isub { position: absolute; left: 0; right: 0; bottom: 5%; padding: .45em 8%; background: rgba(6,8,18,.62); text-align: center; font-size: 1.05em; line-height: 1.35; color: #f4f1ea; text-shadow: 0 .08em 0 #000; pointer-events: none; }
 #idebug { display: none; }
+
+/* start screen title */
+.gtitle { font-family: "Pixelify Sans", "Trebuchet MS", sans-serif; font-weight: 700; font-size: 4.2em; line-height: 1; color: #ffd8a8; letter-spacing: .08em; text-shadow: 0 .06em 0 #b04a1a, 0 .12em 0 #5a1f0a, 0 0 .5em rgba(255,120,60,.55); animation: titleFloat 4s ease-in-out infinite; }
+.gsub { font-size: .9em; letter-spacing: .35em; color: #cfd8ff; margin: .1em 0 .6em; }
+.solnote { max-width: 34em; font-size: .82em !important; line-height: 1.45; opacity: 1 !important; background: rgba(10,12,28,.72); border: .12em solid #3a4170; border-left: .3em solid var(--gold); border-radius: .5em; padding: .55em .9em; text-align: left; margin: 0 0 .5em !important; }
+.solnote b { color: var(--gold); }
+.cs-hint { font-size: .75em !important; }
+.clickstart .btn { margin: .2em; }

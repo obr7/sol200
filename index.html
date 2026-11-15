@@ -173,7 +173,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- touch controls ---------- */
 #touch { display: none; }
-body.touch #touch { display: block; }
+body.touch.playing #touch { display: block; }
 #stick { position: absolute; left: 3%; bottom: 6%; width: 7em; height: 7em; border-radius: 50%; background: rgba(255,255,255,.08); border: .2em solid rgba(255,255,255,.25); }
 #knob { position: absolute; left: 50%; top: 50%; width: 3em; height: 3em; margin: -1.5em; border-radius: 50%; background: rgba(255,255,255,.35); border: .2em solid rgba(255,255,255,.6); }
 #abtn { position: absolute; right: 4%; bottom: 9%; width: 4.6em; height: 4.6em; border-radius: 50%; background: rgba(245,195,90,.8); border: .25em solid #6b3d1f; font-weight: 700; font-size: 1em; color: #3a2414; }
@@ -193,6 +193,14 @@ body.touch #touch { display: block; }
 .clickstart p { margin: 0; font-size: .85em; opacity: .8; }
 #isub { position: absolute; left: 0; right: 0; bottom: 5%; padding: .45em 8%; background: rgba(6,8,18,.62); text-align: center; font-size: 1.05em; line-height: 1.35; color: #f4f1ea; text-shadow: 0 .08em 0 #000; pointer-events: none; }
 #idebug { display: none; }
+
+/* start screen title */
+.gtitle { font-family: "Pixelify Sans", "Trebuchet MS", sans-serif; font-weight: 700; font-size: 4.2em; line-height: 1; color: #ffd8a8; letter-spacing: .08em; text-shadow: 0 .06em 0 #b04a1a, 0 .12em 0 #5a1f0a, 0 0 .5em rgba(255,120,60,.55); animation: titleFloat 4s ease-in-out infinite; }
+.gsub { font-size: .9em; letter-spacing: .35em; color: #cfd8ff; margin: .1em 0 .6em; }
+.solnote { max-width: 34em; font-size: .82em !important; line-height: 1.45; opacity: 1 !important; background: rgba(10,12,28,.72); border: .12em solid #3a4170; border-left: .3em solid var(--gold); border-radius: .5em; padding: .55em .9em; text-align: left; margin: 0 0 .5em !important; }
+.solnote b { color: var(--gold); }
+.cs-hint { font-size: .75em !important; }
+.clickstart .btn { margin: .2em; }
 </style>
 </head>
 <body>
@@ -202,6 +210,7 @@ body.touch #touch { display: block; }
     <div id="meters"></div>
     <div id="objective" class="hidden"><b>OBJECTIVE</b><span></span></div>
     <div id="topright">
+      <button class="iconbtn" id="btnFull" title="Full screen">⛶</button>
       <button class="iconbtn" id="btnMap" title="Base map (M)">🗺️</button>
       <button class="iconbtn" id="btnJournal" title="Discovery journal (J)">📖<span class="badge" id="jcount">0</span></button>
       <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
@@ -251,7 +260,20 @@ const CONFIG = {
     entry: "audio/sfx/entry_roar.mp3", launch: "audio/sfx/launch.mp3", hum: "audio/sfx/room_hum.mp3", separation: "audio/sfx/stage_sep.mp3",
     storm: "audio/sfx/storm_rumble.mp3", wind: "audio/sfx/wind_mars.mp3", airlock: "audio/sfx/airlock.mp3",
   },
-  SFX_VOLUME: { alarm: 0.35, applause: 0.55, argument: 0.75, entry: 0.7, launch: 0.85, hum: 0.35, separation: 0.8, storm: 0.55, wind: 0.45, airlock: 0.7 },
+  // argument_muffled.mp3 is recorded very quietly (about -44 dB), so it gets a big boost.
+  SFX_VOLUME: { alarm: 0.35, applause: 0.55, argument: 4.5, entry: 0.7, launch: 0.85, hum: 0.35, separation: 0.8, storm: 1.8, wind: 0.45, airlock: 0.7 },
+  // Intro music: one pre-rendered track per shot group (copied from "200 sol voices/music" into dist/audio/music/).
+  // Each starts when its shot starts, plays once, and ducks 6 dB under the narrator. Missing file = silence for that shot.
+  INTRO_MUSIC_FILES: {
+    music_01: "audio/music/music_01_argument.mp3", music_02: "audio/music/music_02_ceremony.mp3", music_03: "audio/music/music_03_launch.mp3",
+    music_04: "audio/music/music_04_space_approach.mp3", music_05: "audio/music/music_05_arrival.mp3", music_06: "audio/music/music_06_control_room.mp3",
+  },
+  // Measured length (s) and loudness-matching gain for each track (tracks were mastered at different levels).
+  INTRO_MUSIC_META: {
+    music_01: { shot: "argument", dur: 8.046, gain: 1.25 }, music_02: { shot: "ceremony", dur: 8.986, gain: 3.8 },
+    music_03: { shot: "launch", dur: 10.031, gain: 0.65 }, music_04: { shot: "space", dur: 14.028, gain: 2.0 },
+    music_05: { shot: "arrival", dur: 11.050, gain: 2.9 }, music_06: { shot: "control", dur: 13.035, gain: 1.8 },
+  },
 };
 
 // =====================================================================
@@ -381,8 +403,8 @@ const FACTS = {
   },
   sol: {
     title: "A Day on Mars = a 'Sol'", icon: "🕐", src: ["marsFacts"],
-    text: "A sol is one day on Mars — a little longer than an Earth day. It lasts about 24 hours and 37 minutes.",
-    real: "Mars mission teams count days in sols. Our crew is on Sol 200!",
+    text: "A sol is one day on Mars — a little longer than an Earth day. One sol lasts about 24 hours and 40 minutes.",
+    real: "We say 'sol' instead of 'day' so nobody mixes up Mars days and Earth days. Our crew is on Sol 200!",
   },
   air: {
     title: "Mars Air", icon: "🌬️", src: ["marsFacts"],
@@ -1836,6 +1858,16 @@ const Game = {
     this.canvas = $("#screen"); this.low = mkCanvas(VW, VH); this.lg = this.low.getContext("2d"); this.lg.imageSmoothingEnabled = false;
     this.last = performance.now(); requestAnimationFrame((t) => this.loop(t));
   },
+  fullscreen(force) {
+    try {
+      const d = document, on = !!(d.fullscreenElement || d.webkitFullscreenElement);
+      if (on && !force) { (d.exitFullscreen || d.webkitExitFullscreen).call(d); return; }
+      if (on) return;
+      const el = d.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) { const p = req.call(el, { navigationUI: "hide" }); if (p && p.catch) p.catch(() => {}); if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(() => {}); }
+      else UI.toast("Full screen isn't supported here. Tip: add the page to your Home Screen.");
+    } catch (e) {}
+  },
   saveProgress() { try { localStorage.setItem("sol200_progress", JSON.stringify({ discovered: [...G.discovered], introSeen: this.introSeen })); } catch (e) {} },
   updateJournal() { $("#jcount").textContent = G.discovered.size; },
 
@@ -1890,6 +1922,8 @@ const Game = {
     stick.addEventListener("pointerup", end); stick.addEventListener("pointercancel", end);
     $("#abtn").addEventListener("pointerdown", (e) => { e.preventDefault(); Sound.init(); if (UI.busy()) UI.action(); else this.tryInteract(); });
     $("#btnMap").onclick = () => { if (!UI.busy()) UI.map(); };
+    $("#btnFull").onclick = () => this.fullscreen();
+    document.addEventListener("fullscreenchange", () => setTimeout(() => this.resize(), 100));
     $("#minimapWrap").onclick = () => { if (!UI.busy() && this.mode === "play") UI.map(); };
     $("#btnJournal").onclick = () => { if (!UI.busy()) UI.journal(); };
     $("#btnSettings").onclick = () => { if (!UI.busy()) UI.settings(); };
@@ -2018,8 +2052,8 @@ const Game = {
       }
     }
     if (this.target && this.guidePath && this.guidePath.length > 1) {
-      const P = this.player, wp = this.guidePath[Math.min(3, this.guidePath.length - 1)];
-      const a = Math.atan2(wp.y - P.y, wp.x - P.x), r = 20 + Math.sin(t * 6) * 3;
+      const P = this.player;
+      const a = Math.atan2(this.target.y - P.y, this.target.x - P.x), r = 20 + Math.sin(t * 6) * 3;
       const ax = P.x + Math.cos(a) * r, ay = P.y - 4 + Math.sin(a) * r;
       g.save(); g.translate(Math.round(ax), Math.round(ay)); g.rotate(a); g.fillStyle = "#ffd34a"; g.strokeStyle = "#5a2e10"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(9, 0); g.lineTo(-4, -7); g.lineTo(-1, 0); g.lineTo(-4, 7); g.closePath(); g.stroke(); g.fill(); g.restore();
     }
@@ -2066,6 +2100,7 @@ const Game = {
     } else { c.moving = false; c.walkT = 0; }
   },
   loop(now) {
+    document.body.classList.toggle("playing", this.mode === "play");
     const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; const t = now / 1000;
     if (this.mode === "play" || this.mode === "cutscene") {
       for (const c of this.chars) this.updateChar(c, dt);
@@ -2328,11 +2363,11 @@ const Story = {
     Game.setTarget({ x: 60 * T, y: 9 * T });
     await Game.waitRoom("outside");
     Game.setTarget(null);
-    Sound.setMood("outside"); Sound.startLoop("wind");
+    Sound.setMood("outside"); Sound.startLoop("wind"); Sound.startLoop("storm");
     const res = await Minigames.panels();
     // back inside
     await UI.fade(true);
-    Sound.stopLoop("wind");
+    Sound.stopLoop("wind"); Sound.stopLoop("storm");
     P.helmet = false; N.diego.helmet = false; N.diego.follow = null; N.diego.hurt = true;
     G.hatchOpen = false; dynSolid.add(idx(53, 8)); dynSolid.add(idx(53, 9));
     Game.place(P, 47, 8, 2); Game.place(N.diego, 49, 9, 2); Game.place(N.layla, 46, 9, 3); Game.place(N.marcus, 48, 7, 0);
@@ -2376,7 +2411,7 @@ const Story = {
   async scene5() {
     const N = Game.npc, P = Game.player;
     // the storm hits
-    G.storm = 0.8; G.alarm = true; Sound.startLoop("alarm"); Sound.startLoop("wind"); Cam.shake = 1.2; Sound.play("rumble", 3);
+    G.storm = 0.8; G.alarm = true; Sound.startLoop("alarm"); Sound.startLoop("wind"); Sound.startLoop("storm"); Cam.shake = 1.2; Sound.play("rumble", 3);
     G.rosieBroken = true;
     UI.toast("🚨 ALARM: the oxygen machine stopped!", 3500);
     await sleep(1800);
@@ -2425,7 +2460,7 @@ const Story = {
   // ------------------------------------------------------------ ENDING
   async ending() {
     const N = Game.npc;
-    Sound.stopLoop("wind"); Sound.stopLoop("alarm"); G.alarm = false;
+    Sound.stopLoop("wind"); Sound.stopLoop("storm"); Sound.stopLoop("alarm"); G.alarm = false;
     for (let s = G.storm; s >= 0; s -= 0.05) { G.storm = Math.max(0, s); await sleep(60); }
     G.storm = 0; G.power = Math.max(G.power, 0.6);
     await UI.say("marcus", "The storm is moving away. The danger is over... for today.");
@@ -3323,11 +3358,17 @@ const Intro = {
   showStart() {
     UI.clear(); Game.mode = "title"; Scenes.setShot("title"); $("#hud").classList.add("off");
     const d = el("div"); d.id = "title";
-    d.innerHTML = `<div class="clickstart"><div class="cs-ico">🎧</div><button class="btn go" id="tStart">▶ Click to start</button><p>Best with sound on · about 1 minute intro</p>
-      <div><button class="btn alt" id="tSet">⚙️ Settings</button><button class="btn alt" id="tSrc">🛰️ NASA Data</button></div></div>
+    d.innerHTML = `<div class="clickstart">
+      <div class="gtitle">${CONFIG.GAME_TITLE}</div>
+      <div class="gsub">${CONFIG.SUBTITLE.toUpperCase()}</div>
+      <p class="solnote"><b>What is a sol?</b> A day on Mars is called a <b>sol</b>. Mars spins a little slower than Earth, so one sol is about <b>24 hours and 40 minutes</b> — about 40 minutes longer than a day on Earth. Astronauts say “sol” so they never mix up Mars days and Earth days. Our story starts on the crew’s <b>200th sol</b> on Mars!</p>
+      <button class="btn go" id="tStart">▶ Start</button>
+      <p class="cs-hint">🎧 Best with sound on</p>
+      <div><button class="btn alt" id="tFull">⛶ Full screen</button><button class="btn alt" id="tSet">⚙️ Settings</button><button class="btn alt" id="tSrc">🛰️ NASA Data</button></div></div>
       <small>A game about the real trade-offs of living on Mars · NASA Space Apps Challenge 2026 · Uses live space-weather data from NASA DONKI</small>`;
     UI.root.appendChild(d);
-    d.querySelector("#tStart").onclick = async () => { Sound.init(); d.querySelector("#tStart").textContent = "Loading sounds…"; await this.start(); };
+    d.querySelector("#tStart").onclick = async () => { Sound.init(); if (document.body.classList.contains("touch")) Game.fullscreen(true); d.querySelector("#tStart").textContent = "Loading…"; await this.start(); };
+    d.querySelector("#tFull").onclick = () => Game.fullscreen();
     d.querySelector("#tSet").onclick = () => { Sound.init(); UI.settings(); };
     d.querySelector("#tSrc").onclick = () => { Sound.init(); UI.credits(); };
   },
@@ -3344,7 +3385,7 @@ const Intro = {
         this.narr[k] = { buf: await ctx.decodeAudioData(await r.arrayBuffer()) };
       } catch (e) { this.narr[k] = {}; }
     }));
-    await Promise.all([narr, Sound.loadFiles(CONFIG.SFX_FILES, 5000)]);
+    await Promise.all([narr, Sound.loadFiles(CONFIG.SFX_FILES, 5000), Sound.loadFiles(CONFIG.INTRO_MUSIC_FILES, 6000)]);
   },
 
   async start(fromShot) {
@@ -3365,7 +3406,7 @@ const Intro = {
     this.buildCues(s0);
     for (const p of Object.values(this.pools)) p.clear();
     this.footprints = []; this.handedOff = false; this.shot = null;
-    Sound.stopLoop("hum"); Sound.setMood(null);
+    Sound.stopLoop("hum"); Sound.setMood(null); if (this.music) { this.music.h.stop(0.1); this.music = null; }
     Game.mode = "intro"; this.running = true;
     this.log = []; this.playing = null;
   },
@@ -3375,45 +3416,52 @@ const Intro = {
     const B = this.Bt, C = [], rec = (k) => Sound.hasFile(k);
     const at = (s, fn) => C.push({ s, fn });
     // shot 1
-    at(0, () => { Sound.setMood("tension"); Sound.startLoop("alarm"); Sound.startLoop("hum"); if (rec("argument")) Sound.play("argument"); });
-    at(B.argFreeze, () => { Sound.play("thud"); Sound.setMood(null); });
+    at(0, () => { Sound.startLoop("alarm"); Sound.startLoop("hum"); if (rec("argument")) Sound.play("argument"); });
+    at(B.argFreeze, () => { Sound.play("thud"); });
     at(B.argBlack + B.alarmTail, () => { Sound.stopLoop("alarm"); Sound.stopLoop("hum"); });
     // title
     at(B.titleIn, () => { Sound.play("whoosh"); Sound.play("glint"); });
     // ceremony
-    at(8.0, () => { Sound.setMood("hope"); if (rec("applause")) Sound.playFile("applause", { fade: 0.4 }); else Sound.play("applause", 2.2); });
+    at(8.0, () => { if (rec("applause")) Sound.playFile("applause", { fade: 0.4 }); else Sound.play("applause", 2.2); });
     if (!rec("applause")) at(9.2, () => Sound.play("applause", 1.2));
     at(B.cerPin, () => { Sound.play("pin"); Sound.play("glint"); Sound.play("flash"); if (!rec("applause")) Sound.play("applause", 1.6); });
     at(B.cerPin + 0.25, () => Sound.play("flash"));
-    at(B.cerLook, () => Sound.setMood("single"));
-    at(B.cerBreak, () => { Sound.setMood("hope"); if (!rec("applause")) Sound.play("applause", 1.2); });
+    at(B.cerBreak, () => { if (!rec("applause")) Sound.play("applause", 1.2); });
     at(B.cerFlash, () => Sound.play("flash"));
     // launch
-    at(17.0, () => { Sound.setMood(null); Sound.startLoop("steam"); });
+    at(17.0, () => { Sound.startLoop("steam"); });
     at(B.ignition - 0.3, () => { if (rec("launch")) { Sound.stopLoop("steam"); Sound.play("launch"); } });
     at(B.ignition, () => { Sound.stopLoop("steam"); Sound.play("birds"); if (!rec("launch")) { Sound.play("ignition"); Sound.play("rumble", 6); Sound.startLoop("crackle"); } });
-    at(B.ignition + 0.6, () => Sound.setMood("majestic"));
-    at(B.separation, () => { Sound.play("separation"); Sound.stopLoop("crackle", true); Sound.setMood(null); });
+    at(B.separation, () => { Sound.play("separation"); Sound.stopLoop("crackle", true); });
     // space
-    at(27.0, () => { Sound.setMood("spacepad"); Sound.startLoop("engine"); });
+    at(27.0, () => { Sound.startLoop("engine"); });
     at(B.windowCut[0], () => Sound.play("whoosh"));
     at(B.matchCut, () => Sound.play("whoosh"));
     // mars
-    at(33.0, () => { Sound.stopLoop("engine"); Sound.setMood("mystery"); });
+    at(33.0, () => { Sound.stopLoop("engine"); });
     at(B.retro, () => Sound.play("retro"));
     at(B.entry, () => Sound.play("entry"));
     at(B.touchdown, () => { Sound.play("thud"); Sound.play("rumble", 1.5); });
     at(B.dustWipe, () => Sound.play("whoosh"));
     // arrival
-    at(41.0, () => { Sound.setMood("arrival"); Sound.startLoop("wind"); });
+    at(41.0, () => { Sound.startLoop("wind"); });
     at(B.camSlide, () => { if (rec("storm")) Sound.startLoop("storm"); else Sound.play("rumble", 3); });
     at(B.doorOpen, () => Sound.play("airlock"));
     // control room
     at(52.0, () => { Sound.stopLoop("wind"); Sound.stopLoop("storm"); });
-    at(B.insideCut, () => { Sound.setMood("calm"); Sound.startLoop("hum"); });
+    at(B.insideCut, () => { Sound.startLoop("hum"); });
     at(B.dissolve, () => Sound.play("whoosh"));
+    // per-shot music tracks (second audio channel)
+    for (const [k, m] of Object.entries(CONFIG.INTRO_MUSIC_META || {})) { const sh = this.shots.find((x) => x.id === m.shot); if (sh) at(sh.start, () => this.playMusic(k)); }
     this.cues = C.filter((c) => c.s >= s0).sort((a, b) => a.s - b.s);
     this.narrCues = Object.values(this.plan).filter((p) => p.start >= s0 * this.pace - 0.01).map((p) => ({ p, started: false, ended: false }));
+  },
+  playMusic(k) {
+    if (this.music) { this.music.h.stop(0.25); this.music = null; }
+    const m = (CONFIG.INTRO_MUSIC_META || {})[k] || {};
+    const h = Sound.playFile(k, { bus: Sound.musicBus, vol: (m.gain || 1) * 1.6 });
+    this.log.push(`${k} ${h ? "start" : "MISSING (silence)"} @ ${this.s.toFixed(2)}`);
+    if (h) { this.music = { k, h }; h.src.onended = () => { if (this.music && this.music.h === h) this.music = null; }; }
   },
   runCues() {
     for (const c of this.cues) if (!c.done && this.s >= c.s) { c.done = true; try { c.fn(); } catch (e) {} }
@@ -3464,6 +3512,7 @@ const Intro = {
   finish() {
     if (!this.running) return;
     this.running = false; if (this.subEl) this.subEl.remove(); if (this.dbgEl) this.dbgEl.remove();
+    if (this.music) { this.music.h.stop(0.6); this.music = null; } // gameplay music takes over (crossfade)
     Sound.duck(false);
     if (!this.handedOff) Story.setup();
     Game.introSeen = true; Game.saveProgress();
@@ -3475,7 +3524,7 @@ const Intro = {
     for (const sh of this.shots) { const x = (sh.start / tot) * (IW - 8) + 4; g.fillStyle = sh === this.shot ? "#ffd34a" : "#5a6390"; g.fillRect(Math.round(x), 14, Math.max(1, Math.round(((sh.end - sh.start) / tot) * (IW - 8)) - 1), 5); }
     for (const p of Object.values(this.plan)) { const x = (p.start / this.pace / tot) * (IW - 8) + 4, w = (p.voiceLen / this.pace / tot) * (IW - 8); g.fillStyle = p.k === this.playing ? "#5dff8a" : "#2f7a46"; g.fillRect(Math.round(x), 22, Math.max(1, Math.round(w)), 3); }
     g.fillStyle = "#fff"; g.fillRect(Math.round((this.s / tot) * (IW - 8) + 4), 12, 1, 15);
-    pxText(g, `T ${this.s.toFixed(2)} REAL ${(this.s * this.pace).toFixed(2)}  ${this.shot ? this.shot.id.toUpperCase() : ""}  VOICE ${this.playing || "-"}`, 4, 3, 1, "#ffd34a");
+    pxText(g, `T ${this.s.toFixed(2)} REAL ${(this.s * this.pace).toFixed(2)}  ${this.shot ? this.shot.id.toUpperCase() : ""}  VOICE ${this.playing || "-"}  MUSIC ${this.music ? this.music.k.toUpperCase() : "-"}`, 4, 3, 1, "#ffd34a");
   },
 
   // blit a region of the world buffer B with a camera (sub-pixel position, zoom)

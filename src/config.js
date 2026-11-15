@@ -31,7 +31,20 @@ const CONFIG = {
     entry: "audio/sfx/entry_roar.mp3", launch: "audio/sfx/launch.mp3", hum: "audio/sfx/room_hum.mp3", separation: "audio/sfx/stage_sep.mp3",
     storm: "audio/sfx/storm_rumble.mp3", wind: "audio/sfx/wind_mars.mp3", airlock: "audio/sfx/airlock.mp3",
   },
-  SFX_VOLUME: { alarm: 0.35, applause: 0.55, argument: 0.75, entry: 0.7, launch: 0.85, hum: 0.35, separation: 0.8, storm: 0.55, wind: 0.45, airlock: 0.7 },
+  // argument_muffled.mp3 is recorded very quietly (about -44 dB), so it gets a big boost.
+  SFX_VOLUME: { alarm: 0.35, applause: 0.55, argument: 4.5, entry: 0.7, launch: 0.85, hum: 0.35, separation: 0.8, storm: 1.8, wind: 0.45, airlock: 0.7 },
+  // Intro music: one pre-rendered track per shot group (copied from "200 sol voices/music" into dist/audio/music/).
+  // Each starts when its shot starts, plays once, and ducks 6 dB under the narrator. Missing file = silence for that shot.
+  INTRO_MUSIC_FILES: {
+    music_01: "audio/music/music_01_argument.mp3", music_02: "audio/music/music_02_ceremony.mp3", music_03: "audio/music/music_03_launch.mp3",
+    music_04: "audio/music/music_04_space_approach.mp3", music_05: "audio/music/music_05_arrival.mp3", music_06: "audio/music/music_06_control_room.mp3",
+  },
+  // Measured length (s) and loudness-matching gain for each track (tracks were mastered at different levels).
+  INTRO_MUSIC_META: {
+    music_01: { shot: "argument", dur: 8.046, gain: 1.25 }, music_02: { shot: "ceremony", dur: 8.986, gain: 3.8 },
+    music_03: { shot: "launch", dur: 10.031, gain: 0.65 }, music_04: { shot: "space", dur: 14.028, gain: 2.0 },
+    music_05: { shot: "arrival", dur: 11.050, gain: 2.9 }, music_06: { shot: "control", dur: 13.035, gain: 1.8 },
+  },
 };
 
 // =====================================================================

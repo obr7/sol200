@@ -30,6 +30,16 @@ const Game = {
     this.canvas = $("#screen"); this.low = mkCanvas(VW, VH); this.lg = this.low.getContext("2d"); this.lg.imageSmoothingEnabled = false;
     this.last = performance.now(); requestAnimationFrame((t) => this.loop(t));
   },
+  fullscreen(force) {
+    try {
+      const d = document, on = !!(d.fullscreenElement || d.webkitFullscreenElement);
+      if (on && !force) { (d.exitFullscreen || d.webkitExitFullscreen).call(d); return; }
+      if (on) return;
+      const el = d.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) { const p = req.call(el, { navigationUI: "hide" }); if (p && p.catch) p.catch(() => {}); if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(() => {}); }
+      else UI.toast("Full screen isn't supported here. Tip: add the page to your Home Screen.");
+    } catch (e) {}
+  },
   saveProgress() { try { localStorage.setItem("sol200_progress", JSON.stringify({ discovered: [...G.discovered], introSeen: this.introSeen })); } catch (e) {} },
   updateJournal() { $("#jcount").textContent = G.discovered.size; },
 
@@ -84,6 +94,8 @@ const Game = {
     stick.addEventListener("pointerup", end); stick.addEventListener("pointercancel", end);
     $("#abtn").addEventListener("pointerdown", (e) => { e.preventDefault(); Sound.init(); if (UI.busy()) UI.action(); else this.tryInteract(); });
     $("#btnMap").onclick = () => { if (!UI.busy()) UI.map(); };
+    $("#btnFull").onclick = () => this.fullscreen();
+    document.addEventListener("fullscreenchange", () => setTimeout(() => this.resize(), 100));
     $("#minimapWrap").onclick = () => { if (!UI.busy() && this.mode === "play") UI.map(); };
     $("#btnJournal").onclick = () => { if (!UI.busy()) UI.journal(); };
     $("#btnSettings").onclick = () => { if (!UI.busy()) UI.settings(); };
@@ -212,8 +224,8 @@ const Game = {
       }
     }
     if (this.target && this.guidePath && this.guidePath.length > 1) {
-      const P = this.player, wp = this.guidePath[Math.min(3, this.guidePath.length - 1)];
-      const a = Math.atan2(wp.y - P.y, wp.x - P.x), r = 20 + Math.sin(t * 6) * 3;
+      const P = this.player;
+      const a = Math.atan2(this.target.y - P.y, this.target.x - P.x), r = 20 + Math.sin(t * 6) * 3;
       const ax = P.x + Math.cos(a) * r, ay = P.y - 4 + Math.sin(a) * r;
       g.save(); g.translate(Math.round(ax), Math.round(ay)); g.rotate(a); g.fillStyle = "#ffd34a"; g.strokeStyle = "#5a2e10"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(9, 0); g.lineTo(-4, -7); g.lineTo(-1, 0); g.lineTo(-4, 7); g.closePath(); g.stroke(); g.fill(); g.restore();
     }
@@ -260,6 +272,7 @@ const Game = {
     } else { c.moving = false; c.walkT = 0; }
   },
   loop(now) {
+    document.body.classList.toggle("playing", this.mode === "play");
     const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; const t = now / 1000;
     if (this.mode === "play" || this.mode === "cutscene") {
       for (const c of this.chars) this.updateChar(c, dt);

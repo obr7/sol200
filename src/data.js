@@ -58,8 +58,8 @@ const FACTS = {
   },
   sol: {
     title: "A Day on Mars = a 'Sol'", icon: "🕐", src: ["marsFacts"],
-    text: "A sol is one day on Mars — a little longer than an Earth day. It lasts about 24 hours and 37 minutes.",
-    real: "Mars mission teams count days in sols. Our crew is on Sol 200!",
+    text: "A sol is one day on Mars — a little longer than an Earth day. One sol lasts about 24 hours and 40 minutes.",
+    real: "We say 'sol' instead of 'day' so nobody mixes up Mars days and Earth days. Our crew is on Sol 200!",
   },
   air: {
     title: "Mars Air", icon: "🌬️", src: ["marsFacts"],

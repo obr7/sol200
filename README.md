@@ -27,6 +27,7 @@ You play the commander of a 4-person Mars base on Sol 200, the day a dust storm 
 | How slow the intro plays | `INTRO_TIMING.PACE` (1.0 = the script's exact table at about 65 s; 1.2 = 20% slower at about 76 s, the current setting) |
 | Gaps between n4a / n4b / n4c | `INTRO_TIMING.N4_GAPS` = `[0.8, 0.8]` |
 | Narration files + measured silence | `CONFIG.NARRATION_FILES` (N1, N2, N3, N4A, N4B, N4C) and `CONFIG.NARRATION_META` (dur / lead / trail) |
+| Intro music tracks (one per shot) + gains | `CONFIG.INTRO_MUSIC_FILES`, `CONFIG.INTRO_MUSIC_META` |
 | Recorded sound effects + volumes | `CONFIG.SFX_FILES`, `CONFIG.SFX_VOLUME` |
 | "Sol 200 on Mars." wait / typing / dissolve | `INTRO_TIMING.finalWait`, `finalType`, `finalHold`, `dissolveLen` |
 | The intro's shots (drawing code) | `src/intro.js` (one function per shot: `shot_argument`, `shot_title`, `shot_ceremony`, `shot_launch`, `shot_space`, `shot_mars`, `shot_arrival`, `shot_control`) |
