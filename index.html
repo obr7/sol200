@@ -229,7 +229,7 @@ body.touch.playing #touch { display: block; }
 #iskip:hover { opacity: 1; background: rgba(0,0,0,.7); border-color: #ffd34a; }
 
 /* keyboard keycap controls hint */
-#keysHint { background: rgba(14,16,30,.85); border: .12em solid #3a4170; border-radius: .5em; padding: .45em .6em; font-size: .72em; display: flex; flex-direction: column; gap: .35em; transition: opacity .3s; }
+#keysHint { position: absolute; right: .8em; top: 13em; pointer-events: none; background: rgba(14,16,30,.85); border: .12em solid #3a4170; border-radius: .5em; padding: .45em .6em; font-size: .72em; display: flex; flex-direction: column; gap: .35em; transition: opacity .3s; }
 #keysHint.hidden { display: flex !important; opacity: 0; }
 #keysHint .krow { display: flex; align-items: center; gap: .5em; }
 #keysHint .kgrid { display: grid; grid-template-columns: repeat(3, 1.9em); grid-template-rows: repeat(2, 1.9em); gap: .15em; }
@@ -391,13 +391,14 @@ body.touch.playing #touch { display: block; }
   <canvas id="screen"></canvas>
   <div id="hud" class="layer off">
     <div id="meters"></div>
-    <div id="hudLeft"><div id="objective" class="hidden"><b>OBJECTIVE</b><span></span></div><div id="keysHint" class="hidden"></div><div id="toast"></div></div>
+    <div id="hudLeft"><div id="objective" class="hidden"><b>OBJECTIVE</b><span></span></div><div id="toast"></div></div>
     <div id="topright">
       <button class="iconbtn" id="btnFull" title="Full screen">⛶</button>
       <button class="iconbtn" id="btnMap" title="Base map (M)">🗺️</button>
       <button class="iconbtn" id="btnJournal" title="Discovery journal (J)">📖<span class="badge" id="jcount">0</span></button>
       <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
     </div>
+    <div id="keysHint" class="hidden"></div>
     <div id="minimapWrap" title="Base map (M)"><canvas id="minimap" width="240" height="132"></canvas><div id="mmLabel"></div></div>
     <div id="timer" class="hidden">0</div>
     <div id="roomBanner"></div>
@@ -2850,7 +2851,7 @@ const Game = {
     // the alarm sound always follows the red alarm light (they start and stop together)
     { const want = !!G.alarm && (this.mode === "play" || this.mode === "cutscene"); if (want && !this._alarmOn) { this._alarmOn = true; Sound.startLoop("alarm"); } else if (!want && this._alarmOn) { this._alarmOn = false; Sound.stopLoop("alarm"); } } // alarm sound always follows the red light
     const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; const t = now / 1000;
-    { const kh = $("#keysHint"); if (kh && UI._keysOn) { this.keysHintT = (this.keysHintT || 0) + dt; if (this.keysHintT > 25 || (this.keysHintT > 8 && (this.player.walkDist || 0) > 400)) UI._keysOn = false; } if (kh) kh.classList.toggle("hidden", !(UI._keysOn && this.mode === "play" && !UI.busy())); }
+    { const kh = $("#keysHint"); if (kh && UI._keysOn) { this.keysHintT = (this.keysHintT || 0) + dt; if (this.keysHintT > 25 || (this.keysHintT > 8 && (this.player.walkDist || 0) > 400)) UI._keysOn = false; } if (kh) { kh.classList.toggle("hidden", !(UI._keysOn && this.mode === "play" && !UI.busy())); const mm = $("#minimapWrap"); if (mm && UI._keysOn) kh.style.top = (mm.offsetTop + mm.offsetHeight + 8) + "px"; } }
     if (this.mode === "play" || this.mode === "cutscene") {
       for (const c of this.chars) this.updateChar(c, dt);
       const P = this.player; const lt = this.trail[this.trail.length - 1];

@@ -306,7 +306,7 @@ const Game = {
     // the alarm sound always follows the red alarm light (they start and stop together)
     { const want = !!G.alarm && (this.mode === "play" || this.mode === "cutscene"); if (want && !this._alarmOn) { this._alarmOn = true; Sound.startLoop("alarm"); } else if (!want && this._alarmOn) { this._alarmOn = false; Sound.stopLoop("alarm"); } } // alarm sound always follows the red light
     const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now; const t = now / 1000;
-    { const kh = $("#keysHint"); if (kh && UI._keysOn) { this.keysHintT = (this.keysHintT || 0) + dt; if (this.keysHintT > 25 || (this.keysHintT > 8 && (this.player.walkDist || 0) > 400)) UI._keysOn = false; } if (kh) kh.classList.toggle("hidden", !(UI._keysOn && this.mode === "play" && !UI.busy())); }
+    { const kh = $("#keysHint"); if (kh && UI._keysOn) { this.keysHintT = (this.keysHintT || 0) + dt; if (this.keysHintT > 25 || (this.keysHintT > 8 && (this.player.walkDist || 0) > 400)) UI._keysOn = false; } if (kh) { kh.classList.toggle("hidden", !(UI._keysOn && this.mode === "play" && !UI.busy())); const mm = $("#minimapWrap"); if (mm && UI._keysOn) kh.style.top = (mm.offsetTop + mm.offsetHeight + 8) + "px"; } }
     if (this.mode === "play" || this.mode === "cutscene") {
       for (const c of this.chars) this.updateChar(c, dt);
       const P = this.player; const lt = this.trail[this.trail.length - 1];

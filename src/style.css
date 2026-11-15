@@ -221,7 +221,7 @@ body.touch.playing #touch { display: block; }
 #iskip:hover { opacity: 1; background: rgba(0,0,0,.7); border-color: #ffd34a; }
 
 /* keyboard keycap controls hint */
-#keysHint { background: rgba(14,16,30,.85); border: .12em solid #3a4170; border-radius: .5em; padding: .45em .6em; font-size: .72em; display: flex; flex-direction: column; gap: .35em; transition: opacity .3s; }
+#keysHint { position: absolute; right: .8em; top: 13em; pointer-events: none; background: rgba(14,16,30,.85); border: .12em solid #3a4170; border-radius: .5em; padding: .45em .6em; font-size: .72em; display: flex; flex-direction: column; gap: .35em; transition: opacity .3s; }
 #keysHint.hidden { display: flex !important; opacity: 0; }
 #keysHint .krow { display: flex; align-items: center; gap: .5em; }
 #keysHint .kgrid { display: grid; grid-template-columns: repeat(3, 1.9em); grid-template-rows: repeat(2, 1.9em); gap: .15em; }
