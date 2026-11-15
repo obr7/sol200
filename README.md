@@ -1,17 +1,48 @@
-# SOL 200 — Junior Astronaut Mission Trainer
+<div align="center">
 
-**Play now:** https://obr7.github.io/sol200/
+# 🔴 SOL 200
+### Junior Astronaut Mission Trainer
 
-SOL 200 is a free browser game for children aged 7 to 12, made for the **NASA Space Apps Challenge 2026** challenge *Junior Astronaut Mission Trainer*.
+**A story game about surviving, leading and growing food on Mars, for kids aged 7 to 12.**
+
+[▶ **Play now**](https://obr7.github.io/sol200/) · [📖 The story](docs/STORY.md) · [🛠 Documentation](docs/DOCUMENTATION.md)
+
+![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026-0b3d91) ![Live NASA data](https://img.shields.io/badge/data-NASA%20DONKI%20%C2%B7%20Mars%20Trek-c1440e) ![Runs in any browser](https://img.shields.io/badge/runs%20in-any%20browser-2ea44f) ![Vibe coded](https://img.shields.io/badge/built%20with-vibe%20coding-8a2be2)
+
+</div>
+
+---
+
+SOL 200 is a free browser game made for the **NASA Space Apps Challenge 2026** challenge *Junior Astronaut Mission Trainer*.
 
 You play **Commander Damon Carter** on Sol 200 (day 200) of the first mission to grow food on Mars. A giant dust storm is coming, and the crew does not agree on what to do. You explore the base, play short hands-on mini-games built on real science, and make hard choices. Every choice has a price on three meters: **Safety**, **Mission** and **Team**.
 
 > ### 🎧 Vibe coded from start to finish
 > **This whole project is vibe coding.** Our team did not write the code by hand. We described what we wanted in plain language (the story, the scenes, the mini-games, how things should look and feel), and AI tools wrote all of the code. We played every version, said what to change, and checked every result. The story, characters, game design and science choices are ours. See [AI use](#ai-use) below.
 
----
+## Contents
+[The story](#the-story) · [Chapter 1](#whats-in-chapter-1) · [Real NASA data](#real-nasa-data-used-while-you-play) · [AI use](#ai-use) · [Run it](#run-it) · [Build](#build) · [Credits](#credits)
 
-## What is in the game
+## The story
+
+> Four astronauts who know each other from Earth face crises on Mars while a shared secret from their past surfaces. **The central question: does Damon deserve to lead?**
+
+| # | Chapter | You play | The choice | Lesson | Status |
+|---|---|---|---|---|---|
+| 1 | The Commander | Damon | Clean the panels outside (A) or stay in and share power (B) | Leaders listen; asking for help is not weakness | ✅ Playable |
+| 2 | Damon's Past | Damon | Claim the credit (A) or share it with Marcus (B) | Shortcuts have a cost | 📝 Planned |
+| 3 | Marcus | Marcus | Send the full honest report (A) or hide the painful parts (B) | Silence isn't innocent | 📝 Planned |
+| 4 | Diego | Diego | Admit the water leak and repair fully (A) or keep the quick patch (B) | Half-solutions only delay problems | 📝 Planned |
+| 5 | Layla | Layla | Save Hope (A) or protect the crew's water (B) | Honesty can be kind | 📝 Planned |
+| 6 | The Sun | All four | Build a radiation shelter together during a solar flare | Teamwork decides what survives | 📝 Planned |
+
+- **Threads:** Earth's question "who made the decisions?", the secret of a past training accident, and the Team meter that decides the ending.
+- **Endings:** with Team trust at 50 or more, the crew opens up and sends one honest report; below 50, accusations fly and they part ways, never speaking again.
+- **Foreshadowing:** radiation from a solar flare is Chapter 6's climax, and Chapter 1 already reads live NASA DONKI data to show today's real Sun.
+
+Full outline with every chapter: **[docs/STORY.md](docs/STORY.md)**
+
+## What's in Chapter 1
 
 - **A narrated intro film** (about 78 seconds, with a Skip button): the crew argues, the rocket launches, the crew lands on Mars.
 - **A Mars base to explore**: 5 rooms (Crew Quarters, Control Room, Workshop, Greenhouse, Airlock) and the Mars surface outside, with Among Us-style room lighting and a minimap.

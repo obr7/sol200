@@ -4,6 +4,8 @@ SOL 200 is a single-page HTML5 game. It has no engine, no framework and no runti
 
 > **How this was built: vibe coding.** Every line of code in this repository was written by AI tools (mostly Claude Code, plus Codex) from plain-language requests by our team. The team wrote the story and design, described each feature and change, played every build, and asked for fixes until it worked. ChatGPT made the default character art and crew photos, and ElevenLabs made the voice, music and recorded sounds. Nothing was hand-coded.
 
+**See also:** [The story](STORY.md) · [README](../README.md)
+
 **Contents:** [How it was made](#how-it-was-made) · [Project structure](#project-structure) · [How the game runs](#how-the-game-runs) · [Story flow](#story-flow) · [Mini-games](#mini-games) · [Real data](#real-data) · [Art and sound](#art-and-sound) · [Settings and saving](#settings-and-saving) · [Developer mode](#developer-mode) · [Editing guide](#editing-guide) · [Build, test, deploy](#build-test-deploy) · [Sources](#sources)
 
 ---
