@@ -1,7 +1,10 @@
 // =====================================================================
-//  SUIT BRIEFING CARD — why astronauts wear spacesuits. Each fact is a small
-//  flip card (emoji front, sentence back); after all four, "Suit up!" goes on.
+//  SUIT BRIEFING CARDS — one big "legendary" card with two faces.
+//  Face 1: why astronauts wear spacesuits. Click → it flips with a burst of
+//  gold, the screen shakes, and Face 2 shows a real person: Salam Abu Alhayjaa.
+//  Each fact is a small flip card (emoji front, sentence back).
 // =====================================================================
+// TODO: confirm with Salam — card 2 text and photo need her approval before publishing.
 const SUIT_CARDS = {
   front: {
     title: "Why do astronauts wear spacesuits?",
@@ -13,19 +16,37 @@ const SUIT_CARDS = {
       { e: "🧤", label: "Sealed gloves", c: "#b07adf", text: "<b>Sealed gloves and joints</b> keep the dust out." },
     ],
   },
+  back: {
+    badge: "REAL PERSON",
+    title: "Salam Abu Alhayjaa, from Jordan.",
+    intro: "Real engineers build these suits, and Salam is one of them. She is a Jordanian mechanical engineer who:",
+    facts: [
+      { e: "🛠️", label: "4 spacesuits", c: "#e0a93a", text: "<b>designed four spacesuits</b> over two years," },
+      { e: "🚀", label: "A first for Jordan", c: "#2f9e5a", text: "was chosen as the <b>first Jordanian woman astronaut candidate</b> for an advanced space training program in the USA." },
+    ],
+    outro: "Real people are building the suits for Mars right now.",
+    img: "img/salam.jpg",
+    source: { name: "Al Jazeera", url: "https://www.ajnet.me/family/2025/6/15/%D8%A3%D9%88%D9%84-%D8%A3%D8%B1%D8%AF%D9%86%D9%8A%D8%A9-%D8%AA%D8%B1%D8%B4%D8%AD-%D9%84%D8%B1%D8%AD%D9%84%D8%A9-%D9%81%D8%B6%D8%A7%D8%A6%D9%8A%D8%A9-%D8%B3%D9%84%D8%A7%D9%85" },
+  },
 };
+const ASSETS = { salamPortrait: SUIT_CARDS.back.img };
 
 const SuitCards = {
   open() {
-    const F = SUIT_CARDS.front;
+    const F = SUIT_CARDS.front, B = SUIT_CARDS.back;
     const mini = (f) => `<div class="mini" style="--c:${f.c}"><div class="mIn"><div class="mF"><span class="mE">${f.e}</span><span class="mL">${f.label}</span><span class="mT">tap</span></div><div class="mB">${f.text}</div></div></div>`;
     const html = `<div class="lgWrap"><div class="lgRays"></div>
       <div class="lgScene"><div class="lgCard">
-        <div class="lgFace lgFront">
+        <div class="lgFace lgFront"><div class="lgNum">1 / 2</div>
           <div class="lgFrontGrid"><div><div class="lgIco">🧑‍🚀</div><h3>SUIT UP · BRIEFING</h3><h1>${F.title}</h1><p>${F.intro}</p>
           <div class="lgHint">✨ Tap each small card to learn what it does <span class="lgCount">(0/4)</span></div>
-          <button class="lgFlipBtn">Suit up! ▶</button></div>
+          <button class="lgFlipBtn">↻ Flip the card</button></div>
           <div class="minis four">${F.facts.map(mini).join("")}</div></div></div>
+        <div class="lgFace lgBack"><div class="lgNum">2 / 2</div>
+          <div class="lgBackGrid"><div class="lgPhoto"><img src="${ASSETS.salamPortrait}" alt="Salam Abu Alhayjaa" draggable="false"><span class="badge">${B.badge}</span></div>
+          <div class="lgText"><h3>${B.badge}</h3><h1>${B.title}</h1><p>${B.intro}</p><div class="minis two">${B.facts.map(mini).join("")}</div><p class="lgOut">${B.outro}</p>
+          <div class="src">📚 Source: <a href="${B.source.url}" target="_blank" rel="noopener">${B.source.name}</a></div>
+          <button class="btn go lgGo">Suit up! ▶</button></div></div></div>
       </div></div><canvas class="lgFx"></canvas></div>`;
     return UI.card(html, [], {
       cls: "legendCard", noKey: true, onMount: (card, done) => {
@@ -52,12 +73,11 @@ const SuitCards = {
           wrap.animate([{ transform: "translate(0,0)" }, { transform: "translate(-9px,5px)" }, { transform: "translate(8px,-6px)" }, { transform: "translate(-6px,-4px)" }, { transform: "translate(5px,6px)" }, { transform: "translate(-3px,2px)" }, { transform: "translate(0,0)" }], { duration: 520, easing: "ease-out" });
           const r = rel(lg); setTimeout(() => burst(r.x + r.w / 2, r.y + r.h / 2, 160), 280);
         };
-
+        lg.addEventListener("click", (e) => { if (e.target.closest(".mini, a, .lgGo")) return; flip(); });
         card.querySelector(".lgFlipBtn").addEventListener("pointerenter", () => { hoverEl = lg; });
-        const go = () => { if (flipped) return; flipped = true; Sound.play("success"); Cam.shake = 0.3; const r = rel(lg); burst(r.x + r.w / 2, r.y + r.h / 2, 120); setTimeout(() => { alive = false; window.removeEventListener("resize", size); done("ok"); }, 700); };
-        card.querySelector(".lgFlipBtn").addEventListener("click", (e) => { e.stopPropagation(); go(); });
+        card.querySelector(".lgGo").addEventListener("click", (e) => { e.stopPropagation(); Sound.play("click"); alive = false; window.removeEventListener("resize", size); done("ok"); });
         // keyboard: Space/Enter flips, then continues
-        UI.active.onAction = () => { if (card.querySelector(".lgFront.ready")) go(); };
+        UI.active.onAction = () => { if (!flipped) flip(); else card.querySelector(".lgGo").click(); };
         let last = performance.now();
         const loop = (now) => {
           if (!alive || !document.body.contains(fx)) return;
