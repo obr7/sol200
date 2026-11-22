@@ -9,8 +9,8 @@ const CONFIG = {
   // Character names (change here once the team decides)
   NAMES: { lead: "Damon", marcus: "Marcus", diego: "Diego", layla: "Layla" },
   FULL_NAMES: { lead: "Damon Carter", marcus: "Marcus Bell", diego: "Diego Ramírez", layla: "Layla Haddad" },
-  // NASA Open APIs key (https://api.nasa.gov). DEMO_KEY works but is rate-limited.
-  NASA_API_KEY: "DEMO_KEY",
+  // NASA Open APIs key (https://api.nasa.gov), registered for SOL 200 (1,000 requests/hour). Falls back to archived DONKI data if unavailable.
+  NASA_API_KEY: "dWPTjTMkjLJDcftwHqpkFGW97MhjbTwNGw7N88jG",
   // ElevenLabs narration (copied from "200 sol voices/narrator sounds" into dist/audio/).
   // Any missing file -> the browser's voice reads that line with the estimated length below.
   NARRATION_FILES: { N1: "audio/n1.mp3", N2: "audio/n2.mp3", N3: "audio/n3.mp3", N4A: "audio/n4a.mp3", N4B: "audio/n4b.mp3", N4C: "audio/n4c.mp3" },

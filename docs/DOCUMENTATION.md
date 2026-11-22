@@ -92,7 +92,7 @@ All canvas mini-games share one helper (`canvasGame` in `minigames2.js`). It ope
 ## Real data
 
 - **DONKI (live):** `SpaceWeather.load()` in `data.js` asks `https://api.nasa.gov/DONKI/FLR` for the last 30 days of solar flares, once per visit, with a 6 second timeout. The strongest flare class sets the risk: X = Stormy Sun (−6 Safety outside), M = Busy Sun (−3), otherwise Calm Sun (0). If the request fails or is rate-limited, the game shows a real archived record (`ARCHIVED_SPACE_WEATHER`) and labels it.
-- **API key:** `CONFIG.NASA_API_KEY` in `config.js`. `DEMO_KEY` is limited to 30 requests per hour and 50 per day per IP address; a free personal key from https://api.nasa.gov allows 1,000 per hour.
+- **API key:** `CONFIG.NASA_API_KEY` in `config.js` holds the team's registered key (1,000 requests per hour). `DEMO_KEY` would be limited to 30 per hour and 50 per day per IP address. Forks should use their own free key from https://api.nasa.gov.
 - **Mars Trek (live):** `mars3d.js` loads Viking MDIM 2.1 colour-mosaic tiles from `trek.nasa.gov/tiles/Mars/EQ/...` and wraps them on a sphere drawn pixel by pixel. If the tiles cannot load, a painted Mars is used.
 - **Curiosity photo (live):** the window loads `images-assets.nasa.gov/image/PIA20843/PIA20843~medium.jpg`, shown in large pixels with a light warm tint so it matches the art.
 

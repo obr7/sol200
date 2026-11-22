@@ -103,7 +103,7 @@ Edit files in `src/`, then run the build. See **[docs/DOCUMENTATION.md](docs/DOC
 
 ## NASA API key
 
-`src/config.js` → `CONFIG.NASA_API_KEY` is set to `DEMO_KEY`, which allows only 30 requests per hour and 50 per day per IP address. For heavier use, get a free key at https://api.nasa.gov and put it there.
+`src/config.js` → `CONFIG.NASA_API_KEY` holds the team's registered api.nasa.gov key (1,000 requests per hour), so the live DONKI feed works for many players at once. If you fork the project, replace it with your own free key from https://api.nasa.gov. If the API is unreachable, the game falls back to archived DONKI data and says so on screen.
 
 ## Credits
 
