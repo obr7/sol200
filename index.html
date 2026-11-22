@@ -646,22 +646,33 @@ const SpaceWeather = {
     const end = new Date();
     const start = new Date(end.getTime() - 30 * 86400000);
     const f = (d) => d.toISOString().slice(0, 10);
-    const url = `https://api.nasa.gov/DONKI/FLR?startDate=${f(start)}&endDate=${f(end)}&api_key=${CONFIG.NASA_API_KEY}`;
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 6000);
-      const r = await fetch(url, { signal: ctrl.signal });
-      clearTimeout(t);
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      const data = await r.json();
-      if (!Array.isArray(data)) throw new Error("bad data");
+    const q = `startDate=${f(start)}&endDate=${f(end)}`;
+    // 1) NASA Open APIs gateway (needs the key)  2) the same DONKI service directly at NASA CCMC (no key)
+    const urls = [
+      `https://api.nasa.gov/DONKI/FLR?${q}&api_key=${CONFIG.NASA_API_KEY}`,
+      `https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR?${q}`,
+    ];
+    let data = null;
+    for (const url of urls) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 9000);
+        const r = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(t);
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const j = await r.json();
+        if (!Array.isArray(j)) throw new Error("bad data");
+        data = j; break;
+      } catch (e) { /* try the next source */ }
+    }
+    if (data) {
       this.flares = data
         .filter((x) => x && x.classType)
         .map((x) => ({ classType: x.classType, peakTime: x.peakTime || x.beginTime, link: x.link }))
         .sort((a, b) => (a.peakTime < b.peakTime ? 1 : -1));
       this.status = "live";
       this.fetchedAt = new Date();
-    } catch (e) {
+    } else {
       this.flares = ARCHIVED_SPACE_WEATHER.flares.slice();
       this.status = "archived";
     }
