@@ -5,6 +5,14 @@
 
 **A story game about surviving, leading and growing food on Mars, for kids aged 7 to 12.**
 
+### 🎬 Challenge demo (30 seconds)
+
+[![SOL 200 — 30-second challenge demo](docs/demo/demo-poster.jpg)](https://obr7.github.io/sol200/docs/demo/SOL200_demo.mp4)
+
+**This is our official 30-second demo for the NASA Space Apps 2026 challenge.** Click the image to play it, or [open the video file](docs/demo/SOL200_demo.mp4).
+<sub>Voice-over made with ElevenLabs (AI). Footage is recorded from the game itself.</sub>
+
+
 [▶ **Play now**](https://obr7.github.io/sol200/) · [📖 The story](docs/STORY.md) · [🎬 Game script](docs/full-game-script-en.md) · [🛠 Documentation](docs/DOCUMENTATION.md)
 
 ![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026-0b3d91) ![Live NASA data](https://img.shields.io/badge/data-NASA%20DONKI%20%C2%B7%20Mars%20Trek-c1440e) ![Runs in any browser](https://img.shields.io/badge/runs%20in-any%20browser-2ea44f) ![Vibe coded](https://img.shields.io/badge/built%20with-vibe%20coding-8a2be2)
