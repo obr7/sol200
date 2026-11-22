@@ -1,3 +1,5 @@
+[← Back to the main page](../README.md)
+
 # SOL 200 — The Story
 
 Four astronauts who know each other from Earth face crises on Mars while a shared secret from their past surfaces.
@@ -36,8 +38,8 @@ Play Diego, who avoids confrontation. A flashback of feeling like an outsider sh
 > **Lesson:** half-solutions only delay problems.
 
 ### Chapter 5: Layla — *planned*
-Play Layla, who fears loss. Her flashback and her plant Hope reveal what she lost. She must **save Hope (A)** or **protect the crew's water (B)**, and she finally breaks her silence.
-> **Lesson:** honesty can be kind.
+Play Layla, the soul of the crew, who fears loss. In her flashback she breaks her grandmother's jar and hides it; her grandmother finds it and says, "It's okay, habibti. What happened, happened. Come, let's fix it together," then plants mint in the glued jar. Years later, when her grandmother falls ill, Layla's soul dims and she stays silent about the incomplete training report. Her grandmother leaves her lettuce seeds and the glued jar, and Layla grows the seeds on Mars as her plant Hope. She must **save Hope (A)** or **protect the crew's water (B)**, and she finally breaks her silence, telling Damon the truth in her grandmother's words.
+> **Lesson:** broken things can be fixed together and hold new life, and when a mistake comes out, help comes, not punishment.
 
 ### Chapter 6: The Sun — *planned*
 All four play together, building a radiation shelter during a solar flare as the full truth comes out.
@@ -65,4 +67,10 @@ Radiation from a solar flare is Chapter 6's climax. Chapter 1 already foreshadow
 - **Damon Carter** — Commander (playable in Chapter 1). Fears he does not deserve to lead.
 - **Marcus Bell** — Deputy commander. Fears being ignored again.
 - **Diego Ramirez** — Mechanical engineer. Fears conflict, so he hides behind jokes.
-- **Layla Haddad** — Plant scientist. Fears losing what she loves.
+- **Layla Haddad** — Botanist and spacesuit expert. Fears loss; when her grandmother fell ill, her soul dimmed and she stayed silent.
+
+## Read more
+
+- [Full game script, all 6 chapters](full-game-script-en.md)
+- [The psychology behind the characters](PSYCHOLOGY.md)
+- [Guide for teachers, counselors and parents](PARENTS_AND_TEACHERS.md)
