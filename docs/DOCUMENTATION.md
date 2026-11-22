@@ -93,6 +93,8 @@ All canvas mini-games share one helper (`canvasGame` in `minigames2.js`). It ope
 
 - **DONKI (live):** `SpaceWeather.load()` in `data.js` asks `https://api.nasa.gov/DONKI/FLR` for the last 30 days of solar flares, once per visit, with a 6 second timeout. The strongest flare class sets the risk: X = Stormy Sun (−6 Safety outside), M = Busy Sun (−3), otherwise Calm Sun (0). If the request fails or is rate-limited, the game shows a real archived record (`ARCHIVED_SPACE_WEATHER`) and labels it.
 - **API key:** `CONFIG.NASA_API_KEY` in `config.js` holds the team's registered key (1,000 requests per hour). `DEMO_KEY` would be limited to 30 per hour and 50 per day per IP address. Forks should use their own free key from https://api.nasa.gov.
+- **Sources, in order:** api.nasa.gov `DONKI/FLR` → NASA CCMC `kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR` → archived record (9-second timeout per source, see `SpaceWeather.load()` in `data.js`).
+- **Known issue (22 Nov 2026):** api.nasa.gov returned 404 for `DONKI/FLR` (other DONKI routes worked) and the CCMC endpoint blocks cross-site browser requests, so the game showed the archived record that day. It returns to live data automatically once NASA fixes the route.
 - **Mars Trek (live):** `mars3d.js` loads Viking MDIM 2.1 colour-mosaic tiles from `trek.nasa.gov/tiles/Mars/EQ/...` and wraps them on a sphere drawn pixel by pixel. If the tiles cannot load, a painted Mars is used.
 - **Curiosity photo (live):** the window loads `images-assets.nasa.gov/image/PIA20843/PIA20843~medium.jpg`, shown in large pixels with a light warm tint so it matches the art.
 

@@ -101,9 +101,14 @@ python3 build.py   # joins src/*.js + src/style.css into one index.html (root) a
 
 Edit files in `src/`, then run the build. See **[docs/DOCUMENTATION.md](docs/DOCUMENTATION.md)** for the file map, how the story and mini-games work, settings, developer mode and testing.
 
-## NASA API key
+## NASA API key and live data
 
-`src/config.js` → `CONFIG.NASA_API_KEY` holds the team's registered api.nasa.gov key (1,000 requests per hour), so the live DONKI feed works for many players at once. If you fork the project, replace it with your own free key from https://api.nasa.gov. If the API is unreachable, the game falls back to archived DONKI data and says so on screen.
+- **Registered key.** `src/config.js` → `CONFIG.NASA_API_KEY` holds the team's own registered api.nasa.gov key (1,000 requests per hour) instead of the shared `DEMO_KEY`, so the live DONKI feed can serve many players at once. If you fork the project, use your own free key from https://api.nasa.gov.
+- **Two live sources, then a safe fallback.** The game asks for solar flares (DONKI `FLR`) in this order:
+  1. NASA Open APIs: `https://api.nasa.gov/DONKI/FLR` (with the key).
+  2. NASA CCMC, the team that runs DONKI: `https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR` (no key).
+  3. If neither answers within 9 seconds, an archived real DONKI record (including the X8.7 flare of 14 May 2024). The console then says **ARCHIVED** on screen, so players are never shown old data as live.
+- **Status at our last update (22 Nov 2026).** NASA's `DONKI/FLR` route on api.nasa.gov was returning *404 Not Found* for every request, while other DONKI routes (CME, GST, notifications) worked with the same key. The CCMC endpoint does not allow browser requests from other websites (CORS). So on submission day the game was showing the archived record. No change is needed on our side: as soon as NASA restores the FLR route, the game switches back to **LIVE** by itself.
 
 ## Credits
 
