@@ -5,7 +5,7 @@
 
 **A story game about surviving, leading and growing food on Mars, for kids aged 7 to 12.**
 
-[▶ **Play now**](https://obr7.github.io/sol200/) · [📖 The story](docs/STORY.md) · [🎬 Game script](full-game-script-en.md) · [🛠 Documentation](docs/DOCUMENTATION.md)
+[▶ **Play now**](https://obr7.github.io/sol200/) · [📖 The story](docs/STORY.md) · [🛠 Documentation](docs/DOCUMENTATION.md)
 
 ![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026-0b3d91) ![Live NASA data](https://img.shields.io/badge/data-NASA%20DONKI%20%C2%B7%20Mars%20Trek-c1440e) ![Runs in any browser](https://img.shields.io/badge/runs%20in-any%20browser-2ea44f) ![Vibe coded](https://img.shields.io/badge/built%20with-vibe%20coding-8a2be2)
 
@@ -40,7 +40,7 @@ You play **Commander Damon Carter** on Sol 200 (day 200) of the first mission to
 - **Endings:** with Team trust at 50 or more, the crew opens up and sends one honest report; below 50, accusations fly and they part ways, never speaking again.
 - **Foreshadowing:** radiation from a solar flare is Chapter 6's climax, and Chapter 1 already reads live NASA DONKI data to show today's real Sun.
 
-Full outline with every chapter: **[docs/STORY.md](docs/STORY.md)** · Full game script (all 6 chapters): **[full-game-script-en.md](full-game-script-en.md)**
+Full outline with every chapter: **[docs/STORY.md](docs/STORY.md)**
 
 ## What's in Chapter 1
 
